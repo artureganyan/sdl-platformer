@@ -19,5 +19,6 @@ extern Level* level;
 
 void initLevel( Level* level );
 void initLevels();
+void setLevel( int r, int c );
 
 #endif

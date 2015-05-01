@@ -35,6 +35,14 @@ typedef enum
     TYPE_FIREBALL,
     TYPE_WALL_TOP,
     TYPE_WALL,
+    TYPE_GROUND,
+    TYPE_GROUND_TOP,
+    TYPE_GRASS,
+    TYPE_GRASS_BIG,
+    TYPE_TREE1,
+    TYPE_TREE2,
+    TYPE_CLOUDS1,
+    TYPE_CLOUDS2,
     TYPE_PILLAR,
     TYPE_PILLAR_TOP,
     TYPE_PILLAR_BOTTOM,
@@ -116,6 +124,8 @@ typedef struct {
 typedef struct {
     ObjectType* map[ROW_COUNT][COLUMN_COUNT];
     ObjectArray objects;
+    void (*initSprites)();
+    int background;
     int coins;
     int r;
     int c;

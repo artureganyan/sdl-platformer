@@ -77,11 +77,11 @@ Object* createObject( Level* level, ObjectTypeId typeId, int r, int c )
 
 void initTypes()
 {
-    #define INIT(typeId_, spriteX, spriteY, generalTypeId_, solid_) \
+    #define INIT(typeId_, spriteRow, spriteColumn, generalTypeId_, solid_) \
     { \
         ObjectType* type = &objectTypes[typeId_]; \
-        type->sprite.x = (spriteX); \
-        type->sprite.y = (spriteY); \
+        type->sprite.y = (spriteRow) * SPRITE_SIZE; \
+        type->sprite.x = (spriteColumn) * SPRITE_SIZE; \
         type->sprite.w = SPRITE_SIZE; \
         type->sprite.h = SPRITE_SIZE; \
         type->typeId = typeId_; \
@@ -95,8 +95,8 @@ void initTypes()
         type->onHit = onHit_Object; \
     }
 
-    #define INIT_EX(typeId, spriteX, spriteY, generalTypeId, solid, onInit_, onFrame_, onHit_) \
-    INIT(typeId, spriteX, spriteY, generalTypeId, solid); \
+    #define INIT_EX(typeId, spriteRow, spriteColumn, generalTypeId, solid, onInit_, onFrame_, onHit_) \
+    INIT(typeId, spriteRow, spriteColumn, generalTypeId, solid); \
     { \
         ObjectType* type = &objectTypes[typeId]; \
         type->onInit = onInit_; \
@@ -104,31 +104,38 @@ void initTypes()
         type->onHit = onHit_; \
     }
 
-    //          type id         sprite x, y   general type id     solid     onInit        onFrame          onHit
-    INIT    ( TYPE_NONE,        136,    0,      TYPE_NONE,          0                                               );
-    INIT    ( TYPE_PLAYER,      416,    16,     TYPE_PLAYER,        0                                               );
-    INIT    ( TYPE_WALL,        96,     80,     TYPE_WALL,          1                                               );
-    INIT    ( TYPE_WALL_TOP,    96,     64,     TYPE_WALL,          1                                               );
-    INIT    ( TYPE_PILLAR,      32,     432,    TYPE_BACKGROUND,    0                                               );
-    INIT    ( TYPE_PILLAR_TOP,  32,     416,    TYPE_BACKGROUND,    0                                               );
-    INIT    ( TYPE_PILLAR_BOTTOM, 32,   448,    TYPE_BACKGROUND,    0                                               );
-    INIT    ( TYPE_DOOR,        0,      160,    TYPE_DOOR,          1                                               );
-    INIT    ( TYPE_LADDER,      32,     192,    TYPE_LADDER,        0                                               );
-    INIT_EX ( TYPE_GHOST,       416,    112,    TYPE_ENEMY,         0,  onInit_EnemyShooter, onFrame_EnemyShooter,  onHit_Object    );
-    INIT_EX ( TYPE_SCORPION,    416,    160,    TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_Enemy,  onHit_Enemy );
-    INIT_EX ( TYPE_BAT,         416,    128,    TYPE_ENEMY,         0,  onInit_Bat,     onFrame_Bat,    onHit_Bat   );
-    INIT_EX ( TYPE_FIREBALL,    416,    210,    TYPE_ENEMY,         0,  onInit_EnemyShooter,    onFrame_Fireball,   onHit_Bat   );
-    INIT_EX ( TYPE_KEY,         416,    719,    TYPE_KEY,           0,  onInit_Object,  onFrame_Object, onHit_Item  );
-    INIT_EX ( TYPE_COIN,        432,    751,    TYPE_COIN,          0,  onInit_Object,  onFrame_Object, onHit_Item  );
-    //INIT_EX   ( TYPE_FIRESHOT,    512,    592,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot       );
-    INIT_EX ( TYPE_ICESHOT,     0,      832,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot       );
-    INIT_EX ( TYPE_FIRESHOT,    0,      864,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot       );
-    INIT_EX ( TYPE_DROP,        688,    592,    TYPE_DROP,          0,  onInit_Drop,    onFrame_Drop,   onHit_Drop  );
+    //          type id         sprite r, c      general type id      solid     onInit        onFrame          onHit
+    INIT    ( TYPE_NONE,            0,      10,     TYPE_NONE,          0                                               );
+    INIT    ( TYPE_PLAYER,          1,      26,     TYPE_PLAYER,        0                                               );
+    INIT    ( TYPE_WALL_TOP,        4,      6,      TYPE_WALL,          1                                               );
+    INIT    ( TYPE_WALL,            5,      6,      TYPE_WALL,          1                                               );
+    INIT    ( TYPE_GROUND_TOP,      6,      3,      TYPE_WALL,          1                                               );
+    INIT    ( TYPE_GROUND,          7,      3,      TYPE_WALL,          1                                               );
+    INIT    ( TYPE_GRASS,           40,     0,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_GRASS_BIG,       40,     0,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_TREE1,           41,     3,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_TREE2,           41,     4,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_CLOUDS1,         51,     6,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_CLOUDS2,         51,     7,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_PILLAR_TOP,      26,     2,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_PILLAR,          27,     2,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_PILLAR_BOTTOM,   28,     2,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_DOOR,            10,     0,      TYPE_DOOR,          1                                               );
+    INIT    ( TYPE_LADDER,          12,     2,      TYPE_LADDER,        0                                               );
+    INIT_EX ( TYPE_GHOST,           7,      26,     TYPE_ENEMY,         0,  onInit_EnemyShooter, onFrame_EnemyShooter,  onHit_Object    );
+    INIT_EX ( TYPE_SCORPION,        10,     26,     TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_Enemy,  onHit_Enemy );
+    INIT_EX ( TYPE_BAT,             8,      26,     TYPE_ENEMY,         0,  onInit_Bat,     onFrame_Bat,    onHit_Bat   );
+    INIT_EX ( TYPE_FIREBALL,        13,     26,     TYPE_ENEMY,         0,  onInit_EnemyShooter,    onFrame_Fireball,   onHit_Bat   );
+    INIT_EX ( TYPE_KEY,             45,     26,     TYPE_KEY,           0,  onInit_Object,  onFrame_Object, onHit_Item  );
+    INIT_EX ( TYPE_COIN,            47,     27,     TYPE_COIN,          0,  onInit_Object,  onFrame_Object, onHit_Item  );
+    INIT_EX ( TYPE_ICESHOT,         52,     0,      TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot       );
+    INIT_EX ( TYPE_FIRESHOT,        54,     0,      TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot       );
+    INIT_EX ( TYPE_DROP,            37,     43,     TYPE_DROP,          0,  onInit_Drop,    onFrame_Drop,   onHit_Drop  );
 
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;
     objectTypes[TYPE_SCORPION].width = 28;
-    objectTypes[TYPE_SCORPION].height = 24;
+    objectTypes[TYPE_SCORPION].height = 22;
     objectTypes[TYPE_BAT].speed = 2;
     objectTypes[TYPE_BAT].height = 18;
     objectTypes[TYPE_FIREBALL].speed = 2;

@@ -97,7 +97,7 @@ void processPlayer()
     // ... Left
     if (player.x + CELL_HALF < 0) {
         if (level->c > 0) {
-            level = &levels[level->r][level->c - 1];
+            setLevel(level->r, level->c - 1);
             player.x = LEVEL_WIDTH - CELL_SIZE + CELL_HALF - 1;
 
             // To change position of objects we can simply play N frames
@@ -111,7 +111,7 @@ void processPlayer()
     // ... Right
     } else if (player.x + CELL_HALF > LEVEL_WIDTH) {
         if (level->c < LEVEL_XCOUNT - 1) {
-            level = &levels[level->r][level->c + 1];
+            setLevel(level->r, level->c + 1);
             player.x = -CELL_HALF + 1;
             return;
         } else {
@@ -120,7 +120,7 @@ void processPlayer()
     // ... Bottom
     } else if (player.y + CELL_HALF > LEVEL_HEIGHT) {
         if (level->r < LEVEL_YCOUNT - 1) {
-            level = &levels[level->r + 1][level->c];
+            setLevel(level->r + 1, level->c);
             player.y = -CELL_HALF + 1;
             return;
         } else {
@@ -129,7 +129,7 @@ void processPlayer()
     // ... Top
     } else if (player.y + CELL_HALF < 0) {
         if (level->r > 0) {
-            level = &levels[level->r - 1][level->c];
+            setLevel(level->r - 1, level->c);
             player.y = LEVEL_HEIGHT - CELL_SIZE + CELL_HALF - 1;
             return;
         } else {
@@ -372,7 +372,11 @@ void gameLoop()
         processObjects();
 
         // Rendering
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_SetRenderDrawColor(renderer,
+                (level->background & 0xFF0000) >> 16,
+                (level->background & 0x00FF00) >> 8,
+                (level->background & 0x0000FF),
+                255);
         SDL_RenderClear(renderer);
         drawScreen();
 
