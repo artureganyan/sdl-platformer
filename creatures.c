@@ -20,6 +20,11 @@ int move( Object* obj, int dx, int dy, int checkFloor )
     obj->y += dy;
     getObjectPos(obj, &r, &c, cell, body);
 
+    if (isSolid(r, c)) {
+        obj->x -= dx;
+        obj->y -= dy;
+        return 0;
+    }
     if (dx > 0 && body[1] > cell[1]) {
         if (isSolid(r, c + 1) || body[1] > LEVEL_WIDTH || (checkFloor && !isSolidOrLadder(r + 1, c + 1))) {
             obj->x -= dx;
@@ -126,7 +131,7 @@ void onFrame_EnemyShooter( Object* e )
     if (!e->attack && isVisible(e, (Object*)&player)) {
         e->attack = 48;
         fireball = createObject(level, TYPE_ICESHOT, 0, 0);
-        fireball->x = e->x + e->anim.direction * 20;
+        fireball->x = e->anim.direction > 0 ? e->x + CELL_SIZE : e->x;
         fireball->y = e->y + 2;
         fireball->vx *= e->anim.direction;
         fireball->anim.direction = e->anim.direction;
@@ -245,7 +250,7 @@ void onFrame_Fireball( Object* e )
 
 void onInit_Drop( Object* e )
 {
-    e->y = (e->y / CELL_SIZE) * CELL_SIZE - (CELL_SIZE - e->type->height) / 2;
+    e->y = (e->y / CELL_SIZE) * CELL_SIZE - (CELL_SIZE - e->type->height) / 2 - 1;
     e->attack = 0;  // >= 0  - source of drops
                     // == -1 - the drop in fall
                     // <  -1 - the drop on floor

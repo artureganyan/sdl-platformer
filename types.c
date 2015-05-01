@@ -120,23 +120,29 @@ void initTypes()
     INIT_EX ( TYPE_FIREBALL,    416,    210,    TYPE_ENEMY,         0,  onInit_EnemyShooter,    onFrame_Fireball,   onHit_Bat   );
     INIT_EX ( TYPE_KEY,         416,    719,    TYPE_KEY,           0,  onInit_Object,  onFrame_Object, onHit_Item  );
     INIT_EX ( TYPE_COIN,        432,    751,    TYPE_COIN,          0,  onInit_Object,  onFrame_Object, onHit_Item  );
-    INIT_EX ( TYPE_FIRESHOT,    512,    592,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot   );
-    INIT_EX ( TYPE_ICESHOT,     0,      832,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot   );
-    INIT_EX ( TYPE_DROP,        0,      848,    TYPE_DROP,          0,  onInit_Drop,    onFrame_Drop,   onHit_Drop  );
+    //INIT_EX   ( TYPE_FIRESHOT,    512,    592,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot       );
+    INIT_EX ( TYPE_ICESHOT,     0,      832,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot       );
+    INIT_EX ( TYPE_FIRESHOT,    0,      864,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot       );
+    INIT_EX ( TYPE_DROP,        688,    592,    TYPE_DROP,          0,  onInit_Drop,    onFrame_Drop,   onHit_Drop  );
 
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;
+    objectTypes[TYPE_SCORPION].width = 28;
+    objectTypes[TYPE_SCORPION].height = 24;
     objectTypes[TYPE_BAT].speed = 2;
+    objectTypes[TYPE_BAT].height = 18;
     objectTypes[TYPE_FIREBALL].speed = 2;
+    objectTypes[TYPE_FIREBALL].width = 24;
+    objectTypes[TYPE_FIREBALL].height = 22;
     objectTypes[TYPE_ICESHOT].speed = 5;
+    objectTypes[TYPE_ICESHOT].height = 14;
     objectTypes[TYPE_FIRESHOT].speed = 5;
-    objectTypes[TYPE_FIRESHOT].width = 4;
-    objectTypes[TYPE_FIRESHOT].height = 4;
-    objectTypes[TYPE_DROP].width = 4;
-    objectTypes[TYPE_DROP].height = 4;
+    objectTypes[TYPE_FIRESHOT].width = 8;
+    objectTypes[TYPE_FIRESHOT].height = 8;
+    objectTypes[TYPE_DROP].width = 8;
+    objectTypes[TYPE_DROP].height = 8;
 
     #undef INIT
     #undef INIT_EX
 }
-
 

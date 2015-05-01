@@ -7,8 +7,8 @@
 #include "levels.h"
 
 enum {
-    LEVEL_YOFFSET = CELL_COUNT * LEVEL_XCOUNT,
-    LEVEL_ROWOFFSET = COLUMN_COUNT * LEVEL_XCOUNT
+	LEVEL_YOFFSET = CELL_COUNT * LEVEL_XCOUNT,
+	LEVEL_ROWOFFSET = COLUMN_COUNT * LEVEL_XCOUNT
 };
 
 Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];
@@ -18,10 +18,10 @@ extern const char* levelString;
 
 void initLevel( Level* level )
 {
-    int r, c;
+	int r, c;
     for (r = 0; r < ROW_COUNT; ++ r) {
         for (c = 0; c < COLUMN_COUNT; ++ c) {
-            level->map[r][c] = &objectTypes[TYPE_NONE];
+        	level->map[r][c] = &objectTypes[TYPE_NONE];
         }
     }
 
@@ -45,21 +45,21 @@ void initLevels()
                 for (c = 0; c < COLUMN_COUNT; ++ c) {
                     const char s = string[r * LEVEL_ROWOFFSET + c];
                     if (s == '*') {
-                        if (r == 0 || string[(r - 1) * LEVEL_ROWOFFSET + c] == '*') {
-                            createObjectInMap(level, TYPE_WALL, r, c);
-                        } else {
-                            createObjectInMap(level, TYPE_WALL_TOP, r, c);
-                        }
+                    	if (r == 0 || string[(r - 1) * LEVEL_ROWOFFSET + c] == '*') {
+                    		createObjectInMap(level, TYPE_WALL, r, c);
+                    	} else {
+                    		createObjectInMap(level, TYPE_WALL_TOP, r, c);
+                    	}
                     } else if (s == '|') {
-                        if (r == 0 || string[(r - 1) * LEVEL_ROWOFFSET + c] == '*') {
-                            createObjectInMap(level, TYPE_PILLAR_TOP, r, c);
-                        } else if (r == ROW_COUNT - 1 || string[(r + 1) * LEVEL_ROWOFFSET + c] == '*') {
-                            createObjectInMap(level, TYPE_PILLAR_BOTTOM, r, c);
-                        } else {
-                            createObjectInMap(level, TYPE_PILLAR, r, c);
-                        }
+						if (r == 0 || string[(r - 1) * LEVEL_ROWOFFSET + c] == '*') {
+							createObjectInMap(level, TYPE_PILLAR_TOP, r, c);
+						} else if (r == ROW_COUNT - 1 || string[(r + 1) * LEVEL_ROWOFFSET + c] == '*') {
+							createObjectInMap(level, TYPE_PILLAR_BOTTOM, r, c);
+						} else {
+							createObjectInMap(level, TYPE_PILLAR, r, c);
+						}
                     } else if (s == '=') {
-                        createObjectInMap(level, TYPE_LADDER, r, c);
+                    	createObjectInMap(level, TYPE_LADDER, r, c);
                     } else if (s == 'd') {
                         createObjectInMap(level, TYPE_DOOR, r, c);
                     } else if (s == 'o') {
@@ -89,72 +89,35 @@ void initLevels()
 
 const char* levelString =
 
-    "                 *  "  "                   *"  "*                  *"
-    "               *    "  "        o s       o*"  "*          o       *"
-    "               *****"  "**=*  ********  =***"  "*         ***      *"
-    "                 ***"  "  =             =  *"  "*       ***     g  *"
-    "                 ***"  "  =          =******"  "*os    *  *  =******"
-    "                 ***"  " g o         =     *"  "******    *  =      "
-    "                 ***"  "*****     *****=****"  "*     *  **  =      "
-    "                 ***"  "     b         =   *"  "* s     ***  =    o "
-    "                 ***"  "   o  o      f =   *"  "******=********* ***"
-    "                 ***"  "  **  **  **********"  "*     =     *   o   "
-    "                 ***"  "*         | @  |  @ "  "  go  =   g *  ***  "
-    "                 ***"  "**        |    |    "  "****  =  ****       "
-    "                 ***"  " **       |    |    "  "      =     *       "
-    "                 ***"  "  **   s  |o   | s  "  "      = o   *     g "
-    "********************"  "********************"  "***************=****"
+	"                 *  "  "  @                *"  "*                  *"
+	"               *    "  "        o s       o*"  "*          o       *"
+	"               *****"  "**=*  ********  =***"  "*         ***      *"
+	"                 ***"  "  =             =  *"  "*       ***     g  *"
+	"                 ***"  "  =          =******"  "*os    *  *  =******"
+	"                 ***"  " g o         =     *"  "******    *  =      "
+	"                 ***"  "*****     *****=****"  "*     *  **  =      "
+	"                 ***"  "     b         =   *"  "* s     ***  =    o "
+	"                 ***"  "   o  o      f =   *"  "******=********* ***"
+	"                 ***"  "  **  **  **********"  "*     =     *   o   "
+	"                 ***"  "*         | @  |  @ "  "  go  =   g *  ***  "
+	"                 ***"  "**        |    |    "  "****  =  ****       "
+	"                 ***"  " **       |    |    "  "      =     *       "
+	"                 ***"  "  **   s  |o   | s  "  "      = o   *     g "
+	"********************"  "********************"  "***************=****"
 
-    "                   *"  "      **    =       "  "    =   =      =    "
-    "                   *"  "    **      =       "  "    **  =      =    "
-    "                   *"  "  **        =       "  "  **    =      =    "
-    "                   *"  "     **=*******     "  "        =      =    "
-    "                   *"  "       =            "  "        =      =    "
-    "                   *"  "       =            "  "        = **** =    "
-    "                   *"  "       =            "  "        =      =    "
-    "                   *"  "       =   b        "  "        =      =    "
-    "                   *"  "***** ********= ****"  "        =      =    "
-    "                   *"  "              =     "  "        =      =    "
-    "                   *"  "        g    o=     "  "        =      =    "
-    "                   *"  "   ******   **=**   "  "   **************   "
-    "                   *"  "              =     "  "                    "
-    "                   *"  "**         ** **  **"  "                    "
-    "                   *"  "  **                "  "                    ";
-
-
-/*
-const char* levelString =
-
-    "                  **"  "                    "
-    "            =    ***"  "                    "
-    "            =   ** *"  "                    "
-    "     o k s  =  **  *"  "      g      g      "
-    "   ******* *=***   *"  "   **=***  *****    "
-    "*        *  =       "  "     =              "
-    "*****       =    = *"  "     =              "
-    "    ** oo*oo=    = d"  "     = ooooo  g  o  "
-    "     *******=*  *=**"  "***=*** ********    "
-    "    b            =  "  "   =             ** "
-    "        g   =o      "  "   =                "
-    "   *********=****   "  "   =                "
-    "            =       "  "   =                "
-    "**  ** **  *= **  **"  "   =                "
-    "  **        =       "  "  **=               "
-
-    "      **    =       "  "    =               "
-    "    **      =       "  "    **  =**         "
-    "  **        =       "  "  **    =           "
-    "     **=*******     "  "        =**         "
-    "       =            "  "        =           "
-    "       =            "  "        = ****      "
-    "       =            "  "        =           "
-    "       =   b        "  "        =      ***  "
-    "***** ********= ****"  "        =           "
-    "              =     "  "       *=**         "
-    "        g    o=     "  "        =           "
-    "   ******   **=**   "  "   **************   "
-    "              =     "  "                    "
-    "**         ** **  **"  "                    "
-    "  **                "  "                    ";
-*/
+	"                   *"  "      **    =       "  "    =   =      =    "
+	"                   *"  "    **      =       "  "    **  =      =    "
+	"                   *"  "  **        =       "  "  **    =      =    "
+	"                   *"  "     **=*******     "  "        =      =    "
+	"                   *"  "       =            "  "        =      =    "
+	"                   *"  "       =            "  "        = **** =    "
+	"                   *"  "       =            "  "        =      =    "
+	"                   *"  "       =   b        "  "        =      =    "
+	"                   *"  "***** ********= ****"  "        =      =    "
+	"                   *"  "              =     "  "        =      =    "
+	"                   *"  "        g    o=     "  "        =      =    "
+	"                   *"  "   ******   **=**   "  "   **************   "
+	"                   *"  "              =     "  "                    "
+	"                   *"  "**         ** **  **"  "                    "
+	"                   *"  "  **                "  "                    ";
 

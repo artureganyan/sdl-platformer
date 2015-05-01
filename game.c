@@ -102,7 +102,7 @@ void processPlayer()
 
             // To change position of objects we can simply play N frames
             //for (i = 0; i < N; ++ i) {
-            //    processObjects();
+            //  processObjects();
             //}
             return;
         } else {
@@ -110,7 +110,7 @@ void processPlayer()
         }
     // ... Right
     } else if (player.x + CELL_HALF > LEVEL_WIDTH) {
-        if (level->c < LEVEL_XCOUNT) {
+        if (level->c < LEVEL_XCOUNT - 1) {
             level = &levels[level->r][level->c + 1];
             player.x = -CELL_HALF + 1;
             return;
@@ -119,7 +119,7 @@ void processPlayer()
         }
     // ... Bottom
     } else if (player.y + CELL_HALF > LEVEL_HEIGHT) {
-        if (level->r < LEVEL_YCOUNT) {
+        if (level->r < LEVEL_YCOUNT - 1) {
             level = &levels[level->r + 1][level->c];
             player.y = -CELL_HALF + 1;
             return;
@@ -140,7 +140,6 @@ void processPlayer()
 
 void processObjects()
 {
-    const int HIT_OFFSET = 12;
     int i;
     for (i = 0; i < level->objects.count; ++ i) {
         Object* obj = level->objects.array[i];
@@ -148,8 +147,8 @@ void processObjects()
             continue;
         }
         obj->type->onFrame(obj);
-        if (abs(obj->x - player.x) < CELL_SIZE - HIT_OFFSET &&
-            abs(obj->y - player.y) < CELL_SIZE - HIT_OFFSET) {
+        if (abs(obj->x - player.x) < (PLAYER_WIDTH + obj->type->width) / 2 &&
+            abs(obj->y - player.y) < (PLAYER_HEIGHT + obj->type->height) / 2) {
             obj->type->onHit(obj, (Object*)&player);
         }
     }
