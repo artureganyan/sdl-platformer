@@ -75,7 +75,7 @@ void initLevels()
                     } else if (s == 'f') {
                         createObject(level, TYPE_FIREBALL, r, c);
                     } else if (s == '@') {
-                        //createObject(level, TYPE_DROP, r, c);
+                        createObject(level, TYPE_DROP, r, c);
                     }
                 }
             }
@@ -99,7 +99,7 @@ const char* levelString =
     "                 ***"  "     b         =   *"  "* s     ***  =    o "
     "                 ***"  "   o  o      f =   *"  "******=********* ***"
     "                 ***"  "  **  **  **********"  "*     =     *   o   "
-    "                 ***"  "*         |    |    "  "  go  =   g *  ***  "
+    "                 ***"  "*         | @  |  @ "  "  go  =   g *  ***  "
     "                 ***"  "**        |    |    "  "****  =  ****       "
     "                 ***"  " **       |    |    "  "      =     *       "
     "                 ***"  "  **   s  |o   | s  "  "      = o   *     g "

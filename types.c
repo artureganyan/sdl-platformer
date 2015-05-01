@@ -87,6 +87,9 @@ void initTypes()
         type->typeId = typeId_; \
         type->generalTypeId = generalTypeId_; \
         type->solid = solid_; \
+        type->speed = 0; \
+        type->width = CELL_SIZE; \
+        type->height = CELL_SIZE; \
         type->onInit = onInit_Object; \
         type->onFrame = onFrame_Object; \
         type->onHit = onHit_Object; \
@@ -127,6 +130,10 @@ void initTypes()
     objectTypes[TYPE_FIREBALL].speed = 2;
     objectTypes[TYPE_ICESHOT].speed = 5;
     objectTypes[TYPE_FIRESHOT].speed = 5;
+    objectTypes[TYPE_FIRESHOT].width = 4;
+    objectTypes[TYPE_FIRESHOT].height = 4;
+    objectTypes[TYPE_DROP].width = 4;
+    objectTypes[TYPE_DROP].height = 4;
 
     #undef INIT
     #undef INIT_EX

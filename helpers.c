@@ -48,6 +48,9 @@ void getObjectCell( Object* obj, int* r, int* c )
 // cellBorders/bodyBorders = [left, right, top, bottom], for object cell/body
 void getObjectPos( Object* obj, int* r, int* c, int cellBorders[4], int bodyBorders[4] )
 {
+    const int dw = (CELL_SIZE - obj->type->width) / 2;
+    const int dh = (CELL_SIZE - obj->type->height) / 2;
+
     getObjectCell(obj, r, c);
 
     cellBorders[0] = CELL_SIZE * (*c);
@@ -55,10 +58,10 @@ void getObjectPos( Object* obj, int* r, int* c, int cellBorders[4], int bodyBord
     cellBorders[2] = CELL_SIZE * (*r);
     cellBorders[3] = CELL_SIZE * (*r + 1);
 
-    bodyBorders[0] = obj->x;
-    bodyBorders[1] = obj->x + CELL_SIZE;
-    bodyBorders[2] = obj->y;
-    bodyBorders[3] = obj->y + CELL_SIZE;
+    bodyBorders[0] = obj->x + dw;
+    bodyBorders[1] = obj->x + CELL_SIZE - dw;
+    bodyBorders[2] = obj->y + dh;
+    bodyBorders[3] = obj->y + CELL_SIZE - dh;
 }
 
 int findNearDoor( int* r, int* c )

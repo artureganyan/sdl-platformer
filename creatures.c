@@ -10,7 +10,7 @@
 #include "game.h"
 
 
-// Returns 0 if obj can not move by dx and/or dy
+// Returns 0 if obj can not move by dx or dy
 int move( Object* obj, int dx, int dy, int checkFloor )
 {
     int r, c, cell[4], body[4];
@@ -166,7 +166,7 @@ void onFrame_Shot( Object* e )
 
 void onHit_Shot( Object* e, Object* player )
 {
-    e->removed = 1;
+    setAnimation(e, 3, 3, 5);
     setAnimation(player, 5, 5, 0);
     gameOver = 1;
 }
@@ -243,23 +243,34 @@ void onFrame_Fireball( Object* e )
 }
 
 
-
 void onInit_Drop( Object* e )
 {
-    e->y = (e->y / CELL_SIZE) * CELL_SIZE - 10;
-    e->vx = e->y; // \todo Fix this later
+    e->y = (e->y / CELL_SIZE) * CELL_SIZE - (CELL_SIZE - e->type->height) / 2;
+    e->attack = 0;  // >= 0  - source of drops
+                    // == -1 - the drop in fall
+                    // <  -1 - the drop on floor
 }
 
 void onFrame_Drop( Object* e )
 {
-    if (++ e->attack >= 100) {
+    if (e->attack == -1) {
         if (e->vy < 5) {
             e->vy += 1;
         }
         if (!move(e, 0, e->vy, 0)) {
-            e->y = e->vx;
-            e->attack = 0;
+            e->y += e->vy;
+            e->attack = -2;
         }
+    } else if (e->attack < -1) {
+        if (e->attack -- == -50) {
+            e->removed = 1;
+        }
+    } else if (e->attack -- == 0) {
+        Object* drop = createObject(level, TYPE_DROP, 0, 0);
+        drop->x = e->x;
+        drop->y = e->y;
+        drop->attack = -1;
+        e->attack = 100 + rand() % 500;
     }
 }
 
@@ -269,3 +280,35 @@ void onHit_Drop( Object* e, Object* player )
     gameOver = 1;
 }
 
+// Another version of drop, without creating of new instances
+/*
+void onInit_Drop( Object* e )
+{
+    e->y = (e->y / CELL_SIZE) * CELL_SIZE - (CELL_SIZE - e->type->height) / 2;
+    e->vx = e->y; // \todo Fix this later
+}
+
+void onFrame_Drop( Object* e )
+{
+    if (e->attack == 0) {
+        e->attack = 100 + rand() % 100;
+        e->y = e->vx;
+    } else if (e->attack != 50) {
+        e->attack -= 1;
+    } else {
+        if (e->vy < 5) {
+            e->vy += 1;
+        }
+        if (!move(e, 0, e->vy, 0)) {
+            e->attack = 49;
+            e->y += e->vy;
+        }
+    }
+}
+
+void onHit_Drop( Object* e, Object* player )
+{
+    setAnimation((Object*)player, 5, 5, 0);
+    gameOver = 1;
+}
+*/

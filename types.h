@@ -45,6 +45,7 @@ typedef enum
     TYPE_ICESHOT,
     TYPE_FIRESHOT,
     TYPE_DROP,
+    TYPE_DROPSOURCE,
     TYPE_COUNT, // Must always be last
 
     // General types (objects of these types can not be created)
@@ -65,6 +66,8 @@ typedef struct
     SDL_Rect sprite;
     int solid;
     int speed;
+    int width;
+    int height;
     OnInit onInit;
     OnFrame onFrame;
     OnHit onHit;
