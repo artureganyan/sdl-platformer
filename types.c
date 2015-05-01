@@ -111,19 +111,22 @@ void initTypes()
     INIT    ( TYPE_PILLAR_BOTTOM, 32,   448,    TYPE_BACKGROUND,    0                                               );
     INIT    ( TYPE_DOOR,        0,      160,    TYPE_DOOR,          1                                               );
     INIT    ( TYPE_LADDER,      32,     192,    TYPE_LADDER,        0                                               );
-    INIT_EX ( TYPE_GHOST,       416,    112,    TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_EnemyShooter,   onHit_Object    );
+    INIT_EX ( TYPE_GHOST,       416,    112,    TYPE_ENEMY,         0,  onInit_EnemyShooter, onFrame_EnemyShooter,  onHit_Object    );
     INIT_EX ( TYPE_SCORPION,    416,    160,    TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_Enemy,  onHit_Enemy );
     INIT_EX ( TYPE_BAT,         416,    128,    TYPE_ENEMY,         0,  onInit_Bat,     onFrame_Bat,    onHit_Bat   );
+    INIT_EX ( TYPE_FIREBALL,    416,    210,    TYPE_ENEMY,         0,  onInit_EnemyShooter,    onFrame_Fireball,   onHit_Bat   );
     INIT_EX ( TYPE_KEY,         416,    719,    TYPE_KEY,           0,  onInit_Object,  onFrame_Object, onHit_Item  );
     INIT_EX ( TYPE_COIN,        432,    751,    TYPE_COIN,          0,  onInit_Object,  onFrame_Object, onHit_Item  );
-    //INIT_EX   ( TYPE_FIREBALL,    416,    592,    TYPE_FIREBALL,      0,  onInit_Fireball, onFrame_Fireball, onHit_Fireball   );
-    INIT_EX ( TYPE_FIREBALL,    0,      832,    TYPE_FIREBALL,      0,  onInit_Fireball, onFrame_Fireball, onHit_Fireball   );
+    INIT_EX ( TYPE_FIRESHOT,    512,    592,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot   );
+    INIT_EX ( TYPE_ICESHOT,     0,      832,    TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot   );
     INIT_EX ( TYPE_DROP,        0,      848,    TYPE_DROP,          0,  onInit_Drop,    onFrame_Drop,   onHit_Drop  );
 
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;
     objectTypes[TYPE_BAT].speed = 2;
-    objectTypes[TYPE_FIREBALL].speed = 5;
+    objectTypes[TYPE_FIREBALL].speed = 2;
+    objectTypes[TYPE_ICESHOT].speed = 5;
+    objectTypes[TYPE_FIRESHOT].speed = 5;
 
     #undef INIT
     #undef INIT_EX

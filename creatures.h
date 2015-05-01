@@ -17,11 +17,12 @@ void onInit_Enemy( Object* e );
 void onFrame_Enemy( Object* e );
 void onHit_Enemy( Object* e, Object* player );
 
+void onInit_EnemyShooter( Object* e );
 void onFrame_EnemyShooter( Object* e );
 
-void onInit_Fireball( Object* e );
-void onFrame_Fireball( Object* e );
-void onHit_Fireball( Object* e, Object* player );
+void onInit_Shot( Object* e );
+void onFrame_Shot( Object* e );
+void onHit_Shot( Object* e, Object* player );
 
 void onInit_Bat( Object* e );
 void onFrame_Bat( Object* e );
@@ -32,5 +33,8 @@ void onHit_Item( Object* item, Object* target );
 void onInit_Drop( Object* e );
 void onFrame_Drop( Object* e );
 void onHit_Drop( Object* e, Object* player );
+
+void onInit_Fireball( Object* e );
+void onFrame_Fireball( Object* e );
 
 #endif

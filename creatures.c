@@ -36,7 +36,7 @@ int move( Object* obj, int dx, int dy, int checkFloor )
             obj->y -= dy;
             canMove = 0;
         }
-    } else if (dy < 0 && body[2] > cell[2]) {
+    } else if (dy < 0 && body[2] < cell[2]) {
         if (isSolid(r - 1, c) || body[0] < 0) {
             obj->y -= dy;
             canMove = 0;
@@ -83,15 +83,27 @@ void onInit_Enemy( Object* e )
     int dir = rand() % 2 ? 1 : -1;
     e->vx = e->type->speed * dir;
     e->anim.direction = dir;
+    e->attack = 500 + rand() % 1000;
 }
 
 void onFrame_Enemy( Object* e )
 {
-    if (!move(e, e->vx, e->vy, 1)) {
-        e->vx = -e->vx;
-        e->anim.direction = -e->anim.direction;
+    if (e->attack -- > 0) {
+        if (!move(e, e->vx, e->vy, 1)) {
+            e->vx = -e->vx;
+            e->anim.direction = -e->anim.direction;
+        }
+        setAnimation(e, 1, 2, 24);
+    } else {
+        if (e->attack -- <= -100) {
+            e->attack = 500 + rand() % 1000;
+            if (rand() % 2) {
+                e->vx = -e->vx;
+                e->anim.direction = -e->anim.direction;
+            }
+        }
+        setAnimation(e, 2, 2, 24);
     }
-    setAnimation(e, 1, 2, 24);
 }
 
 void onHit_Enemy( Object* e, Object* player )
@@ -102,12 +114,18 @@ void onHit_Enemy( Object* e, Object* player )
 }
 
 
+void onInit_EnemyShooter( Object* e )
+{
+    onInit_Enemy(e);
+    e->attack = 0;
+}
+
 void onFrame_EnemyShooter( Object* e )
 {
     Object* fireball;
     if (!e->attack && isVisible(e, (Object*)&player)) {
         e->attack = 48;
-        fireball = createObject(level, TYPE_FIREBALL, 0, 0);
+        fireball = createObject(level, TYPE_ICESHOT, 0, 0);
         fireball->x = e->x + e->anim.direction * 20;
         fireball->y = e->y + 2;
         fireball->vx *= e->anim.direction;
@@ -130,13 +148,13 @@ void onFrame_EnemyShooter( Object* e )
 }
 
 
-void onInit_Fireball( Object* e )
+void onInit_Shot( Object* e )
 {
     e->vx = e->type->speed;
     setAnimation(e, 1, 2, 5);
 }
 
-void onFrame_Fireball( Object* e )
+void onFrame_Shot( Object* e )
 {
     if (!move(e, e->vx, e->vy, 0)) {
         setAnimation(e, 3, 3, 5);
@@ -146,7 +164,7 @@ void onFrame_Fireball( Object* e )
     }
 }
 
-void onHit_Fireball( Object* e, Object* player )
+void onHit_Shot( Object* e, Object* player )
 {
     e->removed = 1;
     setAnimation(player, 5, 5, 0);
@@ -158,13 +176,21 @@ void onInit_Bat( Object* e )
 {
     onInit_Enemy(e);
     setAnimation(e, 0, 1, 12);
+    e->attack = 0;
+    e->vy = 1;  // vy must be > 0, so the bat firstly go down,
+                // and then return to the previous height
 }
 
 void onFrame_Bat( Object* e )
 {
-    if (!move(e, e->vx, e->vy, 0)) {
+    int vy = e->attack % 2 ? e->vy : 0;
+    if (!move(e, e->vx, vy, 0)) {
         e->vx = -e->vx;
         e->anim.direction = -e->anim.direction;
+    }
+    if (++ e->attack > CELL_SIZE) {
+        e->attack = 0;
+        e->vy = -e->vy;
     }
 }
 
@@ -189,6 +215,33 @@ void onHit_Item( Object* item, Object* target )
         player.keys += 1;
     }
 }
+
+
+void onFrame_Fireball( Object* e )
+{
+    Object* fireball;
+    if (!e->attack && isVisible(e, (Object*)&player)) {
+        e->attack = 48;
+        fireball = createObject(level, TYPE_FIRESHOT, 0, 0);
+        fireball->x = e->x + e->anim.direction * 20;
+        fireball->y = e->y + 2;
+        fireball->vx *= e->anim.direction;
+        fireball->anim.direction = e->anim.direction;
+    }
+    if (!move(e, e->vx, e->vy, 1)) {
+        e->vx = -e->vx;
+        e->anim.direction = -e->anim.direction;
+    }
+    if (e->attack > 0) {
+        e->attack -= 1;
+    }
+    if (e->attack > 24) {
+        setAnimation(e, 4, 4, 24);
+    } else {
+        setAnimation(e, 0, 1, 24);
+    }
+}
+
 
 
 void onInit_Drop( Object* e )

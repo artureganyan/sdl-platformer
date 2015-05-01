@@ -32,6 +32,7 @@ typedef enum
     TYPE_GHOST,
     TYPE_SCORPION,
     TYPE_BAT,
+    TYPE_FIREBALL,
     TYPE_WALL_TOP,
     TYPE_WALL,
     TYPE_PILLAR,
@@ -41,7 +42,8 @@ typedef enum
     TYPE_LADDER,
     TYPE_KEY,
     TYPE_COIN,
-    TYPE_FIREBALL,
+    TYPE_ICESHOT,
+    TYPE_FIRESHOT,
     TYPE_DROP,
     TYPE_COUNT, // Must always be last
 
