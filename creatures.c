@@ -114,8 +114,7 @@ void onFrame_Enemy( Object* e )
 void onHit_Enemy( Object* e, Object* player )
 {
     setAnimation(e, 4, 4, 0);
-    setAnimation((Object*)player, 5, 5, 0);
-    gameOver = 1;
+    killPlayer();
 }
 
 
@@ -127,14 +126,13 @@ void onInit_EnemyShooter( Object* e )
 
 void onFrame_EnemyShooter( Object* e )
 {
-    Object* fireball;
     if (!e->attack && isVisible(e, (Object*)&player)) {
+        Object* shot = createObject(level, TYPE_ICESHOT, 0, 0);
+        shot->x = e->anim.direction > 0 ? e->x + CELL_SIZE : e->x;
+        shot->y = e->y + 2;
+        shot->vx *= e->anim.direction;
+        shot->anim.direction = e->anim.direction;
         e->attack = 48;
-        fireball = createObject(level, TYPE_ICESHOT, 0, 0);
-        fireball->x = e->anim.direction > 0 ? e->x + CELL_SIZE : e->x;
-        fireball->y = e->y + 2;
-        fireball->vx *= e->anim.direction;
-        fireball->anim.direction = e->anim.direction;
     }
     if (e->attack) {
         if (e->attack >= 12) {
@@ -172,8 +170,7 @@ void onFrame_Shot( Object* e )
 void onHit_Shot( Object* e, Object* player )
 {
     setAnimation(e, 3, 3, 5);
-    setAnimation(player, 5, 5, 0);
-    gameOver = 1;
+    killPlayer();
 }
 
 
@@ -201,8 +198,7 @@ void onFrame_Bat( Object* e )
 
 void onHit_Bat( Object* e, Object* player )
 {
-    setAnimation((Object*)player, 5, 5, 0);
-    gameOver = 1;
+    killPlayer();
 }
 
 
@@ -224,16 +220,15 @@ void onHit_Item( Object* item, Object* target )
 
 void onFrame_Fireball( Object* e )
 {
-    Object* fireball;
     if (!e->attack && isVisible(e, (Object*)&player)) {
+        Object* shot = createObject(level, TYPE_FIRESHOT, 0, 0);
+        shot->x = e->x + e->anim.direction * 20;
+        shot->y = e->y + 2;
+        shot->vx *= e->anim.direction;
+        shot->anim.direction = e->anim.direction;
         e->attack = 48;
-        fireball = createObject(level, TYPE_FIRESHOT, 0, 0);
-        fireball->x = e->x + e->anim.direction * 20;
-        fireball->y = e->y + 2;
-        fireball->vx *= e->anim.direction;
-        fireball->anim.direction = e->anim.direction;
     }
-    if (!move(e, e->vx, e->vy, 1)) {
+    if (!move(e, e->vx, e->vy, 0)) {
         e->vx = -e->vx;
         e->anim.direction = -e->anim.direction;
     }
@@ -281,39 +276,6 @@ void onFrame_Drop( Object* e )
 
 void onHit_Drop( Object* e, Object* player )
 {
-    setAnimation((Object*)player, 5, 5, 0);
-    gameOver = 1;
+    killPlayer();
 }
 
-// Another version of drop, without creating of new instances
-/*
-void onInit_Drop( Object* e )
-{
-    e->y = (e->y / CELL_SIZE) * CELL_SIZE - (CELL_SIZE - e->type->height) / 2;
-    e->vx = e->y; // \todo Fix this later
-}
-
-void onFrame_Drop( Object* e )
-{
-    if (e->attack == 0) {
-        e->attack = 100 + rand() % 100;
-        e->y = e->vx;
-    } else if (e->attack != 50) {
-        e->attack -= 1;
-    } else {
-        if (e->vy < 5) {
-            e->vy += 1;
-        }
-        if (!move(e, 0, e->vy, 0)) {
-            e->attack = 49;
-            e->y += e->vy;
-        }
-    }
-}
-
-void onHit_Drop( Object* e, Object* player )
-{
-    setAnimation((Object*)player, 5, 5, 0);
-    gameOver = 1;
-}
-*/

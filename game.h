@@ -12,7 +12,6 @@
 void processPlayer();
 void processObjects();
 void gameLoop();
-
-extern int gameOver;
+void killPlayer();
 
 #endif

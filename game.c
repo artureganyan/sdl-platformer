@@ -13,7 +13,6 @@
 
 int gameOver = 0;
 
-
 void processPlayer()
 {
     static const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
@@ -152,6 +151,12 @@ void processObjects()
             obj->type->onHit(obj, (Object*)&player);
         }
     }
+}
+
+void killPlayer()
+{
+    setAnimation((Object*)&player, 5, 5, 5);
+    gameOver = 1;
 }
 
 // Whether or not to use system timer to update frames. If defined, system
