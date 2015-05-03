@@ -42,7 +42,7 @@ int move( Object* obj, int dx, int dy, int checkFloor )
             canMove = 0;
         }
     } else if (dy < 0 && body[2] < cell[2]) {
-        if (isSolid(r - 1, c) || body[0] < 0) {
+        if (isSolid(r - 1, c) || body[2] < 0) {
             obj->y -= dy;
             canMove = 0;
         }
@@ -64,8 +64,8 @@ int isVisible( Object* source, Object* target )
         }
         if (x1 != x2) {
             visible = 1;
-            r = source->y / CELL_SIZE;
-            for (; x1 < x2; x1 += CELL_SIZE) {
+            r = (source->y + CELL_HALF) / CELL_SIZE;
+            for (x1 = x1 + CELL_HALF; x1 < x2; x1 += CELL_SIZE) {
                 c = x1 / CELL_SIZE;
                 if (isSolid(r, c)) {
                     visible = 0;
@@ -113,6 +113,13 @@ void onFrame_Enemy( Object* e )
 
 void onHit_Enemy( Object* e, Object* player )
 {
+    // Kill the enemy if player jumps on it
+    /*
+    if (player->y + PLAYER_HEIGHT <= (e->y + (CELL_SIZE - e->type->height) / 2)) {
+        player->vy = -5;
+        e->removed = 1;
+    }
+    */
     setAnimation(e, 4, 4, 0);
     killPlayer();
 }
@@ -218,6 +225,11 @@ void onHit_Item( Object* item, Object* target )
 }
 
 
+void onInit_Fireball( Object* e )
+{
+    onInit_EnemyShooter(e);
+}
+
 void onFrame_Fireball( Object* e )
 {
     if (!e->attack && isVisible(e, (Object*)&player)) {
@@ -277,5 +289,90 @@ void onFrame_Drop( Object* e )
 void onHit_Drop( Object* e, Object* player )
 {
     killPlayer();
+}
+
+
+void onFrame_Spider( Object* e )
+{
+    onFrame_Enemy(e);
+    if (rand() % 100 == 99) {
+        e->vx = (abs(e->vx) == 2 ? 1 : 2) * e->anim.direction;
+    }
+}
+
+
+void onFrame_Teleporting( Object* e )
+{
+    if (e->attack > 0) {
+        if (!move(e, e->vx, e->vy, 1)) {
+            e->vx = -e->vx;
+            e->anim.direction = -e->anim.direction;
+        }
+        setAnimation(e, 1, 2, 24);
+    } else {
+        if (e->attack == -100) {
+            int r, c, prevr = (e->y + CELL_HALF) / CELL_SIZE;
+            int count = CELL_COUNT;
+            while (count --) {
+                r = rand() % (ROW_COUNT - 1);
+                c = rand() % COLUMN_COUNT;
+                if (isSolid(r + 1, c) && !isSolid(r, c) && r != prevr) {
+                    e->y = CELL_SIZE * r;
+                    e->x = CELL_SIZE * c;
+                }
+            }
+        } else if (e->attack <= -200) {
+            e->attack = 100 + rand() % 100;
+        }
+        setAnimation(e, 2, 2, 24);
+    }
+    e->attack -= 1;
+}
+
+void onHit_Teleporting( Object* e, Object* player )
+{
+    if (e->attack >= -100) {
+        onHit_Enemy(e, player);
+    }
+}
+
+
+void onFrame_Mimicry( Object* e )
+{
+    if (e->attack > -100) {
+        if (!move(e, e->vx, e->vy, 1)) {
+            e->vx = -e->vx;
+            e->anim.direction = -e->anim.direction;
+        }
+        setAnimation(e, 1, 2, 24);
+
+        if (e->attack < 0 && rand() % 100 > 70) {
+            const int types[] = {TYPE_COIN, TYPE_SPIKE_BOTTOM, TYPE_MUSHROOM1, TYPE_MUSHROOM2, TYPE_MUSHROOM3,
+                                 TYPE_PILLAR_BOTTOM, TYPE_ROCK, TYPE_KEY, TYPE_GROUND_TOP};
+            int r, c;
+            getObjectCell(e, &r, &c);
+            e->removed = 2;
+            e->vy = level->map[r][c]->typeId;
+            level->map[r][c] = &objectTypes[types[rand() % 9]];
+            e->attack = -100;
+        }
+
+    } else if (e->attack <= -200) {
+        int r, c;
+        getObjectCell(e, &r, &c);
+        level->map[r][c] = &objectTypes[e->vy];
+        e->removed = 0;
+        e->attack = 100 + rand() % 100;
+    }
+    e->attack -= 1;
+}
+
+void onHit_Mimicry( Object* e, Object* player )
+{
+    int r, c;
+    getObjectCell(e, &r, &c);
+    level->map[r][c] = &objectTypes[e->vy];
+    e->removed = 0;
+    onHit_Enemy(e, player);
 }
 

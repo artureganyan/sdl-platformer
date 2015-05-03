@@ -34,6 +34,11 @@ int isSolidLadder( int r, int c )
     return isLadder(r, c) && (isSolid(r, c - 1) || isSolid(r, c + 1) || !isLadder(r - 1, c));
 }
 
+int isWater( int r, int c )
+{
+    return isCellValid(r, c) ? level->map[r][c]->generalTypeId == TYPE_WATER : 0;
+}
+
 int cellContains( int r, int c, ObjectTypeId generalType )
 {
     return isCellValid(r, c) ? level->map[r][c]->generalTypeId == generalType : 0;

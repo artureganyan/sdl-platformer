@@ -31,18 +31,30 @@ typedef enum
     TYPE_PLAYER,
     TYPE_GHOST,
     TYPE_SCORPION,
+    TYPE_SPIDER,
+    TYPE_RAT,
     TYPE_BAT,
+    TYPE_BLOB,
     TYPE_FIREBALL,
+    TYPE_SKELETON,
     TYPE_WALL_TOP,
     TYPE_WALL,
     TYPE_GROUND,
     TYPE_GROUND_TOP,
+    TYPE_WATER,
+    TYPE_WATER_TOP,
     TYPE_GRASS,
     TYPE_GRASS_BIG,
+    TYPE_ROCK,
+    TYPE_SPIKE_TOP,
+    TYPE_SPIKE_BOTTOM,
     TYPE_TREE1,
     TYPE_TREE2,
     TYPE_CLOUDS1,
     TYPE_CLOUDS2,
+    TYPE_MUSHROOM1,
+    TYPE_MUSHROOM2,
+    TYPE_MUSHROOM3,
     TYPE_PILLAR,
     TYPE_PILLAR_TOP,
     TYPE_PILLAR_BOTTOM,
@@ -57,7 +69,8 @@ typedef enum
 
     // General types (objects of these types can not be created)
     TYPE_ENEMY,
-    TYPE_BACKGROUND
+    TYPE_BACKGROUND,
+    TYPE_SPIKE
 } ObjectTypeId;
 
 struct Object_s;

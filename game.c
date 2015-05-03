@@ -92,6 +92,12 @@ void processPlayer()
         }
     }
 
+    // Water
+    if (isWater(r, c)) {
+        killPlayer();
+        player.removed = 1;
+    }
+
     // Screen borders
     // ... Left
     if (player.x + CELL_HALF < 0) {
@@ -142,7 +148,7 @@ void processObjects()
     int i;
     for (i = 0; i < level->objects.count; ++ i) {
         Object* obj = level->objects.array[i];
-        if (obj == (Object*)&player || obj->removed) {
+        if (obj == (Object*)&player || obj->removed == 1) {
             continue;
         }
         obj->type->onFrame(obj);
@@ -201,8 +207,8 @@ void gameLoop()
 
     player.type = &objectTypes[TYPE_PLAYER];
     player.anim.frameDelayCounter = 0;
-    player.x = CELL_SIZE * 0;
-    player.y = CELL_SIZE * 0;
+    //player.x = CELL_SIZE * 0;
+    //player.y = CELL_SIZE * 0;
     player.removed = 0;
     player.inAir = 0;
     player.onLadder = 0;

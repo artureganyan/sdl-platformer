@@ -14,6 +14,7 @@ int isSolid( int r, int c );
 int isLadder( int r, int c );
 int isSolidOrLadder( int r, int c );
 int isSolidLadder( int r, int c );
+int isWater( int r, int c );
 int cellContains( int r, int c, ObjectTypeId generalType );
 
 void getObjectCell( Object* obj, int* r, int* c );

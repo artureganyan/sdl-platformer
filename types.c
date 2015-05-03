@@ -40,7 +40,7 @@ void cleanArray( ObjectArray* objects ) {
     int i, r;
     for (i = 0, r = 0; i < objects->count; ++ i) {
         Object* obj = objects->array[i];
-        if (obj->removed) {
+        if (obj->removed == 1) {
             free(obj);
             r += 1;
         } else if (r) {
@@ -111,12 +111,20 @@ void initTypes()
     INIT    ( TYPE_WALL,            5,      6,      TYPE_WALL,          1                                               );
     INIT    ( TYPE_GROUND_TOP,      6,      3,      TYPE_WALL,          1                                               );
     INIT    ( TYPE_GROUND,          7,      3,      TYPE_WALL,          1                                               );
+    INIT    ( TYPE_WATER_TOP,       8,      0,      TYPE_WATER,         0                                               );
+    INIT    ( TYPE_WATER,           9,      0,      TYPE_WATER,         0                                               );
     INIT    ( TYPE_GRASS,           40,     0,      TYPE_BACKGROUND,    0                                               );
     INIT    ( TYPE_GRASS_BIG,       40,     0,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_ROCK,            50,     0,      TYPE_BACKGROUND,    1                                               );
+    INIT    ( TYPE_SPIKE_TOP,       48,     0,      TYPE_SPIKE,         0                                               );
+    INIT    ( TYPE_SPIKE_BOTTOM,    49,     0,      TYPE_SPIKE,         0                                               );
     INIT    ( TYPE_TREE1,           41,     3,      TYPE_BACKGROUND,    0                                               );
     INIT    ( TYPE_TREE2,           41,     4,      TYPE_BACKGROUND,    0                                               );
     INIT    ( TYPE_CLOUDS1,         51,     6,      TYPE_BACKGROUND,    0                                               );
     INIT    ( TYPE_CLOUDS2,         51,     7,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_MUSHROOM1,       47,     0,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_MUSHROOM2,       47,     1,      TYPE_BACKGROUND,    0                                               );
+    INIT    ( TYPE_MUSHROOM3,       47,     2,      TYPE_BACKGROUND,    0                                               );
     INIT    ( TYPE_PILLAR_TOP,      26,     2,      TYPE_BACKGROUND,    0                                               );
     INIT    ( TYPE_PILLAR,          27,     2,      TYPE_BACKGROUND,    0                                               );
     INIT    ( TYPE_PILLAR_BOTTOM,   28,     2,      TYPE_BACKGROUND,    0                                               );
@@ -124,8 +132,13 @@ void initTypes()
     INIT    ( TYPE_LADDER,          12,     2,      TYPE_LADDER,        0                                               );
     INIT_EX ( TYPE_GHOST,           7,      26,     TYPE_ENEMY,         0,  onInit_EnemyShooter, onFrame_EnemyShooter,  onHit_Object    );
     INIT_EX ( TYPE_SCORPION,        10,     26,     TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_Enemy,  onHit_Enemy );
+    INIT_EX ( TYPE_SPIDER,          11,     26,     TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_Spider,     onHit_Enemy );
+    INIT_EX ( TYPE_RAT,             9,      26,     TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_Enemy,  onHit_Enemy );
     INIT_EX ( TYPE_BAT,             8,      26,     TYPE_ENEMY,         0,  onInit_Bat,     onFrame_Bat,    onHit_Bat   );
-    INIT_EX ( TYPE_FIREBALL,        13,     26,     TYPE_ENEMY,         0,  onInit_EnemyShooter,    onFrame_Fireball,   onHit_Bat   );
+    INIT_EX ( TYPE_BLOB,            12,     26,     TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_Mimicry,    onHit_Mimicry   );
+    INIT_EX ( TYPE_FIREBALL,        13,     26,     TYPE_ENEMY,         0,  onInit_Fireball,    onFrame_Fireball,   onHit_Bat   );
+    INIT_EX ( TYPE_SKELETON,        6,      26,     TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_Teleporting,    onHit_Teleporting   );
+    INIT_EX ( TYPE_SKELETON,        6,      26,     TYPE_ENEMY,         0,  onInit_Enemy,   onFrame_Teleporting,    onHit_Teleporting   );
     INIT_EX ( TYPE_KEY,             45,     26,     TYPE_KEY,           0,  onInit_Object,  onFrame_Object, onHit_Item  );
     INIT_EX ( TYPE_COIN,            47,     27,     TYPE_COIN,          0,  onInit_Object,  onFrame_Object, onHit_Item  );
     INIT_EX ( TYPE_ICESHOT,         52,     0,      TYPE_ENEMY,         0,  onInit_Shot, onFrame_Shot, onHit_Shot       );
@@ -134,13 +147,23 @@ void initTypes()
 
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;
-    objectTypes[TYPE_SCORPION].width = 28;
+    objectTypes[TYPE_SCORPION].width = 24;
     objectTypes[TYPE_SCORPION].height = 22;
+    objectTypes[TYPE_SPIDER].speed = 1;
+    objectTypes[TYPE_SPIDER].width = 22;
+    objectTypes[TYPE_SPIDER].height = 20;
+    objectTypes[TYPE_RAT].speed = 1;
+    objectTypes[TYPE_RAT].width = 24;
+    objectTypes[TYPE_RAT].height = 22;
+    objectTypes[TYPE_BLOB].speed = 1;
+    objectTypes[TYPE_BLOB].width = 24;
+    objectTypes[TYPE_BLOB].height = 22;
     objectTypes[TYPE_BAT].speed = 2;
     objectTypes[TYPE_BAT].height = 18;
     objectTypes[TYPE_FIREBALL].speed = 2;
     objectTypes[TYPE_FIREBALL].width = 24;
     objectTypes[TYPE_FIREBALL].height = 22;
+    objectTypes[TYPE_SKELETON].speed = 1;
     objectTypes[TYPE_ICESHOT].speed = 5;
     objectTypes[TYPE_ICESHOT].height = 14;
     objectTypes[TYPE_FIRESHOT].speed = 5;

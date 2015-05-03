@@ -37,4 +37,12 @@ void onHit_Drop( Object* e, Object* player );
 void onInit_Fireball( Object* e );
 void onFrame_Fireball( Object* e );
 
+void onFrame_Spider( Object* e );
+
+void onFrame_Teleporting( Object* e );
+void onHit_Teleporting( Object* e, Object* player );
+
+void onFrame_Mimicry( Object* e );
+void onHit_Mimicry( Object* e, Object* player );
+
 #endif
