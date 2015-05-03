@@ -80,7 +80,7 @@ int isVisible( Object* source, Object* target )
 
 void onInit_Object( Object* o ) {}
 void onFrame_Object( Object* o ) {}
-void onHit_Object( Object* o, Object* t ) {}
+void onHit_Object( Object* o ) {}
 
 
 void onInit_Enemy( Object* e )
@@ -111,7 +111,7 @@ void onFrame_Enemy( Object* e )
     }
 }
 
-void onHit_Enemy( Object* e, Object* player )
+void onHit_Enemy( Object* e )
 {
     // Kill the enemy if player jumps on it
     /*
@@ -174,7 +174,7 @@ void onFrame_Shot( Object* e )
     }
 }
 
-void onHit_Shot( Object* e, Object* player )
+void onHit_Shot( Object* e )
 {
     setAnimation(e, 3, 3, 5);
     killPlayer();
@@ -203,25 +203,26 @@ void onFrame_Bat( Object* e )
     }
 }
 
-void onHit_Bat( Object* e, Object* player )
+void onHit_Bat( Object* e )
 {
     killPlayer();
 }
 
 
-void onHit_Item( Object* item, Object* target )
+void onHit_Item( Object* item )
 {
     ObjectTypeId generalTypeId = item->type->generalTypeId;
-    item->removed = 1;
 
     if (generalTypeId == TYPE_COIN) {
         player.coins += 1;
-        if (player.coins == level->coins) {
-            // TODO Level complete
-        }
     } else if (generalTypeId == TYPE_KEY) {
-        player.keys += 1;
+        appendArray(&player.items, item);
+        //player.keys += 1;
     }
+
+    item->removed = 2;
+    cleanArray(&level->objects);
+    item->removed = 0;
 }
 
 
@@ -286,7 +287,7 @@ void onFrame_Drop( Object* e )
     }
 }
 
-void onHit_Drop( Object* e, Object* player )
+void onHit_Drop( Object* e )
 {
     killPlayer();
 }
@@ -329,10 +330,10 @@ void onFrame_Teleporting( Object* e )
     e->attack -= 1;
 }
 
-void onHit_Teleporting( Object* e, Object* player )
+void onHit_Teleporting( Object* e )
 {
     if (e->attack >= -100) {
-        onHit_Enemy(e, player);
+        onHit_Enemy(e);
     }
 }
 
@@ -351,7 +352,7 @@ void onFrame_Mimicry( Object* e )
                                  TYPE_PILLAR_BOTTOM, TYPE_ROCK, TYPE_KEY, TYPE_GROUND_TOP};
             int r, c;
             getObjectCell(e, &r, &c);
-            e->removed = 2;
+            e->removed = 3;
             e->vy = level->map[r][c]->typeId;
             level->map[r][c] = &objectTypes[types[rand() % 9]];
             e->attack = -100;
@@ -367,12 +368,12 @@ void onFrame_Mimicry( Object* e )
     e->attack -= 1;
 }
 
-void onHit_Mimicry( Object* e, Object* player )
+void onHit_Mimicry( Object* e )
 {
     int r, c;
     getObjectCell(e, &r, &c);
     level->map[r][c] = &objectTypes[e->vy];
     e->removed = 0;
-    onHit_Enemy(e, player);
+    onHit_Enemy(e);
 }
 

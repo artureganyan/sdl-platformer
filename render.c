@@ -10,16 +10,43 @@
 SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_Texture* sprites;
+TTF_Font* font;
+SDL_Color textColor = {255, 255, 255};
+SDL_Texture* messageTextures[MESSAGE_COUNT];
 
 
 void initRender()
 {
+    int i;
+
+    // Window
+    SDL_CreateWindowAndRenderer(LEVEL_WIDTH, LEVEL_HEIGHT, 0, &window, &renderer);
+
+    // Sprites
     static const char* spritesFilePath = "image/sprites.bmp";
     static const Uint8 transparent[3] = {90, 82, 104};
     SDL_Surface* bmp = SDL_LoadBMP(spritesFilePath);
     SDL_SetColorKey(bmp, SDL_TRUE, SDL_MapRGB(bmp->format, transparent[0], transparent[1], transparent[2]));
     sprites = SDL_CreateTextureFromSurface(renderer, bmp);
     SDL_FreeSurface(bmp);
+
+    // Font
+    TTF_Init();
+    font = TTF_OpenFont("font/PressStart2P.ttf", 12);
+
+    // Messages
+    for (i = 0; i < MESSAGE_COUNT; ++ i) {
+        messageTextures[i] = createText(messages[i]);
+    }
+}
+
+SDL_Texture* createText( const char* text )
+{
+    if (!text || !text[0]) return NULL;
+    SDL_Surface* surface = TTF_RenderText_Solid(font, text, textColor);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    return texture;
 }
 
 void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip flip )
@@ -36,6 +63,20 @@ void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip
 void drawObject( ObjectType* type, int x, int y, int frame, SDL_RendererFlip flip )
 {
     drawSprite(&type->sprite, x, y, frame, flip);
+}
+
+void drawText( SDL_Texture* text, int x, int y, int w, int h )
+{
+    SDL_Rect rect = {x, y};
+    SDL_QueryTexture(text, NULL, NULL, &rect.w, &rect.h);
+    if (w > 0) rect.x += (w - rect.w) / 2;
+    if (h > 0) rect.y += (h - rect.h) / 2;
+    SDL_RenderCopy(renderer, text, NULL, &rect);
+}
+
+void drawMessage( Message message, int x, int y, int w, int h )
+{
+    drawText(messageTextures[message], x, y, w, h);
 }
 
 void drawScreen()

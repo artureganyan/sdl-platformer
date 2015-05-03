@@ -183,14 +183,14 @@ void initLevels()
     levels[1][2].initSprites = initSprites_Underground;
     levels[1][3].initSprites = initSprites_Underground;
 
-    setLevel(1, 0);
+    setLevel(0, 1);
     player.x = CELL_SIZE * 1;
     player.y = CELL_SIZE * 3;
 }
 
 void setLevel( int r, int c )
 {
-    int count = 48 + rand() % 24;
+    //int count = 48 + rand() % 24;
 
     level = &levels[r][c];
     if (level->initSprites) {
@@ -212,8 +212,8 @@ const char* levelString =
     "                    "  "         b        * "  "  `                *"  "*                  *"
     "                    "  "                *   "  "        o s       o*"  "*          o       *"
     "                    "  "                ****"  "****  ********  =***"  "*         ***      *"
-    "                    "  "                 ***"  "                =  *"  "*       ***     g  *"
-    "                    "  "                 ***"  "             =******"  "*os    *  *  =******"
+    "                    "  "  kkk            ***"  "                =  *"  "*       ***     g  *"
+    "                    "  "******           ***"  "             =******"  "*os    *  *  =******"
     "                    "  "                 ***"  " g o         =     *"  "******    *  =      "
     "    b               "  "                 ***"  "*****     *****=****"  "*     *  **  =      "
     ",,,                 "  "                 ***"  "               =   *"  "* s     ***  =    o "
@@ -222,12 +222,12 @@ const char* levelString =
     "xxxxx    xxxxxx     "  "                 ***"  "*        |  ` |   `|"  "  go  =   g *  ***  "
     " |      xxxxxxxxx   "  "                 ***"  "**       |    |    |"  "****  =  ****       "
     " |        |    xxx  "  "     b      b    ***"  " **      |    |    |"  "      =     *       "
-    " |. ,,,,s | . xxxxxx"  "x ,,,  ,;,k  ,,,,d  "  "    *  s | o  |  s |"  "      = o   *     g "
+    " |. ,,,,s | . xxxxxx"  "x ,,, d,;,k d,,,,d d"  "    *  s | o  |  s |"  "      = o   *     g "
     "xxxxxxxxxxxxx=xxxxxx"  "xxxxxxxxxxxxxxxxx***"  "=*******************"  "***************=****"
 
     "xxxxxxxxxxxxx=xxxxxx"  "xxxxxxxxxxxxxxxxxx**"  "********************"  "               =    "
     "xxxxxxxxxxxx = xxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "**         * ooooo *"  "   b           =    "
-    "xxx  xx xxxx =  xxxx"  "xx   ^   b    ^   xx"  "**         d ooooo *"  "               =    "
+    "xxx  ^  xxxx =  xxxx"  "xx   ^   b    ^   xx"  "**         d ooooo *"  "               =    "
     "x        |   =  ^  x"  "x                 xx"  "**     =************"  "          b    =    "
     "x        | p =     |"  "      xxxxxxx     xx"  "** o   =    g       "  "               =    "
     "xxxx  xxxxxxxxxxxxxx"  "xxxx   xxxxx      xx"  "*****  =   *****    "  "               =    "

@@ -11,7 +11,13 @@
 #include <windows.h>
 #include <stdio.h>
 
-int gameOver = 0;
+enum {
+    STATE_QUIT = 0,
+    STATE_PLAYING,
+    STATE_INVENTORY,
+    STATE_GAMEOVER
+} gameState = STATE_PLAYING;
+
 
 void processPlayer()
 {
@@ -129,7 +135,7 @@ void processPlayer()
             player.y = -CELL_HALF + 1;
             return;
         } else {
-            gameOver = 1;
+            killPlayer();
         }
     // ... Top
     } else if (player.y + CELL_HALF < 0) {
@@ -154,7 +160,7 @@ void processObjects()
         obj->type->onFrame(obj);
         if (abs(obj->x - player.x) < (PLAYER_WIDTH + obj->type->width) / 2 &&
             abs(obj->y - player.y) < (PLAYER_HEIGHT + obj->type->height) / 2) {
-            obj->type->onHit(obj, (Object*)&player);
+            obj->type->onHit(obj);
         }
     }
 }
@@ -162,7 +168,7 @@ void processObjects()
 void killPlayer()
 {
     setAnimation((Object*)&player, 5, 5, 5);
-    gameOver = 1;
+    gameState = STATE_GAMEOVER;
 }
 
 // Whether or not to use system timer to update frames. If defined, system
@@ -177,6 +183,65 @@ void on_exit()
     #ifdef USE_SYSTEM_TIMER
     timeEndPeriod(SYSTEM_TIMER_PERIOD);
     #endif
+    TTF_Quit();
+    SDL_Quit();
+}
+
+void drawInventory( int selectionIndex )
+{
+    const ObjectArray* items = &player.items;
+    const int count = items->count ? items->count : 1; //items->count + 1;
+    const int hs = 4;
+    const int h = count * (CELL_SIZE + hs) + (CELL_SIZE - hs);
+    const int w = 8 * CELL_SIZE;
+    const int x = (LEVEL_WIDTH - w) / 2;
+    const int y = (LEVEL_HEIGHT - h) / 2;
+    const SDL_Rect content = {x, y, w, h};
+    const SDL_Rect border = {x - 2, y - 2, w + 4, h + 4};
+    const SDL_Rect selection =
+        { x + CELL_HALF - 8, y + CELL_HALF + (CELL_SIZE + hs) * selectionIndex - 2,
+          w - CELL_SIZE + 16, CELL_SIZE + 4};
+    int i;
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 120);
+    SDL_RenderFillRect(renderer, &border);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 120);
+    SDL_RenderFillRect(renderer, &content);
+
+    if (items->count) {
+        const int x = content.x + CELL_HALF;
+        for (i = 0; i < items->count; ++ i) {
+            const int y = content.y + CELL_HALF + (CELL_SIZE + hs) * i;
+            ObjectType* type = items->array[i]->type;
+            drawObject(type, x, y, 0, SDL_FLIP_NONE);
+            if (type->name) {
+                drawText(type->nameTexture, x + CELL_SIZE + 10, y, 0, CELL_SIZE);
+            }
+        }
+        //drawMessage(MESSAGE_NOITEMS, x, content.y + CELL_HALF + (CELL_SIZE + hs) * items->count,
+        //  content.w - CELL_SIZE, CELL_SIZE);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 120);
+        SDL_RenderDrawRect(renderer, &selection);
+    } else {
+        drawMessage(MESSAGE_NOITEMS, content.x + CELL_HALF,
+                content.y + CELL_HALF, content.w - CELL_SIZE, CELL_SIZE);
+    }
+}
+
+void useItem( Object* item )
+{
+    ObjectTypeId generalTypeId = item->type->generalTypeId;
+    int r = (player.y + CELL_HALF) / CELL_SIZE;
+    int c = (player.x + CELL_HALF) / CELL_SIZE;
+
+    if (generalTypeId == TYPE_KEY) {
+        if (findNearDoor(&r, &c)) {
+            level->map[r][c] = &objectTypes[TYPE_NONE];
+            item->removed = 1;
+        }
+    }
+
+    cleanArray(&player.items);
 }
 
 void gameLoop()
@@ -186,12 +251,14 @@ void gameLoop()
     const Uint8* keystate;
     const int playerSpeed[2] = {3, 2}; // {4, 3} can be better
     const int playerAnimSpeed[2] = {6, 6}; // {5, 5}
-    int playing = 1;
     int hideScreenCounter = -50;
     int jumpDenied = 0;
     int ladderTimer = 0;
+    int cleanTimer = 0;
     int frameCount = 0;
-    int cleanCounter = 0;
+    int selection = 0;
+    int prevKeyFrame = 0;
+    int keyAllowed = 0;
     Uint32 startTime;
     #ifndef USE_SYSTEM_TIMER
     Uint32 prevRenderTime;
@@ -199,7 +266,6 @@ void gameLoop()
     #endif
 
     atexit(on_exit);
-    SDL_CreateWindowAndRenderer(LEVEL_WIDTH, LEVEL_HEIGHT, 0, &window, &renderer);
     initRender();
     initTypes();
     initLevels();
@@ -215,6 +281,7 @@ void gameLoop()
     player.lives = 3;
     player.coins = 0;
     player.keys = 0;
+    initArray(&player.items);
 
     #ifdef USE_SYSTEM_TIMER
     timeBeginPeriod(SYSTEM_TIMER_PERIOD);
@@ -224,7 +291,7 @@ void gameLoop()
 
     startTime = SDL_GetTicks();
 
-    while (playing) {
+    while (gameState != STATE_QUIT) {
         #ifdef USE_SYSTEM_TIMER
         // Frame delay (this way does not use CPU between frames)
         SDL_Delay(FRAME_PERIOD);
@@ -233,141 +300,123 @@ void gameLoop()
         // Read all events
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                playing = 0;
+                gameState = STATE_QUIT;
             }
         }
 
-        // Game over
-        if (gameOver) {
-            hideScreenCounter += 2;
-            if (hideScreenCounter < 0)   continue;
-            if (hideScreenCounter > 255) break;
-            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 25 * (hideScreenCounter / 25));
-            SDL_RenderClear(renderer);
-            drawScreen();
-            SDL_RenderFillRect(renderer, &levelRect);
-            SDL_RenderPresent(renderer);
-            continue;
-        }
+        keyAllowed = (frameCount - prevKeyFrame >= 8);
 
         // Check keyboard
-        // ... Left
-        if (keystate[SDL_SCANCODE_LEFT]) {
-            if (!player.onLadder) {
-                if (!player.inAir) {
-                    setAnimation((Object*)&player, 1, 2, playerAnimSpeed[0]);
+        if (gameState == STATE_PLAYING) {
+
+            // ... Left
+            if (keystate[SDL_SCANCODE_LEFT]) {
+                if (!player.onLadder) {
+                    if (!player.inAir) {
+                        setAnimation((Object*)&player, 1, 2, playerAnimSpeed[0]);
+                    } else {
+                        setAnimation((Object*)&player, 1, 1, playerAnimSpeed[0]);
+                    }
+                }
+                player.anim.direction = -1;
+                player.vx = -playerSpeed[0];
+                //jumpDenied = 0;
+            // ... Right
+            } else if (keystate[SDL_SCANCODE_RIGHT]) {
+                if (!player.onLadder) {
+                    if (!player.inAir) {
+                        setAnimation((Object*)&player, 1, 2, playerAnimSpeed[0]);
+                    } else {
+                        setAnimation((Object*)&player, 1, 1, playerAnimSpeed[0]);
+                    }
+                }
+                player.anim.direction = 1;
+                player.vx = playerSpeed[0];
+                //jumpDenied = 0;
+            // ... Not left or right
+            } else if (player.vx || player.anim.frameStart == 1) {
+                if (!player.onLadder) {
+                    setAnimation((Object*)&player, 0, 0, 0);
+                }
+                player.vx = 0;
+            }
+            // ... Up
+            if (keystate[SDL_SCANCODE_UP]) {
+                int r = (player.y + CELL_HALF) / CELL_SIZE;
+                int c = (player.x + CELL_HALF) / CELL_SIZE;
+                if (!isLadder(r, c)) {
+                    if (!player.inAir && !player.onLadder && !jumpDenied) {
+                        player.vy = -9; // -10 can be better
+                    }
                 } else {
-                    setAnimation((Object*)&player, 1, 1, playerAnimSpeed[0]);
+                    player.onLadder = 1;
+                    player.vy = -playerSpeed[1];
+                    player.x = c * CELL_SIZE;
+                    setAnimation((Object*)&player, 3, 3, playerAnimSpeed[1]);
+                    if (ladderTimer ++ >= 8) {
+                        ladderTimer = 0;
+                        player.anim.direction *= -1;
+                    }
+                    jumpDenied = 1;
                 }
-            }
-            player.anim.direction = -1;
-            player.vx = -playerSpeed[0];
-            //jumpDenied = 0;
-        // ... Right
-        } else if (keystate[SDL_SCANCODE_RIGHT]) {
-            if (!player.onLadder) {
-                if (!player.inAir) {
-                    setAnimation((Object*)&player, 1, 2, playerAnimSpeed[0]);
-                } else {
-                    setAnimation((Object*)&player, 1, 1, playerAnimSpeed[0]);
+            // ... Down
+            } else if (keystate[SDL_SCANCODE_DOWN]) {
+                int r = (player.y + CELL_HALF) / CELL_SIZE;
+                int c = (player.x + CELL_HALF) / CELL_SIZE;
+                if (player.onLadder || isLadder(r + 1, c)) {
+                    player.onLadder = 1;
+                    player.vy = playerSpeed[1];
+                    player.x = c * CELL_SIZE;
+                    setAnimation((Object*)&player, 3, 3, playerAnimSpeed[1]);
+                    if (ladderTimer ++ >= 8) {
+                        ladderTimer = 0;
+                        player.anim.direction *= -1;
+                    }
                 }
-            }
-            player.anim.direction = 1;
-            player.vx = playerSpeed[0];
-            //jumpDenied = 0;
-        // ... Not left or right
-        } else if (player.vx || player.anim.frameStart == 1) {
-            if (!player.onLadder) {
-                setAnimation((Object*)&player, 0, 0, 0);
-            }
-            player.vx = 0;
-        }
-        // ... Up
-        if (keystate[SDL_SCANCODE_UP]) {
-            int r = (player.y + CELL_HALF) / CELL_SIZE;
-            int c = (player.x + CELL_HALF) / CELL_SIZE;
-            if (!isLadder(r, c)) {
-                if (!player.inAir && !player.onLadder && !jumpDenied) {
-                    player.vy = -9; // -10 can be better
-                }
+            // ... Not up or down
             } else {
-                player.onLadder = 1;
-                player.vy = -playerSpeed[1];
-                player.x = c * CELL_SIZE;
-                setAnimation((Object*)&player, 3, 3, playerAnimSpeed[1]);
-                if (ladderTimer ++ >= 8) {
-                    ladderTimer = 0;
-                    player.anim.direction *= -1;
+                if (player.onLadder) {
+                    player.vy = 0;
                 }
-                jumpDenied = 1;
+                jumpDenied = 0;
             }
-        // ... Down
-        } else if (keystate[SDL_SCANCODE_DOWN]) {
-            int r = (player.y + CELL_HALF) / CELL_SIZE;
-            int c = (player.x + CELL_HALF) / CELL_SIZE;
-            if (player.onLadder || isLadder(r + 1, c)) {
-                player.onLadder = 1;
-                player.vy = playerSpeed[1];
-                player.x = c * CELL_SIZE;
-                setAnimation((Object*)&player, 3, 3, playerAnimSpeed[1]);
-                if (ladderTimer ++ >= 8) {
-                    ladderTimer = 0;
-                    player.anim.direction *= -1;
-                }
+            // ... Space
+            if (keystate[SDL_SCANCODE_SPACE] && keyAllowed) {
+                gameState = STATE_INVENTORY;
+                selection = 0;
+                prevKeyFrame = frameCount;
             }
-        // ... Not up or down
-        } else {
-            if (player.onLadder) {
-                player.vy = 0;
-            }
-            jumpDenied = 0;
-        }
-        // ... Open door
-        if (keystate[SDL_SCANCODE_SPACE]) {
-            int r = (player.y + CELL_HALF) / CELL_SIZE;
-            int c = (player.x + CELL_HALF) / CELL_SIZE;
-            if (findNearDoor(&r, &c)) {
-                if (player.keys > 0) {
-                    player.keys -= 1;
-                    level->map[r][c] = &objectTypes[TYPE_NONE];
-                }
-            }
-        }
-        /*
-        // ... Attack
-        if (keystate[SDL_SCANCODE_LCTRL]) {
-            //if (!player.attack) {
-                player.attack = 18;
-            //}
-        }
-        if (player.attack) {
-            if (player.attack -- > 12) {
-                setAnimation((Object*)&player, 4, 4, 5);
-            } else if (player.anim.frameStart == 4) {
-                setAnimation((Object*)&player, 0, 0, 5);
-            }
-        }
-        */
 
-        /*
-        if (player.inAir) {
-            setAnimation((Object*)&player, 1, 1, playerAnimSpeed[0]);
-        }
-        */
+        } else if (gameState == STATE_INVENTORY) {
 
-        // Just for test, remove it later
-        if (keystate[SDL_SCANCODE_R]) {
-            player.x = CELL_SIZE * 10;
-            player.y = CELL_SIZE * 5;
-        }
-        if (keystate[SDL_SCANCODE_N]) {
-            if (!player.inAir) {
-                createObjectInMap(level, TYPE_WALL, rand() % ROW_COUNT, rand() % COLUMN_COUNT);
-                player.inAir = 1;
+            if (keyAllowed) {
+                // ... Up
+                if (keystate[SDL_SCANCODE_UP]) {
+                    if (-- selection < 0) {
+                        selection = player.items.count - 1;
+                    }
+                    prevKeyFrame = frameCount;
+                // ... Down
+                } else if (keystate[SDL_SCANCODE_DOWN]) {
+                    if (++ selection >= player.items.count) {
+                        selection = 0;
+                    }
+                    prevKeyFrame = frameCount;
+                }
+                // ... Space
+                if (keystate[SDL_SCANCODE_SPACE]) {
+                    useItem(player.items.array[selection]);
+                    gameState = STATE_PLAYING;
+                    prevKeyFrame = frameCount;
+                }
+                // ... Esc
+                if (keystate[SDL_SCANCODE_ESCAPE]) {
+                    gameState = STATE_PLAYING;
+                    prevKeyFrame = frameCount;
+                }
             }
+
         }
-        //
 
         #ifndef USE_SYSTEM_TIMER
         // Frame delay (this way uses CPU all the time)
@@ -378,38 +427,42 @@ void gameLoop()
         prevRenderTime = currentTime;
         #endif
 
-        // Movement and objects
-        processPlayer();
-        processObjects();
+        if (gameState == STATE_PLAYING) {
+            // Movement and objects
+            processPlayer();
+            processObjects();
 
-        // Rendering
-        SDL_SetRenderDrawColor(renderer,
-                (level->background & 0xFF0000) >> 16,
-                (level->background & 0x00FF00) >> 8,
-                (level->background & 0x0000FF),
-                255);
-        SDL_RenderClear(renderer);
-        drawScreen();
+            // Rendering
+            SDL_SetRenderDrawColor(renderer,
+                    (level->background & 0xFF0000) >> 16,
+                    (level->background & 0x00FF00) >> 8,
+                    (level->background & 0x0000FF),
+                    255);
+            SDL_RenderClear(renderer);
+            drawScreen();
 
-        // Earthquake
-        /*
-        if (rand() % 8 == 0) {
-            SDL_Rect rect = {rand() % 4, rand() % 4, LEVEL_WIDTH, LEVEL_HEIGHT};
-            SDL_RenderSetViewport(renderer, &rect);
-        } else {
-            SDL_Rect rect = {0, 0, LEVEL_WIDTH, LEVEL_HEIGHT};
-            SDL_RenderSetViewport(renderer, &rect);
+        } else if (gameState == STATE_INVENTORY) {
+            drawInventory(selection);
+
+        } else if (gameState == STATE_GAMEOVER) {
+            hideScreenCounter += 2;
+            if (hideScreenCounter < 0)   continue;
+            if (hideScreenCounter > 255) break;
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 25 * (hideScreenCounter / 25));
+            SDL_RenderClear(renderer);
+            drawScreen();
+            SDL_RenderFillRect(renderer, &levelRect);
+            drawMessage(MESSAGE_GAMEOVER, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT);
         }
-        //*/
 
         SDL_RenderPresent(renderer);
 
         // Delete removed objects from memory
-        if (++ cleanCounter > 500) {
-            cleanCounter = 0;
+        if (++ cleanTimer > 500) {
+            cleanTimer = 0;
             cleanArray(&level->objects);
         }
-
         frameCount += 1;
     }
 

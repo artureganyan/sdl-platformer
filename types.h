@@ -73,17 +73,26 @@ typedef enum
     TYPE_SPIKE
 } ObjectTypeId;
 
+typedef enum
+{
+    MESSAGE_GAMEOVER = 0,
+    MESSAGE_NOITEMS,
+    MESSAGE_COUNT
+} Message;
+
 struct Object_s;
 typedef struct Object_s Object;
 typedef void (*OnInit)( Object* );
 typedef void (*OnFrame)( Object* );
-typedef void (*OnHit)( Object*, Object* /*target*/ );
+typedef void (*OnHit)( Object* );
 
 typedef struct
 {
     ObjectTypeId typeId;
     ObjectTypeId generalTypeId;
     SDL_Rect sprite;
+    SDL_Texture* nameTexture;
+    const char* name;
     int solid;
     int speed;
     int width;
@@ -113,6 +122,12 @@ typedef struct Object_s
     int attack;
 } Object;
 
+typedef struct {
+    Object** array;
+    int reserved;
+    int count;
+} ObjectArray;
+
 typedef struct
 {
     ObjectType* type;
@@ -126,20 +141,14 @@ typedef struct
     int lives;
     int coins;
     int keys;
+    ObjectArray items;
 } Player;
-
-typedef struct {
-    Object** array;
-    int reserved;
-    int count;
-} ObjectArray;
 
 typedef struct {
     ObjectType* map[ROW_COUNT][COLUMN_COUNT];
     ObjectArray objects;
     void (*initSprites)();
     int background;
-    int coins;
     int r;
     int c;
 } Level;
@@ -155,6 +164,7 @@ Object* createObject( Level* level, ObjectTypeId typeId, int r, int c );
 void initTypes();
 
 extern ObjectType objectTypes[TYPE_COUNT];
+extern const char* messages[MESSAGE_COUNT];
 extern Player player;
 extern Level* level;
 
