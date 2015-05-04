@@ -168,7 +168,8 @@ void initTypes()
     INIT_EX ( TYPE_PLATFORM,        4,      6,      TYPE_PLATFORM,      0,  onInit_Platform,        onFrame_Platform,       onHit_Platform,     NULL    );
     INIT_EX ( TYPE_KEY,             45,     26,     TYPE_KEY,           0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Key"   );
     INIT_EX ( TYPE_COIN,            47,     27,     TYPE_COIN,          0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Coin"  );
-
+    INIT_EX ( TYPE_APPLE,           15,     26,     TYPE_APPLE,         0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Apple" );
+    INIT_EX ( TYPE_PEAR,            15,     27,     TYPE_PEAR,          0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Pear"  );
 
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;

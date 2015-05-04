@@ -50,6 +50,47 @@ int move( Object* obj, int dx, int dy, int checkFloor )
     return canMove;
 }
 
+/*
+int move2( Object* obj, int dx, int dy, int checkFloor )
+{
+    int r, c, cell[4], body[4];
+    int canMove = 0;
+
+    obj->x += dx;
+    obj->y += dy;
+    getObjectPos(obj, &r, &c, cell, body);
+
+    if (isSolid(r, c)) {
+        obj->x -= dx;
+        obj->y -= dy;
+        return 0;
+    }
+    if (dx > 0 && body[1] > cell[1]) {
+        if (isSolid(r, c + 1) || body[1] > LEVEL_WIDTH || (checkFloor && !isSolidOrLadder(r + 1, c + 1))) {
+            obj->x -= dx;
+            canMove |= 1;
+        }
+    } else if (dx < 0 && body[0] < cell[0]) {
+        if (isSolid(r, c - 1) || body[0] < 0 || (checkFloor && !isSolidOrLadder(r + 1, c - 1))) {
+            obj->x -= dx;
+            canMove |= 1;
+        }
+    }
+    if (dy > 0 && body[3] > cell[3]) {
+        if (isSolid(r + 1, c) || body[3] > LEVEL_HEIGHT) {
+            obj->y -= dy;
+            canMove |= 2;
+        }
+    } else if (dy < 0 && body[2] < cell[2]) {
+        if (isSolid(r - 1, c) || body[2] < 0) {
+            obj->y -= dy;
+            canMove |= 2;
+        }
+    }
+    return canMove;
+}
+*/
+
 int isVisible( Object* source, Object* target )
 {
     int x1 = 0, x2 = 0, r, c, visible = 0;
@@ -215,26 +256,26 @@ void onHit_Bat( Object* e )
 
 void onHit_Item( Object* item )
 {
-    /*
     ObjectTypeId generalTypeId = item->type->generalTypeId;
 
     if (generalTypeId == TYPE_COIN) {
         player.coins += 1;
     } else if (generalTypeId == TYPE_KEY) {
         appendArray(&player.items, item);
-        //player.keys += 1;
+    }  else {
+        appendArray(&player.items, item);
     }
 
     item->removed = 2;
     cleanArray(&level->objects);
     item->removed = 0;
-    */
 }
 
 
 void onInit_Fireball( Object* e )
 {
     onInit_EnemyShooter(e);
+    //e->vy = e->vx;
 }
 
 void onFrame_Fireball( Object* e )
@@ -251,6 +292,19 @@ void onFrame_Fireball( Object* e )
         e->vx = -e->vx;
         e->anim.direction = -e->anim.direction;
     }
+    /*
+    int r = move2(e, e->vx , e->vy , 0);
+    if (r) {
+        e->vx = r & 1 ? -e->vx : e->vx;
+        e->vy = r & 2 ? -e->vy : e->vy;
+        e->anim.direction = e->vx > 0 ? 1 : -1;
+    }
+    if (rand() % 100 > 98) {
+        if (rand() % 2) e->vx = -e->vx;
+        if (rand() % 2) e->vy = -e->vy;
+        e->anim.direction = e->vx > 0 ? 1 : -1;
+    }
+    */
     if (e->attack > 0) {
         e->attack -= 1;
     }

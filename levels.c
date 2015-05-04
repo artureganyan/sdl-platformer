@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 #include "levels.h"
+#include "render.h"
 
 enum {
     LEVEL_YOFFSET = CELL_COUNT * LEVEL_XCOUNT,
@@ -82,6 +83,8 @@ void initLevel( Level* level )
     }
     level->initSprites = initSprites_Castle;
     level->background = 0x000000;
+    level->nameTexture = NULL;
+    level->name = "Some screen";
 
     initArray(&level->objects);
     appendArray(&level->objects, (Object*)&player);
@@ -151,6 +154,10 @@ void initLevels()
                         createObject(level, TYPE_COIN, r, c);
                     } else if (s == 'k') {
                         createObject(level, TYPE_KEY, r, c);
+                    } else if (s == 'a') {
+                        createObject(level, TYPE_APPLE, r, c);
+                    } else if (s == 'i') {
+                        createObject(level, TYPE_PEAR, r, c);
                     } else if (s == 'g') {
                         createObject(level, TYPE_GHOST, r, c);
                     } else if (s == 's') {
@@ -177,9 +184,10 @@ void initLevels()
                 }
             }
 
-            reorderDepth(&level->objects);
         }
     }
+
+    createObject(&levels[1][1], TYPE_PLATFORM, 13, 3);
 
     levels[0][0].initSprites = initSprites_Forest;
     levels[0][1].initSprites = initSprites_Forest;
@@ -188,7 +196,19 @@ void initLevels()
     levels[1][2].initSprites = initSprites_Underground;
     levels[1][3].initSprites = initSprites_Underground;
 
-    setLevel(0, 1);
+    levels[0][0].name = "Forest";
+    levels[1][0].name = "Cave";
+    levels[1][1].name = "Hidden Entrance";
+
+    for (lr = 0; lr < LEVEL_YCOUNT; ++ lr) {
+        for (lc = 0; lc < LEVEL_XCOUNT; ++ lc) {
+            Level* level = &levels[lr][lc];
+            reorderDepth(&level->objects);
+            level->nameTexture = createText(level->name);
+        }
+    }
+
+    setLevel(0, 2);
     player.x = CELL_SIZE * 1;
     player.y = CELL_SIZE * 0;
 }
@@ -216,8 +236,8 @@ const char* levelString =
 
     "                    "  "                  * "  "  `                *"  "*                  *"
     "                    "  " _              *   "  "        o s       o*"  "*          o       *"
-    "                    "  "       _        ****"  "****  ********  =***"  "*         ***      *"
-    "                    "  "_ kkk            ***"  "                =  *"  "*       ***     g  *"
+    "                    "  " k  k  _        ****"  "****  ********  =***"  "*         ***      *"
+    "                    "  "kakiaik          ***"  "                =  *"  "*       ***     g  *"
     "                    "  "*******  ******  ***"  "             =******"  "*os    *  *  =******"
     "                    "  "                 ***"  " g o         =     *"  "******    *  =      "
     "    b               "  "        &        ***"  "*****     *****=****"  "*     *  **  =      "

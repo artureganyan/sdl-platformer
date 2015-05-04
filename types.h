@@ -14,6 +14,7 @@ typedef enum
     SPRITE_SIZE = 16,
     LEVEL_WIDTH = 640,
     LEVEL_HEIGHT = 480,
+    BAR_HEIGHT = 32,
     CELL_SIZE = SPRITE_SIZE * 2,
     CELL_HALF = CELL_SIZE / 2,
     ROW_COUNT = (LEVEL_HEIGHT + CELL_SIZE - 1) / CELL_SIZE,
@@ -68,6 +69,8 @@ typedef enum
     TYPE_DOOR,
     TYPE_LADDER,
     TYPE_KEY,
+    TYPE_APPLE,
+    TYPE_PEAR,
     TYPE_COIN,
     TYPE_COUNT, // Must always be last
 
@@ -79,9 +82,9 @@ typedef enum
 
 typedef enum
 {
-	MESSAGE_GAMEOVER = 0,
-	MESSAGE_NOITEMS,
-	MESSAGE_COUNT
+    MESSAGE_GAMEOVER = 0,
+    MESSAGE_NOITEMS,
+    MESSAGE_COUNT
 } Message;
 
 struct Object_s;
@@ -149,9 +152,11 @@ typedef struct
 } Player;
 
 typedef struct {
-	ObjectType* map[ROW_COUNT][COLUMN_COUNT];
+    ObjectType* map[ROW_COUNT][COLUMN_COUNT];
     ObjectArray objects;
     void (*initSprites)();
+    SDL_Texture* nameTexture;
+    const char* name;
     int background;
     int r;
     int c;

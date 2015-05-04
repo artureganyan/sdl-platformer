@@ -410,10 +410,13 @@ void gameLoop()
             hideScreenCounter += 2;
             if (hideScreenCounter < 0)   continue;
             if (hideScreenCounter > 255) break;
+            //SDL_RenderClear(renderer);
+            //processPlayer();
+            //processObjects();
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+            drawScreen();
             SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 25 * (hideScreenCounter / 25));
-            SDL_RenderClear(renderer);
-            drawScreen();
             SDL_RenderFillRect(renderer, &levelRect);
             drawMessage(MESSAGE_GAMEOVER, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT);
         }
