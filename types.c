@@ -57,6 +57,19 @@ void cleanArray( ObjectArray* objects ) {
     objects->count -= r;
 }
 
+void reorderDepth( ObjectArray* objects )
+{
+    int i, r;
+    for (i = 0, r = 0; i < objects->count; ++ i) {
+        Object* obj = objects->array[i];
+        if (obj->type->typeId >= TYPE_BACKOBJECTS) {
+            objects->array[i] = objects->array[r];
+            objects->array[r] = obj;
+            r += 1;
+        }
+    }
+}
+
 
 void createObjectInMap( Level* level, ObjectTypeId typeId, int r, int c )
 {
@@ -131,8 +144,8 @@ void initTypes()
     INIT    ( TYPE_SPIKE_BOTTOM,    49,     0,      TYPE_SPIKE,         0                                                                               );
     INIT    ( TYPE_TREE1,           41,     3,      TYPE_BACKGROUND,    0                                                                               );
     INIT    ( TYPE_TREE2,           41,     4,      TYPE_BACKGROUND,    0                                                                               );
-    INIT    ( TYPE_CLOUDS1,         51,     6,      TYPE_BACKGROUND,    0                                                                               );
-    INIT    ( TYPE_CLOUDS2,         51,     7,      TYPE_BACKGROUND,    0                                                                               );
+    INIT_EX ( TYPE_CLOUD1,          51,     6,      TYPE_PLATFORM,      0,  onInit_Object,          onFrame_Object,         onHit_Cloud,        NULL    );
+    INIT    ( TYPE_CLOUD2,          51,     5,      TYPE_PLATFORM,      0                                                                               );
     INIT    ( TYPE_MUSHROOM1,       47,     0,      TYPE_BACKGROUND,    0                                                                               );
     INIT    ( TYPE_MUSHROOM2,       47,     1,      TYPE_BACKGROUND,    0                                                                               );
     INIT    ( TYPE_MUSHROOM3,       47,     2,      TYPE_BACKGROUND,    0                                                                               );
@@ -152,12 +165,14 @@ void initTypes()
     INIT_EX ( TYPE_ICESHOT,         52,     0,      TYPE_ENEMY,         0,  onInit_Shot,            onFrame_Shot,           onHit_Shot,         NULL    );
     INIT_EX ( TYPE_FIRESHOT,        54,     0,      TYPE_ENEMY,         0,  onInit_Shot,            onFrame_Shot,           onHit_Shot,         NULL    );
     INIT_EX ( TYPE_DROP,            37,     43,     TYPE_DROP,          0,  onInit_Drop,            onFrame_Drop,           onHit_Drop,         NULL    );
+    INIT_EX ( TYPE_PLATFORM,        4,      6,      TYPE_PLATFORM,      0,  onInit_Platform,        onFrame_Platform,       onHit_Platform,     NULL    );
     INIT_EX ( TYPE_KEY,             45,     26,     TYPE_KEY,           0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Key"   );
     INIT_EX ( TYPE_COIN,            47,     27,     TYPE_COIN,          0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Coin"  );
 
+
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;
-    objectTypes[TYPE_SCORPION].width = 24;
+    objectTypes[TYPE_SCORPION].width = 20;
     objectTypes[TYPE_SCORPION].height = 22;
     objectTypes[TYPE_SPIDER].speed = 1;
     objectTypes[TYPE_SPIDER].width = 22;
@@ -181,6 +196,9 @@ void initTypes()
     objectTypes[TYPE_FIRESHOT].height = 8;
     objectTypes[TYPE_DROP].width = 8;
     objectTypes[TYPE_DROP].height = 8;
+    objectTypes[TYPE_PLATFORM].width = CELL_SIZE;
+    objectTypes[TYPE_PLATFORM].height = CELL_SIZE;
+    objectTypes[TYPE_PLATFORM].speed = 2;
 
     #undef INIT
     #undef INIT_EX

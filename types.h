@@ -21,13 +21,14 @@ typedef enum
     CELL_COUNT = ROW_COUNT * COLUMN_COUNT,
     FRAME_PERIOD = 1000 / 48,
     PLAYER_WIDTH = CELL_SIZE - 12,
-    PLAYER_HEIGHT = CELL_SIZE - 10,
+    PLAYER_HEIGHT = CELL_SIZE, //- 10,
     SYSTEM_TIMER_PERIOD = 1 // In ms, used to update frames
 } Constant;
 
 typedef enum
 {
     TYPE_NONE = 0,
+    TYPE_TOPOBJECTS,
     TYPE_PLAYER,
     TYPE_GHOST,
     TYPE_SCORPION,
@@ -37,6 +38,14 @@ typedef enum
     TYPE_BLOB,
     TYPE_FIREBALL,
     TYPE_SKELETON,
+    TYPE_ICESHOT,
+    TYPE_FIRESHOT,
+    TYPE_DROP,
+    TYPE_PLATFORM,
+    TYPE_CLOUD1,
+    TYPE_CLOUD2,
+
+    TYPE_BACKOBJECTS,
     TYPE_WALL_TOP,
     TYPE_WALL,
     TYPE_GROUND,
@@ -50,8 +59,6 @@ typedef enum
     TYPE_SPIKE_BOTTOM,
     TYPE_TREE1,
     TYPE_TREE2,
-    TYPE_CLOUDS1,
-    TYPE_CLOUDS2,
     TYPE_MUSHROOM1,
     TYPE_MUSHROOM2,
     TYPE_MUSHROOM3,
@@ -62,9 +69,6 @@ typedef enum
     TYPE_LADDER,
     TYPE_KEY,
     TYPE_COIN,
-    TYPE_ICESHOT,
-    TYPE_FIRESHOT,
-    TYPE_DROP,
     TYPE_COUNT, // Must always be last
 
     // General types (objects of these types can not be created)
@@ -75,9 +79,9 @@ typedef enum
 
 typedef enum
 {
-    MESSAGE_GAMEOVER = 0,
-    MESSAGE_NOITEMS,
-    MESSAGE_COUNT
+	MESSAGE_GAMEOVER = 0,
+	MESSAGE_NOITEMS,
+	MESSAGE_COUNT
 } Message;
 
 struct Object_s;
@@ -145,7 +149,7 @@ typedef struct
 } Player;
 
 typedef struct {
-    ObjectType* map[ROW_COUNT][COLUMN_COUNT];
+	ObjectType* map[ROW_COUNT][COLUMN_COUNT];
     ObjectArray objects;
     void (*initSprites)();
     int background;
@@ -158,6 +162,7 @@ void initArray( ObjectArray* objects );
 void appendArray( ObjectArray* objects, Object* obj );
 void freeArray( ObjectArray* objects );
 void cleanArray( ObjectArray* objects );
+void reorderDepth( ObjectArray* objects );
 
 void createObjectInMap( Level* level, ObjectTypeId typeId, int r, int c );
 Object* createObject( Level* level, ObjectTypeId typeId, int r, int c );

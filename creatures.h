@@ -45,4 +45,10 @@ void onHit_Teleporting( Object* e );
 void onFrame_Mimicry( Object* e );
 void onHit_Mimicry( Object* e );
 
+void onInit_Platform( Object* e );
+void onFrame_Platform( Object* e );
+void onHit_Platform( Object* e );
+
+void onHit_Cloud( Object* e );
+
 #endif

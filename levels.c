@@ -169,10 +169,15 @@ void initLevels()
                         createObject(level, TYPE_SKELETON, r, c);
                     } else if (s == '`') {
                         createObject(level, TYPE_DROP, r, c);
+                    } else if (s == '_') {
+                        createObject(level, TYPE_PLATFORM, r, c);
+                    } else if (s == '&') {
+                        createObject(level, TYPE_CLOUD1, r, c);
                     }
                 }
             }
 
+            reorderDepth(&level->objects);
         }
     }
 
@@ -185,7 +190,7 @@ void initLevels()
 
     setLevel(0, 1);
     player.x = CELL_SIZE * 1;
-    player.y = CELL_SIZE * 3;
+    player.y = CELL_SIZE * 0;
 }
 
 void setLevel( int r, int c )
@@ -209,15 +214,15 @@ void setLevel( int r, int c )
 
 const char* levelString =
 
-    "                    "  "         b        * "  "  `                *"  "*                  *"
-    "                    "  "                *   "  "        o s       o*"  "*          o       *"
-    "                    "  "                ****"  "****  ********  =***"  "*         ***      *"
-    "                    "  "  kkk            ***"  "                =  *"  "*       ***     g  *"
-    "                    "  "******           ***"  "             =******"  "*os    *  *  =******"
+    "                    "  "                  * "  "  `                *"  "*                  *"
+    "                    "  " _              *   "  "        o s       o*"  "*          o       *"
+    "                    "  "       _        ****"  "****  ********  =***"  "*         ***      *"
+    "                    "  "_ kkk            ***"  "                =  *"  "*       ***     g  *"
+    "                    "  "*******  ******  ***"  "             =******"  "*os    *  *  =******"
     "                    "  "                 ***"  " g o         =     *"  "******    *  =      "
-    "    b               "  "                 ***"  "*****     *****=****"  "*     *  **  =      "
+    "    b               "  "        &        ***"  "*****     *****=****"  "*     *  **  =      "
     ",,,                 "  "                 ***"  "               =   *"  "* s     ***  =    o "
-    "xxxx                "  "                 ***"  "   o  o      f =   *"  "******=********* ***"
+    "xxxx                "  "   _          _  ***"  "   o  o      f =   *"  "******=********* ***"
     "xxxxxxx   ,,;,      "  "                 ***"  "  **  ** ***********"  "*     =     *   o   "
     "xxxxx    xxxxxx     "  "                 ***"  "*        |  ` |   `|"  "  go  =   g *  ***  "
     " |      xxxxxxxxx   "  "                 ***"  "**       |    |    |"  "****  =  ****       "

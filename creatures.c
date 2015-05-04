@@ -115,11 +115,15 @@ void onHit_Enemy( Object* e )
 {
     // Kill the enemy if player jumps on it
     /*
-    if (player->y + PLAYER_HEIGHT <= (e->y + (CELL_SIZE - e->type->height) / 2)) {
+    if (player.y + PLAYER_HEIGHT <= (e->y + (CELL_SIZE - e->type->height) / 2)) {
         player->vy = -5;
         e->removed = 1;
     }
-    */
+    //*/
+    if ((e->vx < 0 && player.x > e->x) || (e->vx > 0 && player.x < e->x)) {
+        e->vx = -e->vx;
+        e->anim.direction = -e->anim.direction;
+    }
     setAnimation(e, 4, 4, 0);
     killPlayer();
 }
@@ -211,6 +215,7 @@ void onHit_Bat( Object* e )
 
 void onHit_Item( Object* item )
 {
+    /*
     ObjectTypeId generalTypeId = item->type->generalTypeId;
 
     if (generalTypeId == TYPE_COIN) {
@@ -223,6 +228,7 @@ void onHit_Item( Object* item )
     item->removed = 2;
     cleanArray(&level->objects);
     item->removed = 0;
+    */
 }
 
 
@@ -375,5 +381,62 @@ void onHit_Mimicry( Object* e )
     level->map[r][c] = &objectTypes[e->vy];
     e->removed = 0;
     onHit_Enemy(e);
+}
+
+
+void onInit_Platform( Object* e )
+{
+    e->vx = e->type->speed;
+}
+
+void onFrame_Platform( Object* e )
+{
+    if (!move(e, e->vx, e->vy, 0)) {
+        e->vx = -e->vx;
+        e->vy = -e->vy;
+    }
+}
+
+void onHit_Platform( Object* e )
+{
+    const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
+    const int dh = (CELL_SIZE - PLAYER_HEIGHT) / 2;
+    const int border = 5;
+    int pr, pc, pcell[4], a[4];
+    int er, ec, ecell[4], b[4];
+
+    getObjectPos((Object*)&player, &pr, &pc, pcell, a);
+    getObjectPos(e, &er, &ec, ecell, b);
+
+    if ((a[3] - b[2]) > border && (b[3] - a[2]) > border) {
+        if (a[1] >= b[0] && a[0] <= b[0]) {
+            player.x = b[0] - dw - PLAYER_WIDTH;
+            player.inAir = 0;
+        } else if (a[0] <= b[1] && a[1] >= b[1]) {
+            player.x = b[1] - dw;
+            player.inAir = 0;
+        }
+    } else if ((a[1] - b[0]) > border && (b[1] - a[0]) > border) {
+        if (a[3] >= b[2] && a[2] <= b[2]) {
+            if (!player.vx) {
+                player.x += e->vx;
+            }
+            player.y = b[2] - dh - PLAYER_HEIGHT;
+            player.inAir = 0;
+        } else if (a[2] <= b[3] && a[3] >= b[3]) {
+            player.y = b[3] - dh;
+        }
+    }
+}
+
+
+void onHit_Cloud( Object* e )
+{
+    if (player.vy > 0) {
+        player.y -= player.vy - 1;
+    } else if (player.vy < 0) {
+        //player.y -= player.vy + 2;
+    }
+    player.inAir = 0;
 }
 

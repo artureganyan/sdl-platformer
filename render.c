@@ -19,7 +19,7 @@ void initRender()
 {
     int i;
 
-    // Window
+    // Window and renderer
     SDL_CreateWindowAndRenderer(LEVEL_WIDTH, LEVEL_HEIGHT, 0, &window, &renderer);
 
     // Sprites
@@ -105,6 +105,47 @@ void drawScreen()
         }
         drawObject(obj->type, obj->x, obj->y, anim->frame,
                 anim->direction < 0 ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE);
+    }
+}
+
+void drawInventory( int selectionIndex )
+{
+    const ObjectArray* items = &player.items;
+    const int count = items->count ? items->count : 1; //items->count + 1;
+    const int hs = 4;
+    const int h = count * (CELL_SIZE + hs) + (CELL_SIZE - hs);
+    const int w = 8 * CELL_SIZE;
+    const int x = (LEVEL_WIDTH - w) / 2;
+    const int y = (LEVEL_HEIGHT - h) / 2;
+    const SDL_Rect content = {x, y, w, h};
+    const SDL_Rect border = {x - 2, y - 2, w + 4, h + 4};
+    const SDL_Rect selection =
+        { x + CELL_HALF - 8, y + CELL_HALF + (CELL_SIZE + hs) * selectionIndex - 2,
+          w - CELL_SIZE + 16, CELL_SIZE + 4};
+    int i;
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 120);
+    SDL_RenderFillRect(renderer, &border);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 120);
+    SDL_RenderFillRect(renderer, &content);
+
+    if (items->count) {
+        const int x = content.x + CELL_HALF;
+        for (i = 0; i < items->count; ++ i) {
+            const int y = content.y + CELL_HALF + (CELL_SIZE + hs) * i;
+            ObjectType* type = items->array[i]->type;
+            drawObject(type, x, y, 0, SDL_FLIP_NONE);
+            if (type->name) {
+                drawText(type->nameTexture, x + CELL_SIZE + 10, y, 0, CELL_SIZE);
+            }
+        }
+        //drawMessage(MESSAGE_NOITEMS, x, content.y + CELL_HALF + (CELL_SIZE + hs) * items->count,
+        //  content.w - CELL_SIZE, CELL_SIZE);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 120);
+        SDL_RenderDrawRect(renderer, &selection);
+    } else {
+        drawMessage(MESSAGE_NOITEMS, content.x + CELL_HALF,
+                content.y + CELL_HALF, content.w - CELL_SIZE, CELL_SIZE);
     }
 }
 

@@ -22,6 +22,7 @@ void drawObject( ObjectType* type, int x, int y, int frame, SDL_RendererFlip fli
 void drawText( SDL_Texture* text, int x, int y, int w, int h );
 void drawMessage( Message message, int x, int y, int w, int h );
 void drawScreen();
+void drawInventory( int selectionIndex );
 void setAnimation( Object* object, int frameStart, int frameEnd, int frameDelay );
 
 #endif

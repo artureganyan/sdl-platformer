@@ -22,7 +22,7 @@ enum {
 void processPlayer()
 {
     static const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
-    static const int dh = (CELL_SIZE - PLAYER_HEIGHT) / 2;
+    static const int dh = (CELL_SIZE - (PLAYER_HEIGHT - 10)) / 2;
     const int prevX = player.x;
     int r, c, cell[4], body[4] /*unused*/;
     getObjectPos((Object*)&player, &r, &c, cell, body);
@@ -157,6 +157,8 @@ void processObjects()
         if (obj == (Object*)&player || obj->removed == 1) {
             continue;
         }
+        //const int dw = (CELL_SIZE - obj->type->width) / 2;
+        //const int dh = (CELL_SIZE - obj->type->height) / 2;
         obj->type->onFrame(obj);
         if (abs(obj->x - player.x) < (PLAYER_WIDTH + obj->type->width) / 2 &&
             abs(obj->y - player.y) < (PLAYER_HEIGHT + obj->type->height) / 2) {
@@ -168,64 +170,8 @@ void processObjects()
 void killPlayer()
 {
     setAnimation((Object*)&player, 5, 5, 5);
+    //player.anim.direction *= -1;
     gameState = STATE_GAMEOVER;
-}
-
-// Whether or not to use system timer to update frames. If defined, system
-// timer period will be decreased to 1 ms, so the timer is able to awake
-// our game every FRAME_PERIOD ms. In fact, 10 ms period is enough to awake
-// the game every 20 ms (i.e. 50 fps), but 1 ms is used for reliability.
-// Remember that lower period causes higher power consumption.
-#define USE_SYSTEM_TIMER
-
-void on_exit()
-{
-    #ifdef USE_SYSTEM_TIMER
-    timeEndPeriod(SYSTEM_TIMER_PERIOD);
-    #endif
-    TTF_Quit();
-    SDL_Quit();
-}
-
-void drawInventory( int selectionIndex )
-{
-    const ObjectArray* items = &player.items;
-    const int count = items->count ? items->count : 1; //items->count + 1;
-    const int hs = 4;
-    const int h = count * (CELL_SIZE + hs) + (CELL_SIZE - hs);
-    const int w = 8 * CELL_SIZE;
-    const int x = (LEVEL_WIDTH - w) / 2;
-    const int y = (LEVEL_HEIGHT - h) / 2;
-    const SDL_Rect content = {x, y, w, h};
-    const SDL_Rect border = {x - 2, y - 2, w + 4, h + 4};
-    const SDL_Rect selection =
-        { x + CELL_HALF - 8, y + CELL_HALF + (CELL_SIZE + hs) * selectionIndex - 2,
-          w - CELL_SIZE + 16, CELL_SIZE + 4};
-    int i;
-
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 120);
-    SDL_RenderFillRect(renderer, &border);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 120);
-    SDL_RenderFillRect(renderer, &content);
-
-    if (items->count) {
-        const int x = content.x + CELL_HALF;
-        for (i = 0; i < items->count; ++ i) {
-            const int y = content.y + CELL_HALF + (CELL_SIZE + hs) * i;
-            ObjectType* type = items->array[i]->type;
-            drawObject(type, x, y, 0, SDL_FLIP_NONE);
-            if (type->name) {
-                drawText(type->nameTexture, x + CELL_SIZE + 10, y, 0, CELL_SIZE);
-            }
-        }
-        //drawMessage(MESSAGE_NOITEMS, x, content.y + CELL_HALF + (CELL_SIZE + hs) * items->count,
-        //  content.w - CELL_SIZE, CELL_SIZE);
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 120);
-        SDL_RenderDrawRect(renderer, &selection);
-    } else {
-        drawMessage(MESSAGE_NOITEMS, content.x + CELL_HALF,
-                content.y + CELL_HALF, content.w - CELL_SIZE, CELL_SIZE);
-    }
 }
 
 void useItem( Object* item )
@@ -242,6 +188,22 @@ void useItem( Object* item )
     }
 
     cleanArray(&player.items);
+}
+
+// Whether or not to use system timer to update frames. If defined, system
+// timer period will be decreased to 1 ms, so the timer is able to awake
+// our game every FRAME_PERIOD ms. In fact, 10 ms period is enough to awake
+// the game every 20 ms (i.e. 50 fps), but 1 ms is used for reliability.
+// Remember that lower period causes higher power consumption.
+#define USE_SYSTEM_TIMER
+
+void on_exit()
+{
+    #ifdef USE_SYSTEM_TIMER
+    timeEndPeriod(SYSTEM_TIMER_PERIOD);
+    #endif
+    TTF_Quit();
+    SDL_Quit();
 }
 
 void gameLoop()
@@ -268,8 +230,6 @@ void gameLoop()
     atexit(on_exit);
     initRender();
     initTypes();
-    initLevels();
-    keystate = SDL_GetKeyboardState(NULL);
 
     player.type = &objectTypes[TYPE_PLAYER];
     player.anim.frameDelayCounter = 0;
@@ -282,6 +242,10 @@ void gameLoop()
     player.coins = 0;
     player.keys = 0;
     initArray(&player.items);
+
+    initLevels();
+
+    keystate = SDL_GetKeyboardState(NULL);
 
     #ifdef USE_SYSTEM_TIMER
     timeBeginPeriod(SYSTEM_TIMER_PERIOD);
@@ -428,17 +392,15 @@ void gameLoop()
         #endif
 
         if (gameState == STATE_PLAYING) {
-            // Movement and objects
-            processPlayer();
-            processObjects();
-
-            // Rendering
             SDL_SetRenderDrawColor(renderer,
                     (level->background & 0xFF0000) >> 16,
                     (level->background & 0x00FF00) >> 8,
                     (level->background & 0x0000FF),
                     255);
             SDL_RenderClear(renderer);
+
+            processPlayer();
+            processObjects();
             drawScreen();
 
         } else if (gameState == STATE_INVENTORY) {
