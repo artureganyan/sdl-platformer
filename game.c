@@ -15,8 +15,11 @@ enum {
     STATE_QUIT = 0,
     STATE_PLAYING,
     STATE_INVENTORY,
+    STATE_MESSAGE,
     STATE_GAMEOVER
 } gameState = STATE_PLAYING;
+
+Message currentMessage = MESSAGE_NONE;
 
 
 void processPlayer()
@@ -157,8 +160,6 @@ void processObjects()
         if (obj == (Object*)&player || obj->removed == 1) {
             continue;
         }
-        //const int dw = (CELL_SIZE - obj->type->width) / 2;
-        //const int dh = (CELL_SIZE - obj->type->height) / 2;
         obj->type->onFrame(obj);
         if (abs(obj->x - player.x) < (PLAYER_WIDTH + obj->type->width) / 2 &&
             abs(obj->y - player.y) < (PLAYER_HEIGHT + obj->type->height) / 2) {
@@ -174,6 +175,25 @@ void killPlayer()
     gameState = STATE_GAMEOVER;
 }
 
+void showMessage( Message message )
+{
+    currentMessage = message;
+    gameState = STATE_MESSAGE;
+}
+
+void takeItem( Object* item )
+{
+    ObjectTypeId generalTypeId = item->type->generalTypeId;
+    if (generalTypeId == TYPE_COIN) {
+        player.coins += 1;
+    } else {
+        appendArray(&player.items, item);
+    }
+    item->removed = 2;
+    cleanArray(&level->objects);
+    item->removed = 0;
+}
+
 void useItem( Object* item )
 {
     ObjectTypeId generalTypeId = item->type->generalTypeId;
@@ -185,9 +205,43 @@ void useItem( Object* item )
             level->map[r][c] = &objectTypes[TYPE_NONE];
             item->removed = 1;
         }
+
+    } else if (item->type->typeId == TYPE_LADDER_PART) {
+        if (level->r == 0 && level->c == 0) {
+            if (r == 7 && c == 5) {
+                int tr;
+
+                for (tr = r; tr >= 2; -- tr) {
+                    createObjectInMap(level, TYPE_LADDER, tr, c);
+                }
+
+                /*for (tr = r + 1; tr < r + 3; ++ tr) {
+                    createObjectInMap(level, TYPE_NONE, tr, c);
+                }*/
+
+                /*createObjectInMap(level, TYPE_NONE, ROW_COUNT - 1, c - 1);
+                createObjectInMap(level, TYPE_NONE, ROW_COUNT - 1, c - 2);*/
+
+                //findObject(level, TYPE_PLATFORM)->vy = -1;
+
+                item->removed = 1;
+            }
+        }
+
+    } else if (item->type->typeId == TYPE_PICK) {
+        if (level->r == 0 && level->c == 0) {
+            if (r == 7 && c == 5) {
+                int tr;
+                for (tr = r + 1; tr < r + 3; ++ tr) {
+                    createObjectInMap(level, TYPE_NONE, tr, c);
+                }
+                item->removed = 1;
+            }
+        }
     }
 
     cleanArray(&player.items);
+    //showMessage(MESSAGE_TEST);
 }
 
 // Whether or not to use system timer to update frames. If defined, system
@@ -346,8 +400,16 @@ void gameLoop()
             }
             // ... Space
             if (keystate[SDL_SCANCODE_SPACE] && keyAllowed) {
-                gameState = STATE_INVENTORY;
-                selection = 0;
+                Object* item;
+                int r, c;
+                getObjectCell((Object*)&player, &r, &c);
+                item = findNearItem(r, c);
+                if (item) {
+                    takeItem(item);
+                } else {
+                    gameState = STATE_INVENTORY;
+                    selection = 0;
+                }
                 prevKeyFrame = frameCount;
             }
 
@@ -369,8 +431,8 @@ void gameLoop()
                 }
                 // ... Space
                 if (keystate[SDL_SCANCODE_SPACE]) {
-                    useItem(player.items.array[selection]);
                     gameState = STATE_PLAYING;
+                    useItem(player.items.array[selection]);
                     prevKeyFrame = frameCount;
                 }
                 // ... Esc
@@ -380,6 +442,12 @@ void gameLoop()
                 }
             }
 
+        } else if (gameState == STATE_MESSAGE) {
+            // ... Space
+            if (keystate[SDL_SCANCODE_SPACE] && keyAllowed) {
+                gameState = STATE_PLAYING;
+                prevKeyFrame = frameCount;
+            }
         }
 
         #ifndef USE_SYSTEM_TIMER
@@ -406,6 +474,9 @@ void gameLoop()
         } else if (gameState == STATE_INVENTORY) {
             drawInventory(selection);
 
+        } else if (gameState == STATE_MESSAGE) {
+            drawMessage(currentMessage, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
+
         } else if (gameState == STATE_GAMEOVER) {
             hideScreenCounter += 2;
             if (hideScreenCounter < 0)   continue;
@@ -418,7 +489,7 @@ void gameLoop()
             SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 25 * (hideScreenCounter / 25));
             SDL_RenderFillRect(renderer, &levelRect);
-            drawMessage(MESSAGE_GAMEOVER, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT);
+            drawMessage(MESSAGE_GAMEOVER, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 0);
         }
 
         SDL_RenderPresent(renderer);

@@ -19,6 +19,9 @@ int cellContains( int r, int c, ObjectTypeId generalType );
 
 void getObjectCell( Object* obj, int* r, int* c );
 void getObjectPos( Object* obj, int* r, int* c, int cellBorders[4], int bodyBorders[4] );
+
 int findNearDoor( int* r, int* c );
+Object* findNearItem( int r, int c );
+Object* findObject( Level* level, ObjectTypeId typeId );
 
 #endif

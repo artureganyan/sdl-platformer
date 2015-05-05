@@ -260,7 +260,7 @@ void onHit_Item( Object* item )
 
     if (generalTypeId == TYPE_COIN) {
         player.coins += 1;
-    } else if (generalTypeId == TYPE_KEY) {
+    } /*else if (generalTypeId == TYPE_KEY) {
         appendArray(&player.items, item);
     }  else {
         appendArray(&player.items, item);
@@ -268,7 +268,7 @@ void onHit_Item( Object* item )
 
     item->removed = 2;
     cleanArray(&level->objects);
-    item->removed = 0;
+    item->removed = 0;*/
 }
 
 

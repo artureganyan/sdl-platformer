@@ -82,9 +82,21 @@ void drawText( SDL_Texture* text, int x, int y, int w, int h )
     SDL_RenderCopy(renderer, text, NULL, &rect);
 }
 
-void drawMessage( Message message, int x, int y, int w, int h )
+void drawMessage( Message message, int x, int y, int w, int h, int box )
 {
-    drawText(messageTextures[message], x, y, w, h);
+    SDL_Texture* text = messageTextures[message];
+    if (box) {
+        const int padding = 4;
+        SDL_Rect rect = {x - padding, y - padding};
+        SDL_QueryTexture(text, NULL, NULL, &rect.w, &rect.h);
+        rect.w += padding * 2;
+        rect.h += padding * 2;
+        if (w > 0) rect.x += (w - rect.w) / 2;
+        if (h > 0) rect.y += (h - rect.h) / 2;
+        SDL_SetRenderDrawColor(renderer, 70, 70, 70, 255);
+        SDL_RenderFillRect(renderer, &rect);
+    }
+    drawText(text, x, y, w, h);
 }
 
 void drawScreen()
@@ -168,7 +180,7 @@ void drawInventory( int selectionIndex )
         SDL_RenderDrawRect(renderer, &selection);
     } else {
         drawMessage(MESSAGE_NOITEMS, content.x + CELL_HALF,
-                content.y + CELL_HALF, content.w - CELL_SIZE, CELL_SIZE);
+                content.y + CELL_HALF, content.w - CELL_SIZE, CELL_SIZE, 0);
     }
 }
 

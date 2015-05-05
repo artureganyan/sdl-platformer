@@ -12,8 +12,11 @@ ObjectType objectTypes[TYPE_COUNT];
 Player player;
 
 const char* messages[MESSAGE_COUNT] = {
+        "",
         "Game Over",
-        "No items"
+        "No items",
+        "Can't use...",
+        "Test"
     };
 
 
@@ -170,6 +173,8 @@ void initTypes()
     INIT_EX ( TYPE_COIN,            47,     27,     TYPE_COIN,          0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Coin"  );
     INIT_EX ( TYPE_APPLE,           15,     26,     TYPE_APPLE,         0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Apple" );
     INIT_EX ( TYPE_PEAR,            15,     27,     TYPE_PEAR,          0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Pear"  );
+    INIT_EX ( TYPE_LADDER_PART,     43,     32,     TYPE_LADDER_PART,   0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Ladder");
+    INIT_EX ( TYPE_PICK,            43,     33,     TYPE_PICK,          0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Pick"  );
 
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;

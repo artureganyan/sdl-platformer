@@ -68,10 +68,14 @@ typedef enum
     TYPE_PILLAR_BOTTOM,
     TYPE_DOOR,
     TYPE_LADDER,
+
+    TYPE_ITEMS,
     TYPE_KEY,
     TYPE_APPLE,
     TYPE_PEAR,
     TYPE_COIN,
+    TYPE_LADDER_PART,
+    TYPE_PICK,
     TYPE_COUNT, // Must always be last
 
     // General types (objects of these types can not be created)
@@ -82,8 +86,11 @@ typedef enum
 
 typedef enum
 {
-    MESSAGE_GAMEOVER = 0,
+    MESSAGE_NONE = 0,
+    MESSAGE_GAMEOVER,
     MESSAGE_NOITEMS,
+    MESSAGE_CANNOTUSE,
+    MESSAGE_TEST,
     MESSAGE_COUNT
 } Message;
 
@@ -154,14 +161,13 @@ typedef struct
 typedef struct {
     ObjectType* map[ROW_COUNT][COLUMN_COUNT];
     ObjectArray objects;
-    void (*initSprites)();
+    void (*init)();
     SDL_Texture* nameTexture;
     const char* name;
     int background;
     int r;
     int c;
 } Level;
-
 
 void initArray( ObjectArray* objects );
 void appendArray( ObjectArray* objects, Object* obj );
