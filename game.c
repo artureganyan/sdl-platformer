@@ -16,6 +16,7 @@ enum {
     STATE_PLAYING,
     STATE_INVENTORY,
     STATE_MESSAGE,
+    STATE_KILLED,
     STATE_GAMEOVER
 } gameState = STATE_PLAYING;
 
@@ -168,11 +169,23 @@ void processObjects()
     }
 }
 
+void damagePlayer( int damage )
+{
+    player.health -= damage;
+    if (player.health <= 0) {
+        player.health = 0;
+        killPlayer();
+    }
+}
+
 void killPlayer()
 {
     setAnimation((Object*)&player, 5, 5, 5);
-    //player.anim.direction *= -1;
-    gameState = STATE_GAMEOVER;
+    if (-- player.lives) {
+        gameState = STATE_KILLED;
+    } else {
+        gameState = STATE_GAMEOVER;
+    }
 }
 
 void showMessage( Message message )
@@ -199,32 +212,24 @@ void useItem( Object* item )
     ObjectTypeId generalTypeId = item->type->generalTypeId;
     int r = (player.y + CELL_HALF) / CELL_SIZE;
     int c = (player.x + CELL_HALF) / CELL_SIZE;
+    int used = 0;
 
     if (generalTypeId == TYPE_KEY) {
         if (findNearDoor(&r, &c)) {
             level->map[r][c] = &objectTypes[TYPE_NONE];
             item->removed = 1;
+            used = 1;
         }
 
     } else if (item->type->typeId == TYPE_LADDER_PART) {
         if (level->r == 0 && level->c == 0) {
             if (r == 7 && c == 5) {
                 int tr;
-
                 for (tr = r; tr >= 2; -- tr) {
                     createObjectInMap(level, TYPE_LADDER, tr, c);
                 }
-
-                /*for (tr = r + 1; tr < r + 3; ++ tr) {
-                    createObjectInMap(level, TYPE_NONE, tr, c);
-                }*/
-
-                /*createObjectInMap(level, TYPE_NONE, ROW_COUNT - 1, c - 1);
-                createObjectInMap(level, TYPE_NONE, ROW_COUNT - 1, c - 2);*/
-
-                //findObject(level, TYPE_PLATFORM)->vy = -1;
-
                 item->removed = 1;
+                used = 1;
             }
         }
 
@@ -236,12 +241,15 @@ void useItem( Object* item )
                     createObjectInMap(level, TYPE_NONE, tr, c);
                 }
                 item->removed = 1;
+                used = 1;
             }
         }
     }
 
     cleanArray(&player.items);
-    //showMessage(MESSAGE_TEST);
+    if (!used) {
+        showMessage(MESSAGE_CANNOTUSE);
+    }
 }
 
 // Whether or not to use system timer to update frames. If defined, system
@@ -287,14 +295,12 @@ void gameLoop()
 
     player.type = &objectTypes[TYPE_PLAYER];
     player.anim.frameDelayCounter = 0;
-    //player.x = CELL_SIZE * 0;
-    //player.y = CELL_SIZE * 0;
     player.removed = 0;
     player.inAir = 0;
     player.onLadder = 0;
+    player.health = 100;
     player.lives = 3;
     player.coins = 0;
-    player.keys = 0;
     initArray(&player.items);
 
     initLevels();
@@ -322,9 +328,9 @@ void gameLoop()
             }
         }
 
+        // Check keyboard
         keyAllowed = (frameCount - prevKeyFrame >= 8);
 
-        // Check keyboard
         if (gameState == STATE_PLAYING) {
 
             // ... Left
@@ -432,7 +438,9 @@ void gameLoop()
                 // ... Space
                 if (keystate[SDL_SCANCODE_SPACE]) {
                     gameState = STATE_PLAYING;
-                    useItem(player.items.array[selection]);
+                    if (player.items.count) {
+                        useItem(player.items.array[selection]);
+                    }
                     prevKeyFrame = frameCount;
                 }
                 // ... Esc
@@ -447,6 +455,16 @@ void gameLoop()
             if (keystate[SDL_SCANCODE_SPACE] && keyAllowed) {
                 gameState = STATE_PLAYING;
                 prevKeyFrame = frameCount;
+            }
+
+        } else if (gameState == STATE_KILLED) {
+            // ... Space
+            if (keystate[SDL_SCANCODE_SPACE] && keyAllowed) {
+                gameState = STATE_PLAYING;
+                prevKeyFrame = frameCount;
+                setAnimation((Object*)&player, 0, 0, 1);
+                player.x = 0;
+                player.y = 0;
             }
         }
 
@@ -476,6 +494,9 @@ void gameLoop()
 
         } else if (gameState == STATE_MESSAGE) {
             drawMessage(currentMessage, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
+
+        } else if (gameState == STATE_KILLED) {
+            drawMessage(MESSAGE_LOSTLIFE, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
 
         } else if (gameState == STATE_GAMEOVER) {
             hideScreenCounter += 2;

@@ -45,6 +45,7 @@ typedef enum
     TYPE_PLATFORM,
     TYPE_CLOUD1,
     TYPE_CLOUD2,
+    TYPE_HEART,
 
     TYPE_BACKOBJECTS,
     TYPE_WALL_TOP,
@@ -90,6 +91,7 @@ typedef enum
     MESSAGE_GAMEOVER,
     MESSAGE_NOITEMS,
     MESSAGE_CANNOTUSE,
+    MESSAGE_LOSTLIFE,
     MESSAGE_TEST,
     MESSAGE_COUNT
 } Message;
@@ -152,9 +154,9 @@ typedef struct
     int attack;
     int inAir;
     int onLadder;
+    int health;
     int lives;
     int coins;
-    int keys;
     ObjectArray items;
 } Player;
 

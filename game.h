@@ -12,6 +12,7 @@
 void processPlayer();
 void processObjects();
 void gameLoop();
+void damagePlayer( int damage );
 void killPlayer();
 
 #endif

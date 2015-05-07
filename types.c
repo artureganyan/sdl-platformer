@@ -15,8 +15,9 @@ const char* messages[MESSAGE_COUNT] = {
         "",
         "Game Over",
         "No items",
-        "Can't use...",
-        "Test"
+        "Can not use",
+        "You lost life",
+        "3"
     };
 
 
@@ -175,6 +176,7 @@ void initTypes()
     INIT_EX ( TYPE_PEAR,            15,     27,     TYPE_PEAR,          0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Pear"  );
     INIT_EX ( TYPE_LADDER_PART,     43,     32,     TYPE_LADDER_PART,   0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Ladder");
     INIT_EX ( TYPE_PICK,            43,     33,     TYPE_PICK,          0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Pick"  );
+    INIT    ( TYPE_HEART,           57,     27,     TYPE_HEART,         0                                                                               );
 
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;

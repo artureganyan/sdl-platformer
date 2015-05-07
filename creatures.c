@@ -10,11 +10,10 @@
 #include "game.h"
 
 
-// Returns 0 if obj can not move by dx or dy
 int move( Object* obj, int dx, int dy, int checkFloor )
 {
     int r, c, cell[4], body[4];
-    int canMove = 1;
+    int result = 0;
 
     obj->x += dx;
     obj->y += dy;
@@ -23,73 +22,32 @@ int move( Object* obj, int dx, int dy, int checkFloor )
     if (isSolid(r, c)) {
         obj->x -= dx;
         obj->y -= dy;
-        return 0;
+        return 3;
     }
     if (dx > 0 && body[1] > cell[1]) {
         if (isSolid(r, c + 1) || body[1] > LEVEL_WIDTH || (checkFloor && !isSolidOrLadder(r + 1, c + 1))) {
             obj->x -= dx;
-            canMove = 0;
+            result |= 1;
         }
     } else if (dx < 0 && body[0] < cell[0]) {
         if (isSolid(r, c - 1) || body[0] < 0 || (checkFloor && !isSolidOrLadder(r + 1, c - 1))) {
             obj->x -= dx;
-            canMove = 0;
+            result |= 1;
         }
     }
     if (dy > 0 && body[3] > cell[3]) {
         if (isSolid(r + 1, c) || body[3] > LEVEL_HEIGHT) {
             obj->y -= dy;
-            canMove = 0;
+            result |= 2;
         }
     } else if (dy < 0 && body[2] < cell[2]) {
         if (isSolid(r - 1, c) || body[2] < 0) {
             obj->y -= dy;
-            canMove = 0;
+            result |= 2;
         }
     }
-    return canMove;
+    return result;
 }
-
-/*
-int move2( Object* obj, int dx, int dy, int checkFloor )
-{
-    int r, c, cell[4], body[4];
-    int canMove = 0;
-
-    obj->x += dx;
-    obj->y += dy;
-    getObjectPos(obj, &r, &c, cell, body);
-
-    if (isSolid(r, c)) {
-        obj->x -= dx;
-        obj->y -= dy;
-        return 0;
-    }
-    if (dx > 0 && body[1] > cell[1]) {
-        if (isSolid(r, c + 1) || body[1] > LEVEL_WIDTH || (checkFloor && !isSolidOrLadder(r + 1, c + 1))) {
-            obj->x -= dx;
-            canMove |= 1;
-        }
-    } else if (dx < 0 && body[0] < cell[0]) {
-        if (isSolid(r, c - 1) || body[0] < 0 || (checkFloor && !isSolidOrLadder(r + 1, c - 1))) {
-            obj->x -= dx;
-            canMove |= 1;
-        }
-    }
-    if (dy > 0 && body[3] > cell[3]) {
-        if (isSolid(r + 1, c) || body[3] > LEVEL_HEIGHT) {
-            obj->y -= dy;
-            canMove |= 2;
-        }
-    } else if (dy < 0 && body[2] < cell[2]) {
-        if (isSolid(r - 1, c) || body[2] < 0) {
-            obj->y -= dy;
-            canMove |= 2;
-        }
-    }
-    return canMove;
-}
-*/
 
 int isVisible( Object* source, Object* target )
 {
@@ -135,7 +93,7 @@ void onInit_Enemy( Object* e )
 void onFrame_Enemy( Object* e )
 {
     if (e->attack -- > 0) {
-        if (!move(e, e->vx, e->vy, 1)) {
+        if (move(e, e->vx, e->vy, 1)) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
@@ -194,7 +152,7 @@ void onFrame_EnemyShooter( Object* e )
         }
         e->attack -= 1;
     } else {
-        if (!move(e, e->vx, e->vy, 1)) {
+        if (move(e, e->vx, e->vy, 1)) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
@@ -211,17 +169,21 @@ void onInit_Shot( Object* e )
 
 void onFrame_Shot( Object* e )
 {
-    if (!move(e, e->vx, e->vy, 0)) {
-        setAnimation(e, 3, 3, 5);
-        if (++ e->attack >= 8) {
+    if (e->attack) {
+        if (!-- e->attack) {
             e->removed = 1;
         }
+    } else if (move(e, e->vx, e->vy, 0)) {
+        setAnimation(e, 3, 3, 5);
+        e->attack = 8;
     }
 }
 
 void onHit_Shot( Object* e )
 {
     setAnimation(e, 3, 3, 5);
+    e->attack = 8;
+    //damagePlayer(1);
     killPlayer();
 }
 
@@ -238,7 +200,7 @@ void onInit_Bat( Object* e )
 void onFrame_Bat( Object* e )
 {
     int vy = e->attack % 2 ? e->vy : 0;
-    if (!move(e, e->vx, vy, 0)) {
+    if (move(e, e->vx, vy, 0)) {
         e->vx = -e->vx;
         e->anim.direction = -e->anim.direction;
     }
@@ -275,7 +237,7 @@ void onHit_Item( Object* item )
 void onInit_Fireball( Object* e )
 {
     onInit_EnemyShooter(e);
-    //e->vy = e->vx;
+    e->vy = e->vx;
 }
 
 void onFrame_Fireball( Object* e )
@@ -288,15 +250,17 @@ void onFrame_Fireball( Object* e )
         shot->anim.direction = e->anim.direction;
         e->attack = 48;
     }
-    if (!move(e, e->vx, e->vy, 0)) {
+    /*
+    if (move(e, e->vx, e->vy, 0)) {
         e->vx = -e->vx;
         e->anim.direction = -e->anim.direction;
     }
-    /*
-    int r = move2(e, e->vx , e->vy , 0);
-    if (r) {
-        e->vx = r & 1 ? -e->vx : e->vx;
-        e->vy = r & 2 ? -e->vy : e->vy;
+    */
+    ///*
+    int m = move(e, e->vx , e->vy , 0);
+    if (m) {
+        e->vx = m & 1 ? -e->vx : e->vx;
+        e->vy = m & 2 ? -e->vy : e->vy;
         e->anim.direction = e->vx > 0 ? 1 : -1;
     }
     if (rand() % 100 > 98) {
@@ -304,7 +268,7 @@ void onFrame_Fireball( Object* e )
         if (rand() % 2) e->vy = -e->vy;
         e->anim.direction = e->vx > 0 ? 1 : -1;
     }
-    */
+    //*/
     if (e->attack > 0) {
         e->attack -= 1;
     }
@@ -330,7 +294,7 @@ void onFrame_Drop( Object* e )
         if (e->vy < 5) {
             e->vy += 1;
         }
-        if (!move(e, 0, e->vy, 0)) {
+        if (move(e, 0, e->vy, 0)) {
             e->y += e->vy;
             e->attack = -2;
         }
@@ -365,7 +329,7 @@ void onFrame_Spider( Object* e )
 void onFrame_Teleporting( Object* e )
 {
     if (e->attack > 0) {
-        if (!move(e, e->vx, e->vy, 1)) {
+        if (move(e, e->vx, e->vy, 1)) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
@@ -401,15 +365,16 @@ void onHit_Teleporting( Object* e )
 void onFrame_Mimicry( Object* e )
 {
     if (e->attack > -100) {
-        if (!move(e, e->vx, e->vy, 1)) {
+        if (move(e, e->vx, e->vy, 1)) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
         setAnimation(e, 1, 2, 24);
 
         if (e->attack < 0 && rand() % 100 > 70) {
-            const int types[] = {TYPE_COIN, TYPE_SPIKE_BOTTOM, TYPE_MUSHROOM1, TYPE_MUSHROOM2, TYPE_MUSHROOM3,
-                                 TYPE_PILLAR_BOTTOM, TYPE_ROCK, TYPE_KEY, TYPE_GROUND_TOP};
+            const int types[] =
+                {TYPE_COIN, TYPE_SPIKE_BOTTOM, TYPE_MUSHROOM1, TYPE_MUSHROOM2,
+                 TYPE_MUSHROOM3, TYPE_PILLAR_BOTTOM, TYPE_ROCK, TYPE_KEY, TYPE_GROUND_TOP};
             int r, c;
             getObjectCell(e, &r, &c);
             e->removed = 3;
@@ -445,7 +410,7 @@ void onInit_Platform( Object* e )
 
 void onFrame_Platform( Object* e )
 {
-    if (!move(e, e->vx, e->vy, 0)) {
+    if (move(e, e->vx, e->vy, 0)) {
         e->vx = -e->vx;
         e->vy = -e->vy;
     }

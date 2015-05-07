@@ -212,7 +212,7 @@ void initLevels()
         }
     }
 
-    setLevel(0, 0);
+    setLevel(0, 3);
     player.x = CELL_SIZE * 1;
     player.y = CELL_SIZE * 1;
 }
