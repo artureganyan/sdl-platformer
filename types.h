@@ -20,7 +20,8 @@ typedef enum
     ROW_COUNT = (LEVEL_HEIGHT + CELL_SIZE - 1) / CELL_SIZE,
     COLUMN_COUNT = (LEVEL_WIDTH + CELL_SIZE - 1) / CELL_SIZE,
     CELL_COUNT = ROW_COUNT * COLUMN_COUNT,
-    FRAME_PERIOD = 1000 / 48,
+    FRAME_RATE = 48,
+    FRAME_PERIOD = 1000 / FRAME_RATE,
     PLAYER_WIDTH = CELL_SIZE - 12,
     PLAYER_HEIGHT = CELL_SIZE, //- 10,
     SYSTEM_TIMER_PERIOD = 1 // In ms, used to update frames
@@ -93,6 +94,7 @@ typedef enum
     MESSAGE_CANNOTUSE,
     MESSAGE_LOSTLIFE,
     MESSAGE_TEST,
+    MESSAGE_TEXT,
     MESSAGE_COUNT
 } Message;
 
@@ -135,7 +137,7 @@ typedef struct Object_s
     int x, y;
     int vx, vy;
     int removed;
-    int attack;
+    int state;
 } Object;
 
 typedef struct {
@@ -180,6 +182,8 @@ void reorderDepth( ObjectArray* objects );
 void createObjectInMap( Level* level, ObjectTypeId typeId, int r, int c );
 Object* createObject( Level* level, ObjectTypeId typeId, int r, int c );
 void initTypes();
+
+#define MS_TO_FRAMES(ms) (int)((ms) / 1000.0 * FRAME_RATE)
 
 extern ObjectType objectTypes[TYPE_COUNT];
 extern const char* messages[MESSAGE_COUNT];

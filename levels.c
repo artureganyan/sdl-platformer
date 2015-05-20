@@ -17,59 +17,57 @@ Level* level = &levels[0][0];
 extern const char* levelString;
 
 
-#define INIT(typeId_, spriteRow, spriteColumn) \
-{ \
-    ObjectType* type = &objectTypes[typeId_]; \
-    type->sprite.y = (spriteRow) * SPRITE_SIZE; \
-    type->sprite.x = (spriteColumn) * SPRITE_SIZE; \
+void initSprite( ObjectTypeId typeId, int spriteRow, int spriteColumn )
+{
+    ObjectType* type = &objectTypes[typeId];
+    type->sprite.y = (spriteRow) * SPRITE_SIZE;
+    type->sprite.x = (spriteColumn) * SPRITE_SIZE;
 }
 
 void initSprites_Castle()
 {
-    INIT( TYPE_WALL_TOP,        4,  6 );
-    INIT( TYPE_WALL,            5,  6 );
-    INIT( TYPE_GROUND_TOP,      6,  3 );
-    INIT( TYPE_GROUND,          7,  3 );
-    INIT( TYPE_GRASS,           40, 0 );
-    INIT( TYPE_GRASS_BIG,       40, 1 );
-    INIT( TYPE_PILLAR_TOP,      26, 2 );
-    INIT( TYPE_PILLAR,          27, 2 );
-    INIT( TYPE_PILLAR_BOTTOM,   28, 2 );
-    INIT( TYPE_DOOR,            10, 0 );
-    INIT( TYPE_LADDER,          12, 2 );
+    initSprite( TYPE_WALL_TOP,          4,  6 );
+    initSprite( TYPE_WALL,              5,  6 );
+    initSprite( TYPE_GROUND_TOP,        6,  3 );
+    initSprite( TYPE_GROUND,            7,  3 );
+    initSprite( TYPE_GRASS,             40, 0 );
+    initSprite( TYPE_GRASS_BIG,         40, 1 );
+    initSprite( TYPE_PILLAR_TOP,        26, 2 );
+    initSprite( TYPE_PILLAR,            27, 2 );
+    initSprite( TYPE_PILLAR_BOTTOM,     28, 2 );
+    initSprite( TYPE_DOOR,              10, 0 );
+    initSprite( TYPE_LADDER,            12, 2 );
 }
 
 void initSprites_Forest()
 {
-    INIT( TYPE_WALL_TOP,        4,  6 );
-    INIT( TYPE_WALL,            5,  6 );
-    INIT( TYPE_GROUND_TOP,      6,  1 );
-    INIT( TYPE_GROUND,          7,  1 );
-    INIT( TYPE_GRASS,           40, 0 );
-    INIT( TYPE_GRASS_BIG,       40, 1 );
-    INIT( TYPE_PILLAR_TOP,      48, 1 );
-    INIT( TYPE_PILLAR,          49, 1 );
-    INIT( TYPE_PILLAR_BOTTOM,   50, 1 );
-    INIT( TYPE_DOOR,            10, 0 );
-    INIT( TYPE_LADDER,          12, 2 );
+    initSprite( TYPE_WALL_TOP,          4,  6 );
+    initSprite( TYPE_WALL,              5,  6 );
+    initSprite( TYPE_GROUND_TOP,        6,  1 );
+    initSprite( TYPE_GROUND,            7,  1 );
+    initSprite( TYPE_GRASS,             40, 0 );
+    initSprite( TYPE_GRASS_BIG,         40, 1 );
+    initSprite( TYPE_PILLAR_TOP,        48, 1 );
+    initSprite( TYPE_PILLAR,            49, 1 );
+    initSprite( TYPE_PILLAR_BOTTOM,     50, 1 );
+    initSprite( TYPE_DOOR,              10, 0 );
+    initSprite( TYPE_LADDER,            12, 2 );
 }
 
 void initSprites_Underground()
 {
-    INIT( TYPE_WALL_TOP,        4,  6 );
-    INIT( TYPE_WALL,            5,  6 );
-    INIT( TYPE_GROUND_TOP,      6,  2 );
-    INIT( TYPE_GROUND,          7,  2 );
-    INIT( TYPE_GRASS,           40, 0 );
-    INIT( TYPE_GRASS_BIG,       40, 1 );
-    INIT( TYPE_PILLAR_TOP,      48, 1 );
-    INIT( TYPE_PILLAR,          49, 1 );
-    INIT( TYPE_PILLAR_BOTTOM,   50, 1 );
-    INIT( TYPE_DOOR,            10, 0 );
-    INIT( TYPE_LADDER,          12, 2 );
+    initSprite( TYPE_WALL_TOP,          4,  6 );
+    initSprite( TYPE_WALL,              5,  6 );
+    initSprite( TYPE_GROUND_TOP,        6,  2 );
+    initSprite( TYPE_GROUND,            7,  2 );
+    initSprite( TYPE_GRASS,             40, 0 );
+    initSprite( TYPE_GRASS_BIG,         40, 1 );
+    initSprite( TYPE_PILLAR_TOP,        48, 1 );
+    initSprite( TYPE_PILLAR,            49, 1 );
+    initSprite( TYPE_PILLAR_BOTTOM,     50, 1 );
+    initSprite( TYPE_DOOR,              10, 0 );
+    initSprite( TYPE_LADDER,            12, 2 );
 }
-
-#undef INIT
 
 
 void initLevel( Level* level )
@@ -212,7 +210,7 @@ void initLevels()
         }
     }
 
-    setLevel(0, 3);
+    setLevel(0, 2);
     player.x = CELL_SIZE * 1;
     player.y = CELL_SIZE * 1;
 }
@@ -238,34 +236,34 @@ void setLevel( int r, int c )
 
 const char* levelString =
 
-"    &           &   "  "                    "  "                  * "  "  `                *"  "*                  *"
-"          &         "  "                    "  " _              *   "  "        o s       o*"  "*          o       *"
-"xxxxx               "  "                    "  " k  k  _        ****"  "****  ********  =***"  "*         ***      *"
-"xxx                 "  "                    "  "kakiaik          ***"  "                =  *"  "*       ***     g  *"
-"xx                  "  "                    "  "*******  ******  ***"  "             =******"  "*os    *  *  =******"
-"x                   "  "                    "  "                 ***"  " g o         =     *"  "******    *  =      "
-"x                   "  "    b               "  "        &        ***"  "*****     *****=****"  "*     *  **  =      "
-"xxxxx  ,,;,, a ,;,, "  ",,,                 "  "                 ***"  "               =   *"  "* s     ***  =    o "
-"xxxxxxxxxxxxxxxxxxxx"  "xxxx                "  "   _          _  ***"  "   o  o      f =   *"  "******=********* ***"
-"xxxxxxxxxxxxxxxxxxxx"  "xxxxxxx   ,,;,      "  "                 ***"  "  **  ** ***********"  "*     =     *   o   "
-"  xxx ` x  ` x  ` xx"  "xxxxx    xxxxxx     "  "                 ***"  "*        |  ` |   `|"  "  go  =   g *  ***  "
-"   ^    ^    ^    ^ "  " |      xxxxxxxxx   "  "                 ***"  "**       |    |    |"  "****  =  ****       "
-"                    "  " |        |    xxx  "  "     b      b    ***"  " **      |    |    |"  "      =     *       "
-"  .    s  .         "  " |. ,,,,s | . xxxxxx"  "x ,,, d,;,k d,,,,d d"  "    *  s | o  |  s |"  "      = o   *     g "
-"xxxx~~xxxxxxxxxxxxxx"  "xxxxxxxxxxxxx=xxxxxx"  "xxxxxxxxxxxxxxxxx***"  "=*******************"  "***************=****"
+    "    &           &   "  "                    "  "                  * "  "  `                *"  "*                  *"
+    "          &         "  "                    "  " _              *   "  "        o s       o*"  "*          o       *"
+    "xxxxx               "  "                    "  " k  k  _        ****"  "****  ********  =***"  "*         ***      *"
+    "xxx                 "  "                    "  "kakiaik          ***"  "                =  *"  "*       ***     g  *"
+    "xx                  "  "                    "  "*******  ******  ***"  "             =******"  "*os    *  *  =******"
+    "x                   "  "                    "  "                 ***"  " g o         =     *"  "******    *  =      "
+    "x                   "  "    b               "  "        &        ***"  "*****     *****=****"  "*     *  **  =      "
+    "xxxxx  ,,;,, a ,;,, "  ",,,                 "  "                 ***"  "               =   *"  "* s     ***  =    o "
+    "xxxxxxxxxxxxxxxxxxxx"  "xxxx                "  "   _          _  ***"  "   o  o      f =   *"  "******=********* ***"
+    "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxx   ,,;,      "  "                 ***"  "  **  ** ***********"  "*     =     *   o   "
+    "  xxx ` x  ` x  ` xx"  "xxxxx    xxxxxx     "  "                 ***"  "*        |  ` |   `|"  "  go  =   g *  ***  "
+    "   ^    ^    ^    ^ "  " |      xxxxxxxxx   "  "                 ***"  "**       |    |    |"  "****  =  ****       "
+    "                    "  " |        |    xxx  "  "     b      b    ***"  " **      |    |    |"  "      =     *       "
+    "  .    s  .         "  " |. ,,,,s | . xxxxxx"  "x ,,, d,;,k d,,,,d d"  "    *  s | o  |  s |"  "      = o   *     g "
+    "xxxx~~xxxxxxxxxxxxxx"  "xxxxxxxxxxxxx=xxxxxx"  "xxxxxxxxxxxxxxxxx***"  "=*******************"  "***************=****"
 
-"xxxx  xxxxxxxxxxxxxx"  "xxxxxxxxxxxxx=xxxxxx"  "xxxxxxxxxxxxxxxxxx**"  "********************"  "               =    "
-"xxx   `xxxxxxxxxxxxx"  "xxxxxxxxxxxx = xxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "**         * ooooo *"  "   b           =    "
-"x ^      xxx `  xxxx"  "xxx  ^  xxxx =  xxxx"  "xx   ^   b    ^   xx"  "**         d ooooo *"  "               =    "
-"x               `  x"  "x        |   =  ^  x"  "x                 xx"  "**     =************"  "          b    =    "
-"x       xxxxxx      "  "         | p =     |"  "      xxxxxxx     xx"  "** o   =    g       "  "               =    "
-"x      xxxxxxxx   xx"  "xxxx  xxxxxxxxxxxxxx"  "xxxx   xxxxx      xx"  "*****  =   *****    "  "               =    "
-"x   xxxxxxxxxxx  xxx"  "x ^    xxxxxxxxxxxxx"  "xxx               x*"  "**     =            "  "               =    "
-"xx  `xxxxxxxxx      "  "   b    |     | xxxx"  "xx            r     "  "       =    s       "  "                    "
-"xxx   xxxxxxxxxxxxxx"  "x       |     |     "  " | q         xxxxx**"  "**************=*****"  "*******      *******"
-"xxxx  xxxxxxxxxxxxxx"  "x    xxxxxxxxxxxxxxx"  "xxxxxx  x      xxxx*"  "**   b        =   **"  "***         *    ***"
-"xxxx  xxxxxxxxxxxxxx"  "x @    xxxxxxxxxxxxx"  "xxxx             xxx"  "x*  o   o     =   **"  "**       x        **"
-"xxxx  xxxxxxxxxxxxxx"  "xxxxx     | b       "  " |                xx"  "x***********      xx"  "xx       |        xx"
-"xxx    xxxxxxxxxxxxx"  "x  xxx    |         "  "e|                xx"  "xx                xx"  "xxx      |       xxx"
-"          .         "  "  k xxx~~xxx~~xx~~xx"  "xxx~~~~~~~~~~~~~~~xx"  "xx~~~~~~~~~~~~~~~~xx"  "xxxx~~~~~x~~~~~~xxxx"
-"xxxxxxxxxxxxxxxxxxxx"  "xxxxxxx~~xxx~~xx~~xx"  "xxxx~~~~~~~~~~~~~~xx"  "xx~~~~~~~~~~~~~~~~xx"  "xxxx~~**~x~*~~*~xxxx";
+    "xxxx  xxxxxxxxxxxxxx"  "xxxxxxxxxxxxx=xxxxxx"  "xxxxxxxxxxxxxxxxxx**"  "********************"  "               =    "
+    "xxx   `xxxxxxxxxxxxx"  "xxxxxxxxxxxx = xxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "**         * ooooo *"  "   b           =    "
+    "x ^      xxx `  xxxx"  "xxx  ^  xxxx =  xxxx"  "xx   ^   b    ^   xx"  "**         d ooooo *"  "               =    "
+    "x               `  x"  "x        |   =  ^  x"  "x                 xx"  "**     =************"  "          b    =    "
+    "x       xxxxxx      "  "         | p =     |"  "      xxxxxxx     xx"  "** o   =    g       "  "               =    "
+    "x      xxxxxxxx   xx"  "xxxx  xxxxxxxxxxxxxx"  "xxxx   xxxxx      xx"  "*****  =   *****    "  "               =    "
+    "x   xxxxxxxxxxx  xxx"  "x ^    xxxxxxxxxxxxx"  "xxx               x*"  "**     =            "  "               =    "
+    "xx  `xxxxxxxxx      "  "   b    |     | xxxx"  "xx            r     "  "       =    s       "  "                    "
+    "xxx   xxxxxxxxxxxxxx"  "x       |     |     "  " | q         xxxxx**"  "**************=*****"  "*******      *******"
+    "xxxx  xxxxxxxxxxxxxx"  "x    xxxxxxxxxxxxxxx"  "xxxxxx  x      xxxx*"  "**   b        =   **"  "***         *    ***"
+    "xxxx  xxxxxxxxxxxxxx"  "x @    xxxxxxxxxxxxx"  "xxxx             xxx"  "x*  o   o     =   **"  "**       x        **"
+    "xxxx  xxxxxxxxxxxxxx"  "xxxxx     | b       "  " |                xx"  "x***********      xx"  "xx       |        xx"
+    "xxx    xxxxxxxxxxxxx"  "x  xxx    |         "  "e|                xx"  "xx                xx"  "xxx      |       xxx"
+    "          .         "  "  k xxx~~xxx~~xx~~xx"  "xxx~~~~~~~~~~~~~~~xx"  "xx~~~~~~~~~~~~~~~~xx"  "xxxx~~~~~x~~~~~~xxxx"
+    "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxx~~xxx~~xx~~xx"  "xxxx~~~~~~~~~~~~~~xx"  "xx~~~~~~~~~~~~~~~~xx"  "xxxx~~**~x~*~~*~xxxx";

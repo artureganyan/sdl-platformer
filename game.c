@@ -21,6 +21,7 @@ enum {
 } gameState = STATE_PLAYING;
 
 Message currentMessage = MESSAGE_NONE;
+SDL_Texture* currentMessageTexture = NULL;
 
 
 void processPlayer()
@@ -109,44 +110,39 @@ void processPlayer()
     }
 
     // Screen borders
+    int lc = level->c;
+    int lr = level->r;
+    getObjectCell((Object*)&player, &r, &c);
+
     // ... Left
     if (player.x + CELL_HALF < 0) {
-        if (level->c > 0) {
-            setLevel(level->r, level->c - 1);
+        if (level->c > 0 && !levels[lr][lc - 1].map[r][COLUMN_COUNT - 1]->solid) {
+            setLevel(lr, lc - 1);
             player.x = LEVEL_WIDTH - CELL_SIZE + CELL_HALF - 1;
-
-            // To change position of objects we can simply play N frames
-            //for (i = 0; i < N; ++ i) {
-            //  processObjects();
-            //}
-            return;
         } else {
             player.x = prevX;
         }
     // ... Right
     } else if (player.x + CELL_HALF > LEVEL_WIDTH) {
-        if (level->c < LEVEL_XCOUNT - 1) {
-            setLevel(level->r, level->c + 1);
+        if (level->c < LEVEL_XCOUNT - 1 && !levels[lr][lc + 1].map[r][0]->solid) {
+            setLevel(lr, lc + 1);
             player.x = -CELL_HALF + 1;
-            return;
         } else {
             player.x = prevX;
         }
     // ... Bottom
     } else if (player.y + CELL_HALF > LEVEL_HEIGHT) {
-        if (level->r < LEVEL_YCOUNT - 1) {
-            setLevel(level->r + 1, level->c);
+        if (level->r < LEVEL_YCOUNT - 1 && !levels[lr + 1][lc].map[0][c]->solid) {
+            setLevel(lr + 1, lc);
             player.y = -CELL_HALF + 1;
-            return;
         } else {
             killPlayer();
         }
     // ... Top
     } else if (player.y + CELL_HALF < 0) {
-        if (level->r > 0) {
-            setLevel(level->r - 1, level->c);
+        if (level->r > 0 && !levels[lr - 1][lc].map[ROW_COUNT - 1][c]->solid) {
+            setLevel(lr - 1, lc);
             player.y = LEVEL_HEIGHT - CELL_SIZE + CELL_HALF - 1;
-            return;
         } else {
             // Player will simply fall down
         }
@@ -191,6 +187,16 @@ void killPlayer()
 void showMessage( Message message )
 {
     currentMessage = message;
+    gameState = STATE_MESSAGE;
+}
+
+void showText( const char* text )
+{
+    if (currentMessageTexture) {
+        SDL_free(currentMessageTexture);
+    }
+    currentMessageTexture = createText(text);
+    currentMessage = MESSAGE_TEXT;
     gameState = STATE_MESSAGE;
 }
 
@@ -273,8 +279,8 @@ void gameLoop()
     SDL_Event event;
     SDL_Rect levelRect = {0, 0, LEVEL_WIDTH, LEVEL_HEIGHT};
     const Uint8* keystate;
-    const int playerSpeed[2] = {3, 2}; // {4, 3} can be better
-    const int playerAnimSpeed[2] = {6, 6}; // {5, 5}
+    const int playerSpeed[2] = {3, 2};      // {4, 3} can be better
+    const int playerAnimSpeed[2] = {6, 6};  // {5, 5}
     int hideScreenCounter = -50;
     int jumpDenied = 0;
     int ladderTimer = 0;
@@ -304,6 +310,8 @@ void gameLoop()
     initArray(&player.items);
 
     initLevels();
+
+    showText("You woke up in the strange place...\nWhere are you?");
 
     keystate = SDL_GetKeyboardState(NULL);
 
@@ -493,7 +501,11 @@ void gameLoop()
             drawInventory(selection);
 
         } else if (gameState == STATE_MESSAGE) {
-            drawMessage(currentMessage, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
+            if (currentMessage != MESSAGE_TEXT) {
+                drawMessage(currentMessage, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
+            } else {
+                drawText(currentMessageTexture, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
+            }
 
         } else if (gameState == STATE_KILLED) {
             drawMessage(MESSAGE_LOSTLIFE, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);

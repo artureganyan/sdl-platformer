@@ -5,14 +5,15 @@
  ******************************************************************************/
 
 #include "render.h"
-
+#include <string.h>
 
 SDL_Window* window;
 SDL_Renderer* renderer;
 SDL_Texture* sprites;
 TTF_Font* font;
-SDL_Color textColor = {255, 255, 255};
+SDL_Color textColor = {255, 255, 255, 255};
 SDL_Texture* messageTextures[MESSAGE_COUNT];
+SDL_Texture* messageTexture;
 SDL_Rect levelRect = {0, BAR_HEIGHT, LEVEL_WIDTH, LEVEL_HEIGHT};
 SDL_Rect barRect = {0, 0, LEVEL_WIDTH, BAR_HEIGHT};
 //#define BAR_ENABLED
@@ -31,9 +32,9 @@ void initRender()
 #endif
 
     // Sprites
-    static const char* spritesFilePath = "image/sprites.bmp";
+    static const char* spritesPath = "image/sprites.bmp";
     static const Uint8 transparent[3] = {90, 82, 104};
-    SDL_Surface* bmp = SDL_LoadBMP(spritesFilePath);
+    SDL_Surface* bmp = SDL_LoadBMP(spritesPath);
     SDL_SetColorKey(bmp, SDL_TRUE, SDL_MapRGB(bmp->format, transparent[0], transparent[1], transparent[2]));
     sprites = SDL_CreateTextureFromSurface(renderer, bmp);
     SDL_FreeSurface(bmp);
@@ -51,9 +52,48 @@ void initRender()
 SDL_Texture* createText( const char* text )
 {
     if (!text) return NULL;
-    SDL_Surface* surface = TTF_RenderText_Solid(font, text, textColor);
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_FreeSurface(surface);
+    char* lines[64];
+    int lineCount = 0;
+    int textWidth = 0;
+
+    for (int i = 0, s = 0; ; ++ i, ++ s) {
+        const char c = text[i];
+        if (c == '\n' || c == '\0') {
+            char* line = (char*)malloc(s + 1);
+            strncpy(line, &text[i - s], s);
+            line[s] = 0;
+            lines[lineCount ++] = line;
+            int w, h;
+            TTF_SizeText(font, line, &w, &h);
+            if (w > textWidth) {
+                textWidth = w;
+            }
+            s = -1;
+            if (c == '\0') {
+                break;
+            }
+        }
+    }
+
+    const int LINE_HEIGHT = TTF_FontHeight(font);
+    const int LINE_SPACING = 10;
+    const int textHeight = LINE_HEIGHT + (LINE_HEIGHT + LINE_SPACING) * (lineCount - 1);
+    SDL_Texture* texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGB888,
+            SDL_TEXTUREACCESS_TARGET, textWidth, textHeight);
+    SDL_SetRenderTarget(renderer, texture);
+
+    for (int i = 0; i < lineCount; ++ i) {
+        int w, h;
+        TTF_SizeText(font, lines[i], &w, &h);
+        SDL_Rect destRect = {(textWidth - w) / 2, (LINE_HEIGHT + LINE_SPACING) * i, w, h};
+        SDL_Surface* lineSurface = TTF_RenderText_Solid(font, lines[i], textColor);
+        SDL_Texture* lineTexture = SDL_CreateTextureFromSurface(renderer, lineSurface);
+        SDL_RenderCopy(renderer, lineTexture, NULL, &destRect);
+        SDL_FreeSurface(lineSurface);
+        SDL_free(lineTexture);
+    }
+    SDL_SetRenderTarget(renderer, NULL);
+
     return texture;
 }
 
@@ -84,40 +124,38 @@ void drawBox( int x, int y, int w, int h )
     SDL_RenderFillRect(renderer, &rect);
 }
 
-// Draws text at (x, y) or at the center of rectangle (x, y, w, h) if w and h > 0
-void drawText( SDL_Texture* text, int x, int y, int w, int h )
+// Draws text at (x, y) or at the center of rectangle (x, y, w, h) if w and/or h > 0
+void drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox )
 {
     SDL_Rect rect = {x, y};
     SDL_QueryTexture(text, NULL, NULL, &rect.w, &rect.h);
+    if (withBox) {
+        const int padding = 10;
+        const SDL_Rect defaultRect = {x, y, CELL_SIZE * 5, CELL_SIZE * 2.5};
+        SDL_Rect boxRect = rect;
+        if (boxRect.w > defaultRect.w) {
+            boxRect.w += padding * 2;
+        } else {
+            boxRect.w = defaultRect.w;
+        }
+        if (boxRect.h > defaultRect.h) {
+            boxRect.h += padding * 2;
+        } else {
+            boxRect.h = defaultRect.h;
+        }
+        if (w > 0) boxRect.x += (w - boxRect.w) / 2;
+        if (h > 0) boxRect.y += (h - boxRect.h) / 2;
+        drawBox(boxRect.x, boxRect.y, boxRect.w, boxRect.h);
+    }
     if (w > 0) rect.x += (w - rect.w) / 2;
     if (h > 0) rect.y += (h - rect.h) / 2;
     SDL_RenderCopy(renderer, text, NULL, &rect);
 }
 
 // The same as drawText() but for specified Message
-void drawMessage( Message message, int x, int y, int w, int h, int box )
+void drawMessage( Message message, int x, int y, int w, int h, int withBox )
 {
-    SDL_Texture* text = messageTextures[message];
-    if (box) {
-        const int padding = 10;
-        const SDL_Rect defaultRect = {x, y, CELL_SIZE * 5, CELL_SIZE * 2.5};
-        SDL_Rect rect = {x, y};
-        SDL_QueryTexture(text, NULL, NULL, &rect.w, &rect.h);
-        if (rect.w > defaultRect.w) {
-            rect.w += padding * 2;
-        } else {
-            rect.w = defaultRect.w;
-        }
-        if (rect.h > defaultRect.h) {
-            rect.h += padding * 2;
-        } else {
-            rect.h = defaultRect.h;
-        }
-        if (w > 0) rect.x += (w - rect.w) / 2;
-        if (h > 0) rect.y += (h - rect.h) / 2;
-        drawBox(rect.x, rect.y, rect.w, rect.h);
-    }
-    drawText(text, x, y, w, h);
+    drawText(messageTextures[message], x, y, w, h, withBox);
 }
 
 void drawScreen()
@@ -210,7 +248,7 @@ void drawInventory( int selectionIndex )
             ObjectType* type = items->array[i]->type;
             drawObject(type, x, y, 0, SDL_FLIP_NONE);
             if (type->name) {
-                drawText(type->nameTexture, x + CELL_SIZE + 10, y, 0, CELL_SIZE);
+                drawText(type->nameTexture, x + CELL_SIZE + 10, y, 0, CELL_SIZE, 0);
             }
         }
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);

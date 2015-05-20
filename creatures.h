@@ -17,7 +17,6 @@ void onInit_Enemy( Object* e );
 void onFrame_Enemy( Object* e );
 void onHit_Enemy( Object* e );
 
-void onInit_EnemyShooter( Object* e );
 void onFrame_EnemyShooter( Object* e );
 
 void onInit_Shot( Object* e );
