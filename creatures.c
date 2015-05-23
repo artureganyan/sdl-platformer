@@ -378,7 +378,8 @@ void onFrame_Teleporting( Object* e )
 
 void onHit_Teleporting( Object* e )
 {
-    if (e->state >= -100) {
+    const int STATE_MOVING = MS_TO_FRAMES(4000); // Duplicate
+    if (e->state <= STATE_MOVING) {
         onHit_Enemy(e);
     }
 }
@@ -399,11 +400,14 @@ void onFrame_Mimicry( Object* e )
     } else if (e->state <= STATE_TRANSFORM) {
         if (!e->removed) {
             const int types[] =
-                {TYPE_COIN, TYPE_SPIKE_BOTTOM, TYPE_MUSHROOM1, TYPE_MUSHROOM2,
-                 TYPE_MUSHROOM3, TYPE_PILLAR_BOTTOM, TYPE_ROCK, TYPE_KEY, TYPE_GROUND_TOP};
+                { TYPE_COIN, TYPE_SPIKE_BOTTOM, TYPE_MUSHROOM1,
+                  TYPE_MUSHROOM2, TYPE_MUSHROOM3, TYPE_PILLAR_BOTTOM,
+                  TYPE_ROCK, TYPE_KEY, TYPE_GROUND_TOP };
             int r, c;
             getObjectCell(e, &r, &c);
             e->removed = 3;
+            e->x = c * CELL_SIZE;
+            e->y = r * CELL_SIZE;
             e->vy = level->map[r][c]->typeId;
             level->map[r][c] = &objectTypes[types[rand() % 9]];
         }
@@ -412,8 +416,8 @@ void onFrame_Mimicry( Object* e )
         int r, c;
         getObjectCell(e, &r, &c);
         level->map[r][c] = &objectTypes[e->vy];
-        e->vy = 0;
         e->removed = 0;
+        e->vy = 0;
         e->state = -rand() % 100;
     }
 
@@ -478,11 +482,13 @@ void onHit_Platform( Object* e )
 
 void onHit_Cloud( Object* e )
 {
-    if (player.vy > 0) {
-        player.y -= player.vy - 1;
-    } else if (player.vy < 0) {
-        //player.y -= player.vy + 2;
+    if (player.y + CELL_HALF < e->y + CELL_SIZE) {
+        if (player.vy > 0) {
+            player.y -= player.vy - 1;
+        } else if (player.vy < 0) {
+            //player.y -= player.vy + 2;
+        }
+        player.inAir = 0;
     }
-    player.inAir = 0;
 }
 

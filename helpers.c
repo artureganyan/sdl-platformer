@@ -89,8 +89,7 @@ int findNearDoor( int* r, int* c )
 
 Object* findNearItem( int r, int c )
 {
-    int i;
-    for (i = level->objects.count - 1; i >= 0; -- i) {
+    for (int i = level->objects.count - 1; i >= 0; -- i) {
         Object* obj = level->objects.array[i];
         if (obj->type->typeId > TYPE_ITEMS) {
             int or, oc;
@@ -105,8 +104,7 @@ Object* findNearItem( int r, int c )
 
 Object* findObject( Level* level, ObjectTypeId typeId )
 {
-    int i;
-    for (i = 0; i < level->objects.count; ++ i) {
+    for (int i = 0; i < level->objects.count; ++ i) {
         Object* obj = level->objects.array[i];
         if (obj->type->typeId == typeId) {
             return obj;

@@ -10,8 +10,8 @@
 #include "types.h"
 
 enum {
-    LEVEL_XCOUNT = 5,
-    LEVEL_YCOUNT = 2
+    LEVEL_XCOUNT = 1,
+    LEVEL_YCOUNT = 3
 };
 
 extern Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];

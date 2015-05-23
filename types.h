@@ -23,15 +23,15 @@ typedef enum
     FRAME_RATE = 48,
     FRAME_PERIOD = 1000 / FRAME_RATE,
     PLAYER_WIDTH = CELL_SIZE - 12,
-    PLAYER_HEIGHT = CELL_SIZE, //- 10,
+    PLAYER_HEIGHT = CELL_SIZE, // -10
     SYSTEM_TIMER_PERIOD = 1 // In ms, used to update frames
 } Constant;
 
 typedef enum
 {
     TYPE_NONE = 0,
+
     TYPE_TOPOBJECTS,
-    TYPE_PLAYER,
     TYPE_GHOST,
     TYPE_SCORPION,
     TYPE_SPIDER,
@@ -47,12 +47,15 @@ typedef enum
     TYPE_CLOUD1,
     TYPE_CLOUD2,
     TYPE_HEART,
+    TYPE_WALL_FAKE,
+    TYPE_GROUND_FAKE,
 
     TYPE_BACKOBJECTS,
+    TYPE_PLAYER,
     TYPE_WALL_TOP,
     TYPE_WALL,
-    TYPE_GROUND,
     TYPE_GROUND_TOP,
+    TYPE_GROUND,
     TYPE_WATER,
     TYPE_WATER_TOP,
     TYPE_GRASS,
@@ -78,6 +81,7 @@ typedef enum
     TYPE_COIN,
     TYPE_LADDER_PART,
     TYPE_PICK,
+    TYPE_ACTION,
     TYPE_COUNT, // Must always be last
 
     // General types (objects of these types can not be created)
@@ -165,12 +169,12 @@ typedef struct
 typedef struct {
     ObjectType* map[ROW_COUNT][COLUMN_COUNT];
     ObjectArray objects;
-    void (*init)();
     SDL_Texture* nameTexture;
     const char* name;
     int background;
     int r;
     int c;
+    void (*init)();
 } Level;
 
 void initArray( ObjectArray* objects );

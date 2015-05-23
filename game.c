@@ -27,7 +27,7 @@ SDL_Texture* currentMessageTexture = NULL;
 void processPlayer()
 {
     static const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
-    static const int dh = (CELL_SIZE - (PLAYER_HEIGHT - 10)) / 2;
+    static const int dh = (CELL_SIZE - (PLAYER_HEIGHT - 14)) / 2;
     const int prevX = player.x;
     int r, c, cell[4], body[4] /*unused*/;
     getObjectPos((Object*)&player, &r, &c, cell, body);
@@ -93,7 +93,8 @@ void processPlayer()
         // pressing "down", but still stays in non-ladder cell - then this
         // condition will take it off the ladder. That's not good, but if
         // we hold "down", on next frame player will climb down further.
-        if (!isLadder(r, c)) {
+        if (!isLadder(r, c) /*&& ((isLadder(r + 1, c) && player.vy < 0) ||
+                                (isLadder(r - 1, c) && player.vy > 0))*/) {
             player.onLadder = 0;
             setAnimation((Object*)&player, 0, 0, 4);
             if (player.vy < 0) {
@@ -132,9 +133,13 @@ void processPlayer()
         }
     // ... Bottom
     } else if (player.y + CELL_HALF > LEVEL_HEIGHT) {
-        if (level->r < LEVEL_YCOUNT - 1 && !levels[lr + 1][lc].map[0][c]->solid) {
-            setLevel(lr + 1, lc);
-            player.y = -CELL_HALF + 1;
+        if (level->r < LEVEL_YCOUNT - 1) {
+            if (!levels[lr + 1][lc].map[0][c]->solid) {
+                setLevel(lr + 1, lc);
+                player.y = -CELL_HALF + 1;
+            } else {
+                player.y = LEVEL_HEIGHT - CELL_HALF; // Not correct
+            }
         } else {
             killPlayer();
         }
@@ -151,8 +156,7 @@ void processPlayer()
 
 void processObjects()
 {
-    int i;
-    for (i = 0; i < level->objects.count; ++ i) {
+    for (int i = 0; i < level->objects.count; ++ i) {
         Object* obj = level->objects.array[i];
         if (obj == (Object*)&player || obj->removed == 1) {
             continue;
@@ -202,12 +206,26 @@ void showText( const char* text )
 
 void takeItem( Object* item )
 {
-    ObjectTypeId generalTypeId = item->type->generalTypeId;
-    if (generalTypeId == TYPE_COIN) {
+    const ObjectTypeId generalTypeId = item->type->generalTypeId;
+    const int lr = level->r;
+    const int lc = level->c;
+    int r, c;
+    getObjectCell(item, &r, &c);
+
+    if (generalTypeId == TYPE_ACTION) {
+        if (lr == 1 && lc == 0) {
+            if (item->state == '1') {
+                showText("You try to move the block on the floor,\nand it finally goes.");
+                level->map[r][c + 2] = level->map[r][c + 1];
+                level->map[r][c + 1] = &objectTypes[TYPE_NONE];
+            }
+        }
+    } else if (generalTypeId == TYPE_COIN) {
         player.coins += 1;
     } else {
         appendArray(&player.items, item);
     }
+
     item->removed = 2;
     cleanArray(&level->objects);
     item->removed = 0;
@@ -215,7 +233,8 @@ void takeItem( Object* item )
 
 void useItem( Object* item )
 {
-    ObjectTypeId generalTypeId = item->type->generalTypeId;
+    const ObjectTypeId generalTypeId = item->type->generalTypeId;
+    const ObjectTypeId typeId = item->type->typeId;
     int r = (player.y + CELL_HALF) / CELL_SIZE;
     int c = (player.x + CELL_HALF) / CELL_SIZE;
     int used = 0;
@@ -227,11 +246,10 @@ void useItem( Object* item )
             used = 1;
         }
 
-    } else if (item->type->typeId == TYPE_LADDER_PART) {
+    } else if (typeId == TYPE_LADDER_PART) {
         if (level->r == 0 && level->c == 0) {
             if (r == 7 && c == 5) {
-                int tr;
-                for (tr = r; tr >= 2; -- tr) {
+                for (int tr = r; tr >= 2; -- tr) {
                     createObjectInMap(level, TYPE_LADDER, tr, c);
                 }
                 item->removed = 1;
@@ -239,11 +257,10 @@ void useItem( Object* item )
             }
         }
 
-    } else if (item->type->typeId == TYPE_PICK) {
+    } else if (typeId == TYPE_PICK) {
         if (level->r == 0 && level->c == 0) {
             if (r == 7 && c == 5) {
-                int tr;
-                for (tr = r + 1; tr < r + 3; ++ tr) {
+                for (int tr = r + 1; tr < r + 3; ++ tr) {
                     createObjectInMap(level, TYPE_NONE, tr, c);
                 }
                 item->removed = 1;
@@ -300,6 +317,7 @@ void gameLoop()
     initTypes();
 
     player.type = &objectTypes[TYPE_PLAYER];
+    player.anim.direction = 1;
     player.anim.frameDelayCounter = 0;
     player.removed = 0;
     player.inAir = 0;
@@ -311,7 +329,7 @@ void gameLoop()
 
     initLevels();
 
-    showText("You woke up in the strange place...\nWhere are you?");
+    showText("You woke up in the locked room.\nWhere are you?");
 
     keystate = SDL_GetKeyboardState(NULL);
 
@@ -471,8 +489,11 @@ void gameLoop()
                 gameState = STATE_PLAYING;
                 prevKeyFrame = frameCount;
                 setAnimation((Object*)&player, 0, 0, 1);
+                player.health = 100;
                 player.x = 0;
                 player.y = 0;
+                player.onLadder = 0;
+                player.inAir = 0;
             }
         }
 

@@ -17,7 +17,7 @@ const char* messages[MESSAGE_COUNT] = {
         "No items",
         "Can not use",
         "You lost life",
-        "ABC рст 123 !?,.;:(text)",
+        "3",
         ""
     };
 
@@ -46,9 +46,10 @@ void freeArray( ObjectArray* objects )
     objects->count = 0;
 }
 
-void cleanArray( ObjectArray* objects ) {
-    int i, r;
-    for (i = 0, r = 0; i < objects->count; ++ i) {
+void cleanArray( ObjectArray* objects )
+{
+    int r = 0;
+    for (int i = 0; i < objects->count; ++ i) {
         Object* obj = objects->array[i];
         if (obj->removed == 1) {
             free(obj);
@@ -64,8 +65,7 @@ void cleanArray( ObjectArray* objects ) {
 
 void reorderDepth( ObjectArray* objects )
 {
-    int i, r;
-    for (i = 0, r = 0; i < objects->count; ++ i) {
+    for (int i = 0, r = 0; i < objects->count; ++ i) {
         Object* obj = objects->array[i];
         if (obj->type->typeId >= TYPE_BACKOBJECTS) {
             objects->array[i] = objects->array[r];
@@ -135,8 +135,10 @@ void initTypes()
     initType    ( TYPE_PLAYER,          1,      26,     TYPE_PLAYER,        0                                                                               );
     initType    ( TYPE_WALL_TOP,        4,      6,      TYPE_WALL,          1                                                                               );
     initType    ( TYPE_WALL,            5,      6,      TYPE_WALL,          1                                                                               );
+    initType    ( TYPE_WALL_FAKE,       5,      6,      TYPE_WALL_FAKE,     0                                                                               );
     initType    ( TYPE_GROUND_TOP,      6,      3,      TYPE_WALL,          1                                                                               );
     initType    ( TYPE_GROUND,          7,      3,      TYPE_WALL,          1                                                                               );
+    initType    ( TYPE_GROUND_FAKE,     7,      3,      TYPE_GROUND_FAKE,   0                                                                               );
     initType    ( TYPE_WATER_TOP,       8,      0,      TYPE_WATER,         0                                                                               );
     initType    ( TYPE_WATER,           9,      0,      TYPE_WATER,         0                                                                               );
     initType    ( TYPE_GRASS,           40,     0,      TYPE_BACKGROUND,    0                                                                               );
@@ -175,12 +177,13 @@ void initTypes()
     initTypeEx  ( TYPE_LADDER_PART,     43,     32,     TYPE_LADDER_PART,   0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Ladder");
     initTypeEx  ( TYPE_PICK,            43,     33,     TYPE_PICK,          0,  onInit_Object,          onFrame_Object,         onHit_Item,         "Pick"  );
     initType    ( TYPE_HEART,           57,     27,     TYPE_HEART,         0                                                                               );
+    initType    ( TYPE_ACTION,          0,      10,     TYPE_ACTION,        0                                                                               );
 
     objectTypes[TYPE_PLAYER].width = PLAYER_WIDTH;
     objectTypes[TYPE_PLAYER].height = PLAYER_HEIGHT;
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;
-    objectTypes[TYPE_SCORPION].width = 20;
+    objectTypes[TYPE_SCORPION].width = 18;
     objectTypes[TYPE_SCORPION].height = 22;
     objectTypes[TYPE_SPIDER].speed = 1;
     objectTypes[TYPE_SPIDER].width = 22;

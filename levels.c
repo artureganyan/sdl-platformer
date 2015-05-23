@@ -28,8 +28,10 @@ void initSprites_Castle()
 {
     initSprite( TYPE_WALL_TOP,          4,  6 );
     initSprite( TYPE_WALL,              5,  6 );
+    initSprite( TYPE_WALL_FAKE,         5,  6 );
     initSprite( TYPE_GROUND_TOP,        6,  3 );
     initSprite( TYPE_GROUND,            7,  3 );
+    initSprite( TYPE_GROUND_FAKE,       7,  3 );
     initSprite( TYPE_GRASS,             40, 0 );
     initSprite( TYPE_GRASS_BIG,         40, 1 );
     initSprite( TYPE_PILLAR_TOP,        26, 2 );
@@ -72,9 +74,8 @@ void initSprites_Underground()
 
 void initLevel( Level* level )
 {
-    int r, c;
-    for (r = 0; r < ROW_COUNT; ++ r) {
-        for (c = 0; c < COLUMN_COUNT; ++ c) {
+    for (int r = 0; r < ROW_COUNT; ++ r) {
+        for (int c = 0; c < COLUMN_COUNT; ++ c) {
             level->map[r][c] = &objectTypes[TYPE_NONE];
         }
     }
@@ -89,18 +90,16 @@ void initLevel( Level* level )
 
 void initLevels()
 {
-    int r, c, lr, lc;
-
-    for (lr = 0; lr < LEVEL_YCOUNT; ++ lr) {
-        for (lc = 0; lc < LEVEL_XCOUNT; ++ lc) {
+    for (int lr = 0; lr < LEVEL_YCOUNT; ++ lr) {
+        for (int lc = 0; lc < LEVEL_XCOUNT; ++ lc) {
             const char* string = levelString + LEVEL_YOFFSET * lr + COLUMN_COUNT * lc;
             Level* level = &levels[lr][lc];
             initLevel(level);
             level->r = lr;
             level->c = lc;
 
-            for (r = 0; r < ROW_COUNT; ++ r) {
-                for (c = 0; c < COLUMN_COUNT; ++ c) {
+            for (int r = 0; r < ROW_COUNT; ++ r) {
+                for (int c = 0; c < COLUMN_COUNT; ++ c) {
                     const char s = string[r * LEVEL_ROWOFFSET + c];
                     if (s == '*' || s == 'x') {
                         const int type = s == '*' ? TYPE_WALL : TYPE_GROUND;
@@ -177,6 +176,8 @@ void initLevels()
                         createObject(level, TYPE_PLATFORM, r, c);
                     } else if (s == '&') {
                         createObject(level, TYPE_CLOUD1, r, c);
+                    } else if (s >= '1' && s <= '9') {
+                        createObject(level, TYPE_ACTION, r, c)->state = s;
                     }
                 }
             }
@@ -184,6 +185,18 @@ void initLevels()
         }
     }
 
+    ///*
+    levels[0][0].init = initSprites_Forest;
+    levels[1][0].init = initSprites_Castle;
+    levels[2][0].init = initSprites_Underground;
+
+    for (int r = 13; r <= 14; ++ r) {
+        createObject(&levels[1][0], TYPE_WALL_FAKE, r, 4);
+        //levels[1][0].map[r][4] = &objectTypes[TYPE_WALL_FAKE];
+    }
+    //*/
+
+    /*
     createObject(&levels[0][0], TYPE_LADDER_PART, 7, 8);
     createObject(&levels[0][0], TYPE_PICK, 7, 12);
     createObject(&levels[1][2], TYPE_PLATFORM, 13, 3);
@@ -201,18 +214,19 @@ void initLevels()
     levels[0][0].name = "Forest";
     levels[1][0].name = "Cave";
     levels[1][1].name = "Hidden Entrance";
+    //*/
 
-    for (lr = 0; lr < LEVEL_YCOUNT; ++ lr) {
-        for (lc = 0; lc < LEVEL_XCOUNT; ++ lc) {
+    for (int lr = 0; lr < LEVEL_YCOUNT; ++ lr) {
+        for (int lc = 0; lc < LEVEL_XCOUNT; ++ lc) {
             Level* level = &levels[lr][lc];
             reorderDepth(&level->objects);
             level->nameTexture = createText(level->name);
         }
     }
 
-    setLevel(0, 2);
-    player.x = CELL_SIZE * 1;
-    player.y = CELL_SIZE * 1;
+    setLevel(1, 0);
+    player.x = CELL_SIZE * 7;
+    player.y = CELL_SIZE * 12;
 }
 
 void setLevel( int r, int c )
@@ -234,13 +248,14 @@ void setLevel( int r, int c )
 }
 
 
+/*
 const char* levelString =
 
     "    &           &   "  "                    "  "                  * "  "  `                *"  "*                  *"
-    "          &         "  "                    "  " _              *   "  "        o s       o*"  "*          o       *"
-    "xxxxx               "  "                    "  " k  k  _        ****"  "****  ********  =***"  "*         ***      *"
-    "xxx                 "  "                    "  "kakiaik          ***"  "                =  *"  "*       ***     g  *"
-    "xx                  "  "                    "  "*******  ******  ***"  "             =******"  "*os    *  *  =******"
+    "          &         "  "                    "  " _          **  *   "  "        o s       o*"  "*          o       *"
+    "xxxxx               "  "                    "  " k  k  _   **   ****"  "*=**  ********  =***"  "*         ***      *"
+    "xxx                 "  "                    "  "kakiaik   **     ***"  " =              =  *"  "*       ***     g  *"
+    "xx                  "  "                    "  "*******  ******  ***"  " =           =******"  "*os    *  *  =******"
     "x                   "  "                    "  "                 ***"  " g o         =     *"  "******    *  =      "
     "x                   "  "    b               "  "        &        ***"  "*****     *****=****"  "*     *  **  =      "
     "xxxxx  ,,;,, a ,;,, "  ",,,                 "  "                 ***"  "               =   *"  "* s     ***  =    o "
@@ -267,3 +282,45 @@ const char* levelString =
     "xxx    xxxxxxxxxxxxx"  "x  xxx    |         "  "e|                xx"  "xx                xx"  "xxx      |       xxx"
     "          .         "  "  k xxx~~xxx~~xx~~xx"  "xxx~~~~~~~~~~~~~~~xx"  "xx~~~~~~~~~~~~~~~~xx"  "xxxx~~~~~x~~~~~~xxxx"
     "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxx~~xxx~~xx~~xx"  "xxxx~~~~~~~~~~~~~~xx"  "xx~~~~~~~~~~~~~~~~xx"  "xxxx~~**~x~*~~*~xxxx";
+//*/
+
+
+///*
+const char* levelString =
+
+"                    "
+"  &              &  "
+"          &         "
+"                    "
+"                    "
+"                    "
+"                    "
+"                    "
+"                    "
+"                    "
+"   ,,               "
+"  xxx               "
+" xxxxx ,;, xxx  xx  "
+"xxxxxxxxxxxxxxxxxxxx"
+"xxxxxxxxxxxxxxxxxxxx"
+
+"********************"
+"********************"
+"                    "
+"             g      "
+"**********=*********"
+"          =         "
+"          =         "
+"    g     =         "
+"********************"
+"********************"
+"***      **  `   `  "
+"**       *          "
+"***1*    d          "
+"**** ***************"
+"**** ***************"
+
+"**** ***************"
+"xxxx xxxxxxxxxxxxxxx"
+"xxx   xxxxxxxxxxxxxx""x       xxxx   x  xx""xxx      ^  b  ^    ""xxxxxx              ""xxxxxxxxxxxxx  xxxxx""xxxxxxxxxxx     xxxx""xxx      |   x    | ""xxxx     |  xxx   | ""xxxxx    xxxxxxxxxxx"" xxxxxxxxxxxxxxxxxxx""  xxxxxxxxxxxxxxxxx ""xxxxxxxxxxxxxxxxxx  ""xxxxxxxxxxxxxxxxxxxx";
+//*/

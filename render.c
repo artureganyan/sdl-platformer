@@ -21,8 +21,6 @@ SDL_Rect barRect = {0, 0, LEVEL_WIDTH, BAR_HEIGHT};
 
 void initRender()
 {
-    int i;
-
     // Window and renderer
 #ifdef BAR_ENABLED
     SDL_CreateWindowAndRenderer(LEVEL_WIDTH, LEVEL_HEIGHT + BAR_HEIGHT, 0, &window, &renderer);
@@ -44,7 +42,7 @@ void initRender()
     font = TTF_OpenFont("font/PressStart2P.ttf", 12);
 
     // Messages
-    for (i = 0; i < MESSAGE_COUNT; ++ i) {
+    for (int i = 0; i < MESSAGE_COUNT; ++ i) {
         messageTextures[i] = createText(messages[i]);
     }
 }
@@ -52,6 +50,8 @@ void initRender()
 SDL_Texture* createText( const char* text )
 {
     if (!text) return NULL;
+
+    // Split text into lines
     char* lines[64];
     int lineCount = 0;
     int textWidth = 0;
@@ -75,6 +75,7 @@ SDL_Texture* createText( const char* text )
         }
     }
 
+    // Create texture
     const int LINE_HEIGHT = TTF_FontHeight(font);
     const int LINE_SPACING = 10;
     const int textHeight = LINE_HEIGHT + (LINE_HEIGHT + LINE_SPACING) * (lineCount - 1);
@@ -91,6 +92,7 @@ SDL_Texture* createText( const char* text )
         SDL_RenderCopy(renderer, lineTexture, NULL, &destRect);
         SDL_FreeSurface(lineSurface);
         SDL_free(lineTexture);
+        free(lines[i]);
     }
     SDL_SetRenderTarget(renderer, NULL);
 
@@ -127,12 +129,12 @@ void drawBox( int x, int y, int w, int h )
 // Draws text at (x, y) or at the center of rectangle (x, y, w, h) if w and/or h > 0
 void drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox )
 {
-    SDL_Rect rect = {x, y};
-    SDL_QueryTexture(text, NULL, NULL, &rect.w, &rect.h);
+    SDL_Rect textRect = {x, y};
+    SDL_QueryTexture(text, NULL, NULL, &textRect.w, &textRect.h);
     if (withBox) {
         const int padding = 10;
         const SDL_Rect defaultRect = {x, y, CELL_SIZE * 5, CELL_SIZE * 2.5};
-        SDL_Rect boxRect = rect;
+        SDL_Rect boxRect = textRect;
         if (boxRect.w > defaultRect.w) {
             boxRect.w += padding * 2;
         } else {
@@ -147,9 +149,9 @@ void drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox )
         if (h > 0) boxRect.y += (h - boxRect.h) / 2;
         drawBox(boxRect.x, boxRect.y, boxRect.w, boxRect.h);
     }
-    if (w > 0) rect.x += (w - rect.w) / 2;
-    if (h > 0) rect.y += (h - rect.h) / 2;
-    SDL_RenderCopy(renderer, text, NULL, &rect);
+    if (w > 0) textRect.x += (w - textRect.w) / 2;
+    if (h > 0) textRect.y += (h - textRect.h) / 2;
+    SDL_RenderCopy(renderer, text, NULL, &textRect);
 }
 
 // The same as drawText() but for specified Message
@@ -169,16 +171,18 @@ void drawScreen()
     SDL_RenderFillRect(renderer, &barBorders);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(renderer, &bar);
-    drawText(level->nameTexture, 0, 0, LEVEL_WIDTH, BAR_HEIGHT);
+    drawText(level->nameTexture, 0, 0, LEVEL_WIDTH, BAR_HEIGHT, 0);
     /*
     drawObject(&objectTypes[TYPE_HEART], 0, -2, 0, SDL_FLIP_NONE);
     drawObject(&objectTypes[TYPE_HEART], CELL_HALF, -2, 0, SDL_FLIP_NONE);
     drawObject(&objectTypes[TYPE_HEART], CELL_HALF*2, -2, 0, SDL_FLIP_NONE);
     */
     drawObject(&objectTypes[TYPE_HEART], 0, -1, 0, SDL_FLIP_NONE);
-    drawMessage(MESSAGE_TEST, 28, 0, 0, 32, 0);
+    drawMessage(MESSAGE_TEST, 28, 0, 0, BAR_HEIGHT + 4, 0);
+    const int b = 2;
     SDL_Rect healthBar = {49, CELL_HALF - 5, player.health / 1.5, 10};
-    SDL_Rect healthBox = {49 - 1, CELL_HALF - 5 - 1, 100 / 1.5 + 2, 10 + 2};
+    SDL_Rect healthBack = {healthBar.x, healthBar.y, 100 / 1.5, healthBar.h};
+    SDL_Rect healthBox = {healthBar.x - b, healthBar.y - b, 100 / 1.5 + b*2, healthBar.h + b*2};
     /*
     SDL_Rect healthBox1 = {50 - 2, CELL_HALF - 5 - 2, 50 + 4, 10 + 4};
     SDL_Rect healthBox2 = {50, CELL_HALF - 5, 50, 10};
@@ -186,24 +190,27 @@ void drawScreen()
     SDL_RenderFillRect(renderer, &healthBox1);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(renderer, &healthBox2);
-    */
+    //*/
+    ///*
     SDL_SetRenderDrawColor(renderer, 70, 70, 70, 255);
-    SDL_RenderDrawRect(renderer, &healthBox);
+    SDL_RenderFillRect(renderer, &healthBox);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderFillRect(renderer, &healthBack);
     SDL_SetRenderDrawColor(renderer, 190, 38, 51, 255);
     SDL_RenderFillRect(renderer, &healthBar);
+    //*/
     SDL_RenderSetViewport(renderer, &levelRect);
 #endif
 
     // Level
-    int r, c, i;
-    for (r = 0; r < ROW_COUNT; ++ r) {
-        for (c = 0; c < COLUMN_COUNT; ++ c) {
+    for (int r = 0; r < ROW_COUNT; ++ r) {
+        for (int c = 0; c < COLUMN_COUNT; ++ c) {
             drawObject(level->map[r][c], CELL_SIZE * c, CELL_SIZE * r, 0, SDL_FLIP_NONE);
         }
     }
 
     // Objects
-    for (i = 0; i < level->objects.count; ++ i) {
+    for (int i = 0; i < level->objects.count; ++ i) {
         Object* obj = level->objects.array[i];
         Animation* anim = &obj->anim;
         if (obj->removed) continue;
@@ -242,8 +249,7 @@ void drawInventory( int selectionIndex )
         const int x = content.x + CELL_HALF;
         const int i0 = selectionIndex >= MAX_ITEMS ? selectionIndex - MAX_ITEMS + 1 : 0;
         const int i1 = items->count > MAX_ITEMS ? i0 + MAX_ITEMS : items->count;
-        int i;
-        for (i = i0; i < i1; ++ i) {
+        for (int i = i0; i < i1; ++ i) {
             const int y = content.y + CELL_HALF + (CELL_SIZE + hspace) * (i - i0);
             ObjectType* type = items->array[i]->type;
             drawObject(type, x, y, 0, SDL_FLIP_NONE);
