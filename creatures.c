@@ -206,9 +206,13 @@ void onFrame_Bat( Object* e )
 {
     const int STATE_NEWDIRECTION = CELL_SIZE;
     int vy = e->state % 2 ? e->vy : 0;
-    if (move(e, e->vx, vy, 0)) {
+    int m = move(e, e->vx, vy, 0);
+    if (m & 1) {
         e->vx = -e->vx;
         e->anim.direction = -e->anim.direction;
+    }
+    if (m & 2) {
+        e->vy = -e->vy;
     }
     if (++ e->state >= STATE_NEWDIRECTION) {
         e->state = 0;
@@ -225,11 +229,12 @@ void onHit_Bat( Object* e )
 
 void onHit_Item( Object* item )
 {
+    /*
     ObjectTypeId generalTypeId = item->type->generalTypeId;
 
     if (generalTypeId == TYPE_COIN) {
         player.coins += 1;
-    } /*else if (generalTypeId == TYPE_KEY) {
+    }else if (generalTypeId == TYPE_KEY) {
         appendArray(&player.items, item);
     }  else {
         appendArray(&player.items, item);
@@ -237,7 +242,8 @@ void onHit_Item( Object* item )
 
     item->removed = 2;
     cleanArray(&level->objects);
-    item->removed = 0;*/
+    item->removed = 0;
+    */
 }
 
 
@@ -490,5 +496,15 @@ void onHit_Cloud( Object* e )
         }
         player.inAir = 0;
     }
+}
+
+
+void onInit_Torch( Object* e )
+{
+    setAnimation(e, 0, 1, 12);
+}
+
+void onHit_Torch( Object* e )
+{
 }
 

@@ -50,4 +50,7 @@ void onHit_Platform( Object* e );
 
 void onHit_Cloud( Object* e );
 
+void onInit_Torch( Object* e );
+void onHit_Torch( Object* e );
+
 #endif

@@ -156,6 +156,7 @@ void initTypes()
     initType    ( TYPE_PILLAR_TOP,      26,     2,      TYPE_BACKGROUND,    0                                                                               );
     initType    ( TYPE_PILLAR,          27,     2,      TYPE_BACKGROUND,    0                                                                               );
     initType    ( TYPE_PILLAR_BOTTOM,   28,     2,      TYPE_BACKGROUND,    0                                                                               );
+    initTypeEx  ( TYPE_TORCH,           53,     7,      TYPE_BACKGROUND,    0,  onInit_Torch,           onFrame_Object,         onHit_Torch,        "Torch" );
     initType    ( TYPE_DOOR,            10,     0,      TYPE_DOOR,          1                                                                               );
     initType    ( TYPE_LADDER,          12,     2,      TYPE_LADDER,        0                                                                               );
     initTypeEx  ( TYPE_GHOST,           7,      26,     TYPE_ENEMY,         0,  onInit_Enemy,           onFrame_EnemyShooter,   onHit_Object,       NULL    );
@@ -183,31 +184,38 @@ void initTypes()
     objectTypes[TYPE_PLAYER].height = PLAYER_HEIGHT;
     objectTypes[TYPE_GHOST].speed = 1;
     objectTypes[TYPE_SCORPION].speed = 1;
-    objectTypes[TYPE_SCORPION].width = 18;
-    objectTypes[TYPE_SCORPION].height = 22;
+    objectTypes[TYPE_SCORPION].width = 9;
+    objectTypes[TYPE_SCORPION].height = 11;
     objectTypes[TYPE_SPIDER].speed = 1;
-    objectTypes[TYPE_SPIDER].width = 22;
-    objectTypes[TYPE_SPIDER].height = 20;
+    objectTypes[TYPE_SPIDER].width = 11;
+    objectTypes[TYPE_SPIDER].height = 10;
     objectTypes[TYPE_RAT].speed = 1;
-    objectTypes[TYPE_RAT].width = 24;
-    objectTypes[TYPE_RAT].height = 22;
+    objectTypes[TYPE_RAT].width = 12;
+    objectTypes[TYPE_RAT].height = 11;
     objectTypes[TYPE_BLOB].speed = 1;
-    objectTypes[TYPE_BLOB].width = 22;
-    objectTypes[TYPE_BLOB].height = 20;
+    objectTypes[TYPE_BLOB].width = 11;
+    objectTypes[TYPE_BLOB].height = 10;
     objectTypes[TYPE_BAT].speed = 2;
-    objectTypes[TYPE_BAT].height = 18;
+    objectTypes[TYPE_BAT].height = 10;
     objectTypes[TYPE_FIREBALL].speed = 2;
-    objectTypes[TYPE_FIREBALL].width = 24;
-    objectTypes[TYPE_FIREBALL].height = 22;
+    objectTypes[TYPE_FIREBALL].width = 14;
+    objectTypes[TYPE_FIREBALL].height = 12;
     objectTypes[TYPE_SKELETON].speed = 1;
     objectTypes[TYPE_ICESHOT].speed = 5;
-    objectTypes[TYPE_ICESHOT].height = 14;
+    objectTypes[TYPE_ICESHOT].height = 7;
     objectTypes[TYPE_FIRESHOT].speed = 5;
-    objectTypes[TYPE_FIRESHOT].width = 8;
-    objectTypes[TYPE_FIRESHOT].height = 8;
-    objectTypes[TYPE_DROP].width = 8;
-    objectTypes[TYPE_DROP].height = 8;
-    objectTypes[TYPE_PLATFORM].width = CELL_SIZE;
-    objectTypes[TYPE_PLATFORM].height = CELL_SIZE;
+    objectTypes[TYPE_FIRESHOT].width = 4;
+    objectTypes[TYPE_FIRESHOT].height = 4;
+    objectTypes[TYPE_DROP].width = 4;
+    objectTypes[TYPE_DROP].height = 4;
+    objectTypes[TYPE_PLATFORM].width = SPRITE_SIZE;
+    objectTypes[TYPE_PLATFORM].height = SPRITE_SIZE;
     objectTypes[TYPE_PLATFORM].speed = 2;
+
+    for (ObjectTypeId t = TYPE_NONE; t < TYPE_COUNT; ++ t) {
+        if (t == TYPE_PLAYER) continue;
+        ObjectType* type = &objectTypes[t];
+        type->width *= SIZE_FACTOR;
+        type->height *= SIZE_FACTOR;
+    }
 }

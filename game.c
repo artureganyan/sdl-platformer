@@ -218,17 +218,18 @@ void takeItem( Object* item )
                 showText("You try to move the block on the floor,\nand it finally goes.");
                 level->map[r][c + 2] = level->map[r][c + 1];
                 level->map[r][c + 1] = &objectTypes[TYPE_NONE];
+            } else if (item->state == '2') {
+                showText("The door is locked.");
             }
         }
     } else if (generalTypeId == TYPE_COIN) {
         player.coins += 1;
     } else {
         appendArray(&player.items, item);
+        item->removed = 2;
+        cleanArray(&level->objects);
+        item->removed = 0;
     }
-
-    item->removed = 2;
-    cleanArray(&level->objects);
-    item->removed = 0;
 }
 
 void useItem( Object* item )
@@ -514,9 +515,16 @@ void gameLoop()
                     255);
             SDL_RenderClear(renderer);
 
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
             processPlayer();
             processObjects();
             drawScreen();
+
+            /*
+            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 100);
+            SDL_RenderFillRect(renderer, &levelRect);
+            */
 
         } else if (gameState == STATE_INVENTORY) {
             drawInventory(selection);

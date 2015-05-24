@@ -10,7 +10,7 @@
 #include "types.h"
 
 enum {
-    LEVEL_XCOUNT = 1,
+    LEVEL_XCOUNT = 4,
     LEVEL_YCOUNT = 3
 };
 

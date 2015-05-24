@@ -176,6 +176,8 @@ void initLevels()
                         createObject(level, TYPE_PLATFORM, r, c);
                     } else if (s == '&') {
                         createObject(level, TYPE_CLOUD1, r, c);
+                    } else if (s == '!') {
+                        createObject(level, TYPE_TORCH, r, c);
                     } else if (s >= '1' && s <= '9') {
                         createObject(level, TYPE_ACTION, r, c)->state = s;
                     }
@@ -187,12 +189,16 @@ void initLevels()
 
     ///*
     levels[0][0].init = initSprites_Forest;
-    levels[1][0].init = initSprites_Castle;
+    levels[1][0].init = initSprites_Forest;
+    levels[1][1].init = initSprites_Forest;
+    levels[1][2].init = initSprites_Castle;
     levels[2][0].init = initSprites_Underground;
+    levels[2][1].init = initSprites_Underground;
+    levels[2][2].init = initSprites_Underground;
+    levels[2][3].init = initSprites_Underground;
 
     for (int r = 13; r <= 14; ++ r) {
-        createObject(&levels[1][0], TYPE_WALL_FAKE, r, 4);
-        //levels[1][0].map[r][4] = &objectTypes[TYPE_WALL_FAKE];
+        createObject(&levels[1][3], TYPE_WALL_FAKE, r, 4);;
     }
     //*/
 
@@ -224,15 +230,19 @@ void initLevels()
         }
     }
 
+    /*
     setLevel(1, 0);
     player.x = CELL_SIZE * 7;
     player.y = CELL_SIZE * 12;
+    */
+
+    setLevel(1, 3);
+    player.x = CELL_SIZE * 7;
+    player.y = CELL_SIZE * 2;
 }
 
 void setLevel( int r, int c )
 {
-    //int count = 48 + rand() % 24;
-
     level = &levels[r][c];
     if (level->init) {
         level->init();
@@ -241,6 +251,7 @@ void setLevel( int r, int c )
     // To change position of objects we simply play few frames
     // \todo This can kill player!
     /*
+    int count = 48 + rand() % 24;
     while (count --) {
         processObjects();
     }
@@ -288,39 +299,39 @@ const char* levelString =
 ///*
 const char* levelString =
 
-"                    "
-"  &              &  "
-"          &         "
-"                    "
-"                    "
-"                    "
-"                    "
-"                    "
-"                    "
-"                    "
-"   ,,               "
-"  xxx               "
-" xxxxx ,;, xxx  xx  "
-"xxxxxxxxxxxxxxxxxxxx"
-"xxxxxxxxxxxxxxxxxxxx"
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "
 
-"********************"
-"********************"
-"                    "
-"             g      "
-"**********=*********"
-"          =         "
-"          =         "
-"    g     =         "
-"********************"
-"********************"
-"***      **  `   `  "
-"**       *          "
-"***1*    d          "
-"**** ***************"
-"**** ***************"
+"                    "  "              ******"  "                    "  "********************"
+"     &              "  "   &          ******"  "                    "  "********************"
+"               &    "  "        &           "  "                    "  "                    "
+"                    "  "              *     "  "                    "  "             g      "
+"                    "  "              ******"  "                    "  "**********=*********"
+"                    "  "              ******"  "                    "  "          =         "
+"                    "  "              ******"  "                    "  "    !     =    !    "
+"                    "  "              ******"  "                    "  "    g     =         "
+"                    "  "              ******"  "                    "  "********************"
+"                    "  "              ******"  "                    "  "********************"
+"                    "  "              ******"  "                    "  "***      **  `   `  "
+"                    "  "              ***   "  "                    "  "**       *          "
+"x         ,, ,,,    "  "    ,;,       d     "  "                    "  "***1*   2d          "
+"xx  =   xxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "                    "  "**** ***************"
+"xxx = xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "                    "  "**** ***************"
 
-"**** ***************"
-"xxxx xxxxxxxxxxxxxxx"
-"xxx   xxxxxxxxxxxxxx""x       xxxx   x  xx""xxx      ^  b  ^    ""xxxxxx              ""xxxxxxxxxxxxx  xxxxx""xxxxxxxxxxx     xxxx""xxx      |   x    | ""xxxx     |  xxx   | ""xxxxx    xxxxxxxxxxx"" xxxxxxxxxxxxxxxxxxx""  xxxxxxxxxxxxxxxxx ""xxxxxxxxxxxxxxxxxx  ""xxxxxxxxxxxxxxxxxxxx";
+"xxxx=   xxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "********************"  "**** ***************"
+"xxxxx    xx  xx xxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxx xxxxxxxxxxxxxxx"
+"xxxxxxx      |      "  "      |        |    "  "   x  x `  xxxxxxxxx"  "xxx   xxxxxxxxxxxxxx""xxxxxxxxx .  |    xx"  "x    xxx       |  xx"  "x  `      xxxxx` xxx"  "x       xxxx   x  xx""xxxxxxxxxxxxxxxxxxxx"  "xxx xxxxxx   xxxxxxx"  "xx   b       ^   xxx"  "xxx      ^  b  ^   x""xxxx  xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxx xxxx     xxxx"  "xxxxxx             x""xxx    xxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxx    xxx"  "xxxxxxxxxxxxx  xxxxx""xx    xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxx   xx"  "xxxxxxxxxxx     xxxx""xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxx  |    xxxx"  "xxx   x  |   x    xx""xxxxxxxxxx  xxxxxxxx"  "xxx xxxxxxxxxxx  xxx"  "xxxxxxxx   |   xxxxx"  "xxxx     |  xxx   xx""xxx  xx      xx  xx "  "xx   xx   xx  ^   xx"  "xxx ^ x   xxxx  xxxx"  "x        xxxxxxxxxxx"" ^    ^  xx         "  "     ^             x"  "x        xxxxxx     "  "   xxxxxxxxxxxxxxxxx""   r    xxxx        "  "        xxxxx     xx"  "xx    . xxxxxxxx xxx"  "xx  xxxxxxxxxxxxxxx ""xxxxxxxxxxxxx~~xx~~x"  "~~xx~~xxxxxxxx . xxx"  "xxx  xxxxxxxxxxxxxxx"  "xx~~xxxxxxxxxxxxxx  ""xxxxxxxxxxxx~~~~~~~~"  "~~~~~~xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xx~~xxxxxxxxxxxxxxxx";
 //*/
