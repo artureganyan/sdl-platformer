@@ -12,9 +12,10 @@ enum {
     LEVEL_ROWOFFSET = COLUMN_COUNT * LEVEL_XCOUNT
 };
 
-Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];
+//Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];
 Level* level = &levels[0][0];
 extern const char* levelString;
+//extern void (*initFuctions)[][];
 
 
 void initSprite( ObjectTypeId typeId, int spriteRow, int spriteColumn )
@@ -24,7 +25,7 @@ void initSprite( ObjectTypeId typeId, int spriteRow, int spriteColumn )
     type->sprite.x = (spriteColumn) * SPRITE_SIZE;
 }
 
-void initSprites_Castle()
+void init_Castle()
 {
     initSprite( TYPE_WALL_TOP,          4,  6 );
     initSprite( TYPE_WALL,              5,  6 );
@@ -41,7 +42,7 @@ void initSprites_Castle()
     initSprite( TYPE_LADDER,            12, 2 );
 }
 
-void initSprites_Forest()
+void init_Forest()
 {
     initSprite( TYPE_WALL_TOP,          4,  6 );
     initSprite( TYPE_WALL,              5,  6 );
@@ -56,7 +57,7 @@ void initSprites_Forest()
     initSprite( TYPE_LADDER,            12, 2 );
 }
 
-void initSprites_Underground()
+void init_Underground()
 {
     initSprite( TYPE_WALL_TOP,          4,  6 );
     initSprite( TYPE_WALL,              5,  6 );
@@ -79,10 +80,10 @@ void initLevel( Level* level )
             level->map[r][c] = &objectTypes[TYPE_NONE];
         }
     }
-    level->init = initSprites_Castle;
     level->background = 0x000000;
     level->nameTexture = NULL;
     level->name = "Some screen";
+    //level->init = init_Castle;
 
     initArray(&level->objects);
     appendArray(&level->objects, (Object*)&player);
@@ -90,13 +91,17 @@ void initLevel( Level* level )
 
 void initLevels()
 {
+    struct { int r, c; } startLevel;
+
     for (int lr = 0; lr < LEVEL_YCOUNT; ++ lr) {
         for (int lc = 0; lc < LEVEL_XCOUNT; ++ lc) {
             const char* string = levelString + LEVEL_YOFFSET * lr + COLUMN_COUNT * lc;
+
             Level* level = &levels[lr][lc];
             initLevel(level);
             level->r = lr;
             level->c = lc;
+            //level->init = initFunctions[lr][lc];
 
             for (int r = 0; r < ROW_COUNT; ++ r) {
                 for (int c = 0; c < COLUMN_COUNT; ++ c) {
@@ -180,6 +185,11 @@ void initLevels()
                         createObject(level, TYPE_TORCH, r, c);
                     } else if (s >= '1' && s <= '9') {
                         createObject(level, TYPE_ACTION, r, c)->state = s;
+                    } else if (s == 'P') {
+                        startLevel.r = lr;
+                        startLevel.c = lc;
+                        player.y = CELL_SIZE * r;
+                        player.x = CELL_SIZE * c;
                     }
                 }
             }
@@ -187,7 +197,7 @@ void initLevels()
         }
     }
 
-    ///*
+    /*
     levels[0][0].init = initSprites_Forest;
     levels[1][0].init = initSprites_Forest;
     levels[1][1].init = initSprites_Forest;
@@ -196,9 +206,9 @@ void initLevels()
     levels[2][1].init = initSprites_Underground;
     levels[2][2].init = initSprites_Underground;
     levels[2][3].init = initSprites_Underground;
-
+    */
     for (int r = 13; r <= 14; ++ r) {
-        createObject(&levels[1][3], TYPE_WALL_FAKE, r, 4);;
+        createObject(&levels[1][4], TYPE_WALL_FAKE, r, 4);
     }
     //*/
 
@@ -225,20 +235,12 @@ void initLevels()
     for (int lr = 0; lr < LEVEL_YCOUNT; ++ lr) {
         for (int lc = 0; lc < LEVEL_XCOUNT; ++ lc) {
             Level* level = &levels[lr][lc];
-            reorderDepth(&level->objects);
+            sortArrayByDepth(&level->objects);
             level->nameTexture = createText(level->name);
         }
     }
 
-    /*
-    setLevel(1, 0);
-    player.x = CELL_SIZE * 7;
-    player.y = CELL_SIZE * 12;
-    */
-
-    setLevel(1, 3);
-    player.x = CELL_SIZE * 7;
-    player.y = CELL_SIZE * 2;
+    setLevel(startLevel.r, startLevel.c);
 }
 
 void setLevel( int r, int c )
@@ -296,42 +298,51 @@ const char* levelString =
 //*/
 
 
-///*
 const char* levelString =
 
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
-"                    "  "                    "  "                    "  "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
+"                    "  "                    "  "                    "  "                    "  "                    " "                    "
 
-"                    "  "              ******"  "                    "  "********************"
-"     &              "  "   &          ******"  "                    "  "********************"
-"               &    "  "        &           "  "                    "  "                    "
-"                    "  "              *     "  "                    "  "             g      "
-"                    "  "              ******"  "                    "  "**********=*********"
-"                    "  "              ******"  "                    "  "          =         "
-"                    "  "              ******"  "                    "  "    !     =    !    "
-"                    "  "              ******"  "                    "  "    g     =         "
-"                    "  "              ******"  "                    "  "********************"
-"                    "  "              ******"  "                    "  "********************"
-"                    "  "              ******"  "                    "  "***      **  `   `  "
-"                    "  "              ***   "  "                    "  "**       *          "
-"x         ,, ,,,    "  "    ,;,       d     "  "                    "  "***1*   2d          "
-"xx  =   xxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "                    "  "**** ***************"
-"xxx = xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "                    "  "**** ***************"
+"                    "  "                    "  "              ******"  "********************"  "********************" "                    "
+"     &      &       "  "     &              "  "   &          ******"  "********************"  "********************" "                    "
+"                    "  "               &    "  "        &           "  "                    "  "                    " "                    "
+"        &           "  "                    "  "              *     "  "                    "  "             g      " "                    "
+"                    "  "                    "  "              ******"  "********************"  "**********=*********" "                    "
+"                    "  "                    "  "              ******"  "**               |  "  "          =         " "                    "
+"                    "  "                    "  "              ******"  "**               |  "  "    !     =    !    " "                    "
+"                    "  " ,;                 "  "              ******"  "**               |  "  "    g     =         " "                    "
+"xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxx           "  "              ******"  "**              ****"  "********************" "                    "
+"xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxx            "  "              ******"  "**             *****"  "********************" "                    "
+"xxxxxxxxxxxxxxxxxxxx"  "xxxxxxx             "  "              ******"  "**            ******"  "***      **  `   `  " "                    "
+"xxxxxxxxxxxxxxxxxxxx"  "xxx  |              "  "              ***   "  "      !      *******"  "**       *          " "                    "
+"xxxxxxxxxxxxxxxxxxxx"  "x    |  @   ,,,     "  "     ,;, P          "  "            ********"  "***1*   2d          " "                    "
+"xxxxxxxxxxxxxxxxxxxx"  "x    xxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "********************"  "**** ***************" "                    "
+"xxxxxxxxxxxxxxxxxxxx"  "x  xxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "********************"  "**** ***************" "                    "
 
-"xxxx=   xxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "********************"  "**** ***************"
-"xxxxx    xx  xx xxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxx xxxxxxxxxxxxxxx"
-"xxxxxxx      |      "  "      |        |    "  "   x  x `  xxxxxxxxx"  "xxx   xxxxxxxxxxxxxx""xxxxxxxxx .  |    xx"  "x    xxx       |  xx"  "x  `      xxxxx` xxx"  "x       xxxx   x  xx""xxxxxxxxxxxxxxxxxxxx"  "xxx xxxxxx   xxxxxxx"  "xx   b       ^   xxx"  "xxx      ^  b  ^   x""xxxx  xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxx xxxx     xxxx"  "xxxxxx             x""xxx    xxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxx    xxx"  "xxxxxxxxxxxxx  xxxxx""xx    xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxx   xx"  "xxxxxxxxxxx     xxxx""xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxx  |    xxxx"  "xxx   x  |   x    xx""xxxxxxxxxx  xxxxxxxx"  "xxx xxxxxxxxxxx  xxx"  "xxxxxxxx   |   xxxxx"  "xxxx     |  xxx   xx""xxx  xx      xx  xx "  "xx   xx   xx  ^   xx"  "xxx ^ x   xxxx  xxxx"  "x        xxxxxxxxxxx"" ^    ^  xx         "  "     ^             x"  "x        xxxxxx     "  "   xxxxxxxxxxxxxxxxx""   r    xxxx        "  "        xxxxx     xx"  "xx    . xxxxxxxx xxx"  "xx  xxxxxxxxxxxxxxx ""xxxxxxxxxxxxx~~xx~~x"  "~~xx~~xxxxxxxx . xxx"  "xxx  xxxxxxxxxxxxxxx"  "xx~~xxxxxxxxxxxxxx  ""xxxxxxxxxxxx~~~~~~~~"  "~~~~~~xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xx~~xxxxxxxxxxxxxxxx";
-//*/
+"xxxxxxxxxxxxxxxxxxxx"  "xx  xxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "********************"  "**** ***************" "********************"
+"xxxxxxxxxxxxxxxxxxxx"  "xxx      xx  xx xxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxx xxxxxxxxxxxxxxx" "xxxxxxxxxxxxxxxxxxxx"
+"xxxxxxxxxxxxxxxxxxxx"  "xxxxxxx      |      "  "      |        |    "  "   x  x `  xxxxxxxxx"  "xx    xxxxxxxxxxxxxx" "xxxxxxxxxxxxxxxxxxxx""xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxx .  |    xx"  "x    xxx       |  xx"  "x  `      xxxxx` xxx"  "x       xxxx   x  xx" "xxxxxxxxxxxxxxxxxxxx""xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxx xxxxxx   xxxxxxx"  "xx   b       ^   xxx"  "xxx      ^  b  ^   x" "x    xxxxxxxxxxxxxxx""xxxxxxxxxxxxxxxxxxxx"  "xxxx  xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxx xxxx     xxxx"  "xxxxxx           .  " "       xxxxxxx  xxxx""xxxxxxxxxxxxxxxxxxxx"  "xxx    xxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxx    xxx"  "xxxxxxxxxxxxx  xxxxx" "x    xxxxxxxx    xxx""xxxxxxxxxxxxxxxxxxxx"  "xx    xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxx   xx"  "xxxxxxxxxxx     xxxx" "xxx xxxxxxxx        ""xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxx  |    xxxx"  "xxx   x  |   x    xx" "xxxxxxxxxxxxxx    xx""xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxx  xxxxxxxx"  "xxx xxxxxxxxxxx  xxx"  "xxxxxxxx   |   xxxxx"  "xxxx     |  xxx   xx" "xxxxxxxxxxxxxxxx xxx""xxxxxxxxxxxxxxxxxxxx"  "xxx  xx      xx  xx "  "xx   xx   xx  ^   xx"  "xxx ^ x   xxxx  xxxx"  "x        xxxxxxxxxxx" "xxxxxxxxxxx` xxxxxxx""xxxxxxxxxxxxxxxxxxxx"  " ^    ^  xx         "  "     ^             x"  "x        xxxxxx     "  "   xxxxxxxxxxxxxxxxx" "xxxxxxxxx     xxxxxx""xxxxxxxxxxxxxxxxxxxx"  "   r    xxxx        "  "        xxxxx     xx"  "xx    . xxxxxxxx xxx"  "xx  xxxxxxxxxxxxxxx " " ^ xxxxx   xxxxxxxxx""xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxx~~xx~~x"  "~~xx~~xxxxxxxx . xxx"  "xxx  xxxxxxxxxxxxxxx"  "xx~~xxxxxxxxxxxxxx  " "      .  xxxxxxxxxxx""xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxx~~~~~~~~"  "~~~~~~xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xx~~xxxxxxxxxxxxxxxx" "x xx xxxxxxxxxxxxxxx";
+
+
+Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT] = {
+
+{{.init = init_Forest}, {.init = init_Forest},  {.init = init_Forest},  {.init = init_Forest},  {.init = init_Forest},  {.init = init_Forest}},
+
+{{.init = init_Forest}, {.init = init_Forest},  {.init = init_Forest},  {.init = init_Castle},  {.init = init_Castle},  {.init = init_Castle}},
+
+{{.init = init_Underground}, {.init = init_Underground}, {.init = init_Underground}, {.init = init_Underground}, {.init = init_Underground}, {.init = init_Underground}}
+
+};

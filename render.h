@@ -10,10 +10,7 @@
 #include "types.h"
 #include "SDL_ttf.h"
 
-extern SDL_Window* window;
 extern SDL_Renderer* renderer;
-extern SDL_Texture* sprites;
-extern TTF_Font* font;
 
 void initRender();
 SDL_Texture* createText( const char* text );

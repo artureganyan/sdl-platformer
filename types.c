@@ -63,16 +63,14 @@ void cleanArray( ObjectArray* objects )
     objects->count -= r;
 }
 
-void reorderDepth( ObjectArray* objects )
+int compareByDepth( const void* obj1, const void* obj2 )
 {
-    for (int i = 0, r = 0; i < objects->count; ++ i) {
-        Object* obj = objects->array[i];
-        if (obj->type->typeId >= TYPE_BACKOBJECTS) {
-            objects->array[i] = objects->array[r];
-            objects->array[r] = obj;
-            r += 1;
-        }
-    }
+    return ((Object*)obj2)->type->typeId - ((Object*)obj1)->type->typeId;
+}
+
+void sortArrayByDepth( ObjectArray* objects )
+{
+    qsort(objects->array, objects->count, sizeof(Object*), compareByDepth);
 }
 
 
@@ -114,8 +112,8 @@ void initTypeEx( ObjectTypeId typeId, int spriteRow, int spriteColumn, ObjectTyp
     type->nameTexture = createText(type->name);
     type->solid = solid;
     type->speed = 0;
-    type->width = CELL_SIZE;
-    type->height = CELL_SIZE;
+    type->width = SPRITE_SIZE;
+    type->height = SPRITE_SIZE;
     type->onInit = onInit;
     type->onFrame = onFrame;
     type->onHit = onHit;

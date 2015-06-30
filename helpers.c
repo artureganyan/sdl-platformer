@@ -91,7 +91,7 @@ Object* findNearItem( int r, int c )
 {
     for (int i = level->objects.count - 1; i >= 0; -- i) {
         Object* obj = level->objects.array[i];
-        if (obj->type->typeId > TYPE_ITEMS) {
+        if (obj->type->typeId > TYPE_ITEMS && !obj->removed) {
             int or, oc;
             getObjectCell(obj, &or, &oc);
             if (or == r && oc == c) {

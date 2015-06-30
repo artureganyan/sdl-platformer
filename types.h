@@ -21,7 +21,7 @@ typedef enum
     ROW_COUNT = (LEVEL_HEIGHT + CELL_SIZE - 1) / CELL_SIZE,
     COLUMN_COUNT = (LEVEL_WIDTH + CELL_SIZE - 1) / CELL_SIZE,
     CELL_COUNT = ROW_COUNT * COLUMN_COUNT,
-    FRAME_RATE = 48,
+    FRAME_RATE = 60,
     FRAME_PERIOD = 1000 / FRAME_RATE,
     PLAYER_WIDTH = CELL_SIZE - 12,
     PLAYER_HEIGHT = CELL_SIZE, // -10
@@ -32,7 +32,6 @@ typedef enum
 {
     TYPE_NONE = 0,
 
-    TYPE_TOPOBJECTS,
     TYPE_GHOST,
     TYPE_SCORPION,
     TYPE_SPIDER,
@@ -47,12 +46,11 @@ typedef enum
     TYPE_PLATFORM,
     TYPE_CLOUD1,
     TYPE_CLOUD2,
-    TYPE_HEART,
     TYPE_WALL_FAKE,
     TYPE_GROUND_FAKE,
-
-    TYPE_BACKOBJECTS,
     TYPE_PLAYER,
+
+    TYPE_HEART,
     TYPE_WALL_TOP,
     TYPE_WALL,
     TYPE_GROUND_TOP,
@@ -84,6 +82,7 @@ typedef enum
     TYPE_LADDER_PART,
     TYPE_PICK,
     TYPE_ACTION,
+
     TYPE_COUNT, // Must always be last
 
     // General types (objects of these types can not be created)

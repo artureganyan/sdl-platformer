@@ -507,4 +507,3 @@ void onInit_Torch( Object* e )
 void onHit_Torch( Object* e )
 {
 }
-
