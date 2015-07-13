@@ -11,16 +11,6 @@
 ObjectType objectTypes[TYPE_COUNT];
 Player player;
 
-const char* messages[MESSAGE_COUNT] = {
-        "",
-        "Game Over",
-        "No items",
-        "Can not use",
-        "You lost life",
-        "3",
-        ""
-    };
-
 
 void initArray( ObjectArray* objects )
 {
@@ -109,7 +99,6 @@ void initTypeEx( ObjectTypeId typeId, int spriteRow, int spriteColumn, ObjectTyp
     type->typeId = typeId;
     type->generalTypeId = generalTypeId;
     type->name = name;
-    type->nameTexture = createText(type->name);
     type->solid = solid;
     type->speed = 0;
     type->width = SPRITE_SIZE;
@@ -124,7 +113,6 @@ void initType( ObjectTypeId typeId, int spriteRow, int spriteColumn, ObjectTypeI
     initTypeEx(typeId, spriteRow, spriteColumn, generalTypeId, solid,
             onInit_Object, onFrame_Object, onHit_Object, NULL);
 }
-
 
 void initTypes()
 {
@@ -216,4 +204,18 @@ void initTypes()
         type->width *= SIZE_FACTOR;
         type->height *= SIZE_FACTOR;
     }
+}
+
+void initPlayer()
+{
+    player.type = &objectTypes[TYPE_PLAYER];
+    player.anim.direction = 1;
+    player.anim.frameDelayCounter = 0;
+    player.removed = 0;
+    player.inAir = 0;
+    player.onLadder = 0;
+    player.health = 100;
+    player.lives = 3;
+    player.coins = 0;
+    initArray(&player.items);
 }

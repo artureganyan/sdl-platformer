@@ -13,11 +13,9 @@
 extern SDL_Renderer* renderer;
 
 void initRender();
-SDL_Texture* createText( const char* text );
 void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip flip );
 void drawObject( ObjectType* type, int x, int y, int frame, SDL_RendererFlip flip );
-void drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox );
-void drawMessage( Message message, int x, int y, int w, int h, int withBox );
+void drawText( const char* text, int x, int y, int w, int h, int withBox );
 void drawScreen();
 void drawInventory( int selectionIndex );
 void setAnimation( Object* object, int frameStart, int frameEnd, int frameDelay );

@@ -12,11 +12,24 @@ SDL_Renderer* renderer;
 SDL_Texture* sprites;
 TTF_Font* font;
 SDL_Color textColor = {255, 255, 255, 255};
-SDL_Texture* messageTextures[MESSAGE_COUNT];
-SDL_Texture* messageTexture;
 SDL_Rect levelRect = {0, BAR_HEIGHT, LEVEL_WIDTH, LEVEL_HEIGHT};
 SDL_Rect barRect = {0, 0, LEVEL_WIDTH, BAR_HEIGHT};
 //#define BAR_ENABLED
+
+enum {
+    TEXT_CACHE_SIZE = 8
+};
+
+typedef struct
+{
+    const char* text;
+    SDL_Texture* texture;
+} TextTexture;
+
+struct {
+    TextTexture textures[TEXT_CACHE_SIZE];
+    int next;
+} textCache;
 
 
 void initRender()
@@ -40,11 +53,6 @@ void initRender()
     // Font
     TTF_Init();
     font = TTF_OpenFont("font/PressStart2P.ttf", 12);
-
-    // Messages
-    for (int i = 0; i < MESSAGE_COUNT; ++ i) {
-        messageTextures[i] = createText(messages[i]);
-    }
 }
 
 SDL_Texture* createText( const char* text )
@@ -126,8 +134,9 @@ void drawBox( int x, int y, int w, int h )
     SDL_RenderFillRect(renderer, &rect);
 }
 
-// Draws text at (x, y) or at the center of rectangle (x, y, w, h) if w and/or h > 0
-void drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox )
+// Draws text at (x, y) or at the center of rectangle (x, y, w, h) if w and/or h > 0.
+// If withBox is 1, draws a box around the text.
+void _drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox )
 {
     SDL_Rect textRect = {x, y};
     SDL_QueryTexture(text, NULL, NULL, &textRect.w, &textRect.h);
@@ -154,10 +163,31 @@ void drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox )
     SDL_RenderCopy(renderer, text, NULL, &textRect);
 }
 
-// The same as drawText() but for specified Message
-void drawMessage( Message message, int x, int y, int w, int h, int withBox )
+// Draws the text and caches its texture.
+//
+// Requirements: If a string pointed by the "text" parameter is changed dynamically,
+// its address should be changed as well. The string address is cached, and later any
+// string with the same address will be drawn from cache, unchanged.
+//
+void drawText( const char* text, int x, int y, int w, int h, int withBox )
 {
-    drawText(messageTextures[message], x, y, w, h, withBox);
+    if (!text) return;
+    SDL_Texture* texture = NULL;
+    for (int i = 0; i < TEXT_CACHE_SIZE; ++ i) {
+        TextTexture* t = &textCache.textures[i];
+        if (t->text == text) {
+            texture = t->texture;
+            break;
+        }
+    }
+    if (!texture) {
+        TextTexture* t = &textCache.textures[textCache.next];
+        t->texture = createText(text);
+        t->text = text;
+        texture = t->texture;
+        textCache.next = (textCache.next + 1) % TEXT_CACHE_SIZE;
+    }
+    _drawText(texture, x, y, w, h, withBox);
 }
 
 void drawScreen()
@@ -171,14 +201,14 @@ void drawScreen()
     SDL_RenderFillRect(renderer, &barBorders);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderFillRect(renderer, &bar);
-    drawText(level->nameTexture, 0, 0, LEVEL_WIDTH, BAR_HEIGHT, 0);
+    drawText(level->name, 0, 0, LEVEL_WIDTH, BAR_HEIGHT, 0);
     /*
     drawObject(&objectTypes[TYPE_HEART], 0, -2, 0, SDL_FLIP_NONE);
     drawObject(&objectTypes[TYPE_HEART], CELL_HALF, -2, 0, SDL_FLIP_NONE);
     drawObject(&objectTypes[TYPE_HEART], CELL_HALF*2, -2, 0, SDL_FLIP_NONE);
     */
     drawObject(&objectTypes[TYPE_HEART], 0, -1, 0, SDL_FLIP_NONE);
-    drawMessage(MESSAGE_TEST, 28, 0, 0, BAR_HEIGHT + 4, 0);
+    drawText("3", 28, 0, 0, BAR_HEIGHT + 4, 0);
     const int b = 2;
     SDL_Rect healthBar = {49, CELL_HALF - 5, player.health / 1.5, 10};
     SDL_Rect healthBack = {healthBar.x, healthBar.y, 100 / 1.5, healthBar.h};
@@ -254,13 +284,13 @@ void drawInventory( int selectionIndex )
             ObjectType* type = items->array[i]->type;
             drawObject(type, x, y, 0, SDL_FLIP_NONE);
             if (type->name) {
-                drawText(type->nameTexture, x + CELL_SIZE + 10, y, 0, CELL_SIZE, 0);
+                drawText(type->name, x + CELL_SIZE + 10, y, 0, CELL_SIZE, 0);
             }
         }
         SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
         SDL_RenderDrawRect(renderer, &selection);
     } else {
-        drawMessage(MESSAGE_NOITEMS, content.x + CELL_HALF,
+        drawText("No items", content.x + CELL_HALF,
                 content.y + CELL_HALF, content.w - CELL_SIZE, CELL_SIZE, 0);
     }
 }

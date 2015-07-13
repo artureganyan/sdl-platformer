@@ -81,7 +81,6 @@ void initLevel( Level* level )
         }
     }
     level->background = 0x000000;
-    level->nameTexture = NULL;
     level->name = "Some screen";
     //level->init = init_Castle;
 
@@ -236,11 +235,12 @@ void initLevels()
         for (int lc = 0; lc < LEVEL_XCOUNT; ++ lc) {
             Level* level = &levels[lr][lc];
             sortArrayByDepth(&level->objects);
-            level->nameTexture = createText(level->name);
         }
     }
 
     setLevel(startLevel.r, startLevel.c);
+
+    createObject(&levels[1][1], TYPE_PICK, 12, 7);
 }
 
 void setLevel( int r, int c )
@@ -328,7 +328,7 @@ const char* levelString =
 "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxx            "  "              ******"  "**             *****"  "********************" "                    "
 "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxx             "  "              ******"  "**            ******"  "***      **  `   `  " "                    "
 "xxxxxxxxxxxxxxxxxxxx"  "xxx  |              "  "              ***   "  "      !      *******"  "**       *          " "                    "
-"xxxxxxxxxxxxxxxxxxxx"  "x    |  @   ,,,     "  "     ,;, P          "  "            ********"  "***1*   2d          " "                    "
+"xxxxxxxxxxxxxxxxxxxx"  "x    |    @P,,,     "  "     ,;,      d     "  "            ********"  "***1*   2d          " "                    "
 "xxxxxxxxxxxxxxxxxxxx"  "x    xxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "********************"  "**** ***************" "                    "
 "xxxxxxxxxxxxxxxxxxxx"  "x  xxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxxx******"  "********************"  "**** ***************" "                    "
 

@@ -21,8 +21,7 @@ enum {
     STATE_GAMEOVER
 } gameState = STATE_PLAYING;
 
-Message currentMessage = MESSAGE_NONE;
-SDL_Texture* currentMessageTexture = NULL;
+const char* message = NULL;
 
 
 void processPlayer()
@@ -197,19 +196,9 @@ void killPlayer()
     }
 }
 
-void showMessage( Message message )
+void showMessage( const char* text )
 {
-    currentMessage = message;
-    gameState = STATE_MESSAGE;
-}
-
-void showText( const char* text )
-{
-    if (currentMessageTexture) {
-        SDL_free(currentMessageTexture);
-    }
-    currentMessageTexture = createText(text);
-    currentMessage = MESSAGE_TEXT;
+    message = text;
     gameState = STATE_MESSAGE;
 }
 
@@ -224,15 +213,15 @@ int takeItem( Object* item )
     getObjectCell(item, &r, &c);
 
     if (generalTypeId == TYPE_ACTION) {
-        if (lr == 1 && lc == 3) {
+        if (lr == 1 && lc == 4) {
             if (item->state == '1') {
                 if (player.anim.direction < 0) return 0;
-                showText("You try to move the block on the floor,\nand it finally goes.");
+                showMessage("You try to move the block on the floor,\nand it finally goes.");
                 level->map[r][c + 2] = level->map[r][c + 1];
                 level->map[r][c + 1] = &objectTypes[TYPE_NONE];
                 item->removed = 1;
             } else if (item->state == '2') {
-                showText("The door is locked.");
+                showMessage("The door is locked.");
             }
         }
     } else if (generalTypeId == TYPE_COIN) {
@@ -276,11 +265,43 @@ void useItem( Object* item )
         }
 
     } else if (typeId == TYPE_PICK) {
-        if (level->r == 0 && level->c == 0) {
-            if (r == 7 && c == 5) {
-                for (int tr = r + 1; tr < r + 3; ++ tr) {
-                    createObjectInMap(level, TYPE_NONE, tr, c);
+        if (level->r == 1 && level->c == 1) {
+            if (r == 12 && c == 5) {
+                showMessage("The pillar is crushed and the cave is collapsed,\nbut you managed to run back.");
+//              for (int c = 3; c < 9; ++ c) {
+//                  createObjectInMap(level, TYPE_NONE, 8, c);
+//                  createObjectInMap(level, TYPE_NONE, 9, c);
+//              }
+//              for (int c = 3; c < 9; ++ c) {
+//                  createObjectInMap(level, TYPE_GROUND_TOP, 10, c);
+//                  createObjectInMap(level, TYPE_GROUND, 11, c - 1);
+//                  createObjectInMap(level, TYPE_GROUND, 12, c - 2);
+//              }
+//              createObjectInMap(level, TYPE_NONE, 12, 1);
+//              createObjectInMap(level, TYPE_NONE, 12, 2);
+
+                for (int c = 1; c < 10; ++ c) {
+                    createObjectInMap(level, TYPE_NONE, 7, c);
+                    createObjectInMap(level, TYPE_NONE, 8, c);
+                    createObjectInMap(level, TYPE_NONE, 9, c);
+                    createObjectInMap(level, TYPE_NONE, 10, c);
                 }
+                for (int c = 1; c < 9; ++ c) {
+                    if (c < 6) createObjectInMap(level, TYPE_GROUND_TOP, 10, c);
+                    if (c < 8) createObjectInMap(level, TYPE_GROUND, 11, c);
+                    createObjectInMap(level, TYPE_GROUND, 12, c);
+                    if (c > 4) createObjectInMap(level, TYPE_GROUND, 13, c);
+                    if (c > 4) createObjectInMap(level, TYPE_GROUND, 14, c);
+                }
+                createObjectInMap(level, TYPE_NONE, 11, 4);
+                createObjectInMap(level, TYPE_NONE, 12, 2);
+                createObjectInMap(level, TYPE_NONE, 12, 6);
+                createObjectInMap(level, TYPE_GROUND_TOP, 9, 1);
+                createObjectInMap(level, TYPE_GROUND, 10, 1);
+
+                player.x = 9 * CELL_SIZE;
+                player.y = 12 * CELL_SIZE;
+                player.anim.direction = -1;
                 item->removed = 1;
                 used = 1;
             }
@@ -289,22 +310,12 @@ void useItem( Object* item )
 
     cleanArray(&player.items);
     if (!used) {
-        showMessage(MESSAGE_CANNOTUSE);
+        showMessage("Can not use");
     }
 }
 
-// Whether or not to use system timer to update frames. If defined, system
-// timer period will be decreased to 1 ms, so the timer is able to awake
-// the game every FRAME_PERIOD ms. In fact, 10 ms period is enough to awake
-// the game every 20 ms (i.e. 50 fps), but 1 ms is used for reliability.
-// Remember that lower period causes higher power consumption.
-//#define USE_SYSTEM_TIMER
-
 void on_exit()
 {
-    #ifdef USE_SYSTEM_TIMER
-    timeEndPeriod(SYSTEM_TIMER_PERIOD);
-    #endif
     timeEndPeriod(SYSTEM_TIMER_PERIOD);
     TTF_Quit();
     SDL_Quit();
@@ -376,81 +387,45 @@ void gameLoop()
     int prevKeyFrame = 0;
     int keyAllowed = 0;
     Time startTime;
-    #ifndef USE_SYSTEM_TIMER
     Time prevRenderTime;
-    Time currentTime;
-    #endif
 
     atexit(on_exit);
     initRender();
     initTypes();
-
-    player.type = &objectTypes[TYPE_PLAYER];
-    player.anim.direction = 1;
-    player.anim.frameDelayCounter = 0;
-    player.removed = 0;
-    player.inAir = 0;
-    player.onLadder = 0;
-    player.health = 100;
-    player.lives = 3;
-    player.coins = 0;
-    initArray(&player.items);
-
+    initPlayer();
     initLevels();
 
-    showText("You woke up in the locked room.\nWhere are you?");
+    showMessage("You woke up in the locked room.\nWhere are you?");
 
     keystate = SDL_GetKeyboardState(NULL);
 
     InitTime();
-
-    #ifdef USE_SYSTEM_TIMER
     timeBeginPeriod(SYSTEM_TIMER_PERIOD);
-    #else
-    timeBeginPeriod(SYSTEM_TIMER_PERIOD);
-    prevRenderTime = GetTime();
-    #endif
-
-    const Time framePeriod = 1000.0 / 48;
+    const Time framePeriod = 1000.0 / FRAME_RATE;
     startTime = GetTime();
+    prevRenderTime = startTime;
 
     while (gameState != STATE_QUIT) {
-        #ifdef USE_SYSTEM_TIMER
-        // Frame delay (this way does not use CPU between frames)
-        SDL_Delay(FRAME_PERIOD);
-        #endif
 
+        // Draw screen
         if (gameState == STATE_PLAYING) {
             SDL_SetRenderDrawColor(renderer,
                     (level->background & 0xFF0000) >> 16,
                     (level->background & 0x00FF00) >> 8,
                     (level->background & 0x0000FF),
                     255);
-            SDL_RenderClear(renderer);
-
             SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-            processPlayer();
-            processObjects();
+            SDL_RenderClear(renderer);
             drawScreen();
-
-            /*
-            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 100);
-            SDL_RenderFillRect(renderer, &levelRect);
-            */
 
         } else if (gameState == STATE_INVENTORY) {
             drawInventory(selection);
 
         } else if (gameState == STATE_MESSAGE) {
-            if (currentMessage != MESSAGE_TEXT) {
-                drawMessage(currentMessage, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
-            } else {
-                drawText(currentMessageTexture, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
-            }
+            drawText(message, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
 
         } else if (gameState == STATE_KILLED) {
-            drawMessage(MESSAGE_LOSTLIFE, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
+            drawText("You lost a life", 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 1);
 
         } else if (gameState == STATE_GAMEOVER) {
             hideScreenCounter += 2;
@@ -464,7 +439,7 @@ void gameLoop()
             SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
             SDL_SetRenderDrawColor(renderer, 0, 0, 0, 25 * (hideScreenCounter / 25));
             SDL_RenderFillRect(renderer, &levelRect);
-            drawMessage(MESSAGE_GAMEOVER, 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 0);
+            drawText("Game over", 0, 0, LEVEL_WIDTH, LEVEL_HEIGHT, 0);
         }
 
         SDL_RenderPresent(renderer);
@@ -476,7 +451,7 @@ void gameLoop()
             }
         }
 
-        // Check keyboard
+        // Process user input and game logic
         keyAllowed = (frameCount - prevKeyFrame >= 8);
 
         if (gameState == STATE_PLAYING) {
@@ -540,6 +515,7 @@ void gameLoop()
                     player.onLadder = 1;
                     player.vy = playerSpeed[1];
                     player.x = c * CELL_SIZE;
+                    // This condition can be removed if processPlayer() will be more complex
                     if (!isLadder(r, c)) {
                         player.y = r * CELL_SIZE + CELL_HALF - player.vy;
                     }
@@ -566,6 +542,9 @@ void gameLoop()
                 }
                 prevKeyFrame = frameCount;
             }
+
+            processPlayer();
+            processObjects();
 
         } else if (gameState == STATE_INVENTORY) {
 
@@ -623,19 +602,13 @@ void gameLoop()
         if (++ cleanTimer > 500) {
             cleanTimer = 0;
             cleanArray(&level->objects);
-//          player.anim.direction *= -1;
         }
-//        player.vx = player.anim.direction;
 
-        #ifndef USE_SYSTEM_TIMER
+        // Frame delay
         const Time nextFrameTime = prevRenderTime + framePeriod;
         Time remainedTime;
         int count = 0;
         while ((remainedTime = nextFrameTime - GetTime()) > 0) {
-            // Seems like this is better for CPU
-//          if (remainedTime - 1 >= 1) {
-//              Sleep(remainedTime - 1);
-//          }
             if (remainedTime >= 1) {
                 Sleep(remainedTime);
             } else {
@@ -653,8 +626,6 @@ void gameLoop()
             }
         }
         prevRenderTime = currentTime;
-        #endif
-
         frameCount += 1;
     }
 
@@ -663,12 +634,7 @@ void gameLoop()
         printf("%d) %2.2f %d  ", p->frame, p->period, p->count);
     }
     printf("\n");
-
     printf("%f %d\n", frameCount / ((GetTime() - startTime) / 1000.0), frameCount);
 
-    #ifdef USE_SYSTEM_TIMER
     timeEndPeriod(SYSTEM_TIMER_PERIOD);
-    #else
-    timeEndPeriod(SYSTEM_TIMER_PERIOD);
-    #endif
 }

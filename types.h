@@ -21,7 +21,7 @@ typedef enum
     ROW_COUNT = (LEVEL_HEIGHT + CELL_SIZE - 1) / CELL_SIZE,
     COLUMN_COUNT = (LEVEL_WIDTH + CELL_SIZE - 1) / CELL_SIZE,
     CELL_COUNT = ROW_COUNT * COLUMN_COUNT,
-    FRAME_RATE = 60,
+    FRAME_RATE = 48,
     FRAME_PERIOD = 1000 / FRAME_RATE,
     PLAYER_WIDTH = CELL_SIZE - 12,
     PLAYER_HEIGHT = CELL_SIZE, // -10
@@ -91,18 +91,6 @@ typedef enum
     TYPE_SPIKE
 } ObjectTypeId;
 
-typedef enum
-{
-    MESSAGE_NONE = 0,
-    MESSAGE_GAMEOVER,
-    MESSAGE_NOITEMS,
-    MESSAGE_CANNOTUSE,
-    MESSAGE_LOSTLIFE,
-    MESSAGE_TEST,
-    MESSAGE_TEXT,
-    MESSAGE_COUNT
-} Message;
-
 struct Object_s;
 typedef struct Object_s Object;
 typedef void (*OnInit)( Object* );
@@ -170,7 +158,6 @@ typedef struct
 typedef struct {
     ObjectType* map[ROW_COUNT][COLUMN_COUNT];
     ObjectArray objects;
-    SDL_Texture* nameTexture;
     const char* name;
     int background;
     int r;
@@ -182,16 +169,16 @@ void initArray( ObjectArray* objects );
 void appendArray( ObjectArray* objects, Object* obj );
 void freeArray( ObjectArray* objects );
 void cleanArray( ObjectArray* objects );
-void reorderDepth( ObjectArray* objects );
+void sortArrayByDepth( ObjectArray* objects );
 
 void createObjectInMap( Level* level, ObjectTypeId typeId, int r, int c );
 Object* createObject( Level* level, ObjectTypeId typeId, int r, int c );
 void initTypes();
+void initPlayer();
 
 #define MS_TO_FRAMES(ms) (int)((ms) / 1000.0 * FRAME_RATE)
 
 extern ObjectType objectTypes[TYPE_COUNT];
-extern const char* messages[MESSAGE_COUNT];
 extern Player player;
 extern Level* level;
 

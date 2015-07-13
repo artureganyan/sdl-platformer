@@ -139,8 +139,8 @@ void onFrame_EnemyShooter( Object* e )
 
     if (e->state <= STATE_MOVING && isVisible(e, (Object*)&player)) {
         Object* shot = createObject(level, TYPE_ICESHOT, 0, 0);
-        shot->x = e->anim.direction > 0 ? e->x + CELL_SIZE : e->x;
-        shot->y = e->y + 2;
+        shot->x = e->anim.direction > 0 ? e->x + e->type->width : e->x - e->type->width;
+        shot->y = e->y;
         shot->vx *= e->anim.direction;
         shot->anim.direction = e->anim.direction;
         e->state = STATE_MOVING + 1;
