@@ -33,19 +33,26 @@ void processPlayer()
 
     // Movement
     player.x += player.vx;
+
+    // \note
+    // Changing each "isSolid()" to "isSolid() & 0x1" in Left and Right conditions below
+    // (and Top) allows blocks which are solid only from one side (bottom) if they have
+    // type->solid == 2, and retains normal solid blocks (solid == 1). Of course, it's
+    // better to add appropriate version of isSolid().
+
     // ... Left
     if (player.x < cell[0]) {
-        if (isSolid(r, c - 1) ||
-            (player.y + dh < cell[2] && isSolid(r - 1, c - 1)) ||
-            (player.y + CELL_SIZE - dh > cell[3] && isSolid(r + 1, c - 1)) ) {
+        if (isSolid(r, c - 1) & 1 ||
+            (player.y + dh < cell[2] && isSolid(r - 1, c - 1) & 1) ||
+            (player.y + CELL_SIZE - dh > cell[3] && isSolid(r + 1, c - 1) & 1) ) {
             player.x = cell[0];
             player.vx = 0;
         }
     // ... Right
     } else if (player.x + CELL_SIZE > cell[1]) {
-        if (isSolid(r, c + 1) ||
-            (player.y + dh < cell[2] && isSolid(r - 1, c + 1)) ||
-            (player.y + CELL_SIZE - dh > cell[3] && isSolid(r + 1, c + 1)) ) {
+        if (isSolid(r, c + 1) & 1 ||
+            (player.y + dh < cell[2] && isSolid(r - 1, c + 1) & 1) ||
+            (player.y + CELL_SIZE - dh > cell[3] && isSolid(r + 1, c + 1) & 1) ) {
             player.x = cell[0];
             player.vx = 0;
         }
@@ -590,9 +597,17 @@ void gameLoop()
                 gameState = STATE_PLAYING;
                 prevKeyFrame = frameCount;
                 setAnimation((Object*)&player, 0, 0, 1);
+                // Just to avoid sticking in a wall
+                for (int r = 0; r < ROW_COUNT; ++ r) {
+                    for (int c = 0; c < COLUMN_COUNT; ++ c) {
+                        if (!level->map[r][c]->solid) {
+                            player.y = r * CELL_SIZE;
+                            player.x = c * CELL_SIZE;
+                            r = c = CELL_COUNT;
+                        }
+                    }
+                }
                 player.health = 100;
-                player.x = 0;
-                player.y = 0;
                 player.onLadder = 0;
                 player.inAir = 0;
             }

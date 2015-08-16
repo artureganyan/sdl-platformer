@@ -134,7 +134,7 @@ void drawBox( int x, int y, int w, int h )
     SDL_RenderFillRect(renderer, &rect);
 }
 
-// Draws text at (x, y) or at the center of rectangle (x, y, w, h) if w and/or h > 0.
+// Draws text at (x, y) or at the center of rectangle (x, y, w, h) if w or h > 0.
 // If withBox is 1, draws a box around the text.
 void _drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox )
 {
@@ -166,7 +166,7 @@ void _drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox )
 // Draws the text and caches its texture.
 //
 // Requirements: If a string pointed by the "text" parameter is changed dynamically,
-// its address should be changed as well. The string address is cached, and later any
+// its address should also be changed. The string address is cached, and later any
 // string with the same address will be drawn from cache, unchanged.
 //
 void drawText( const char* text, int x, int y, int w, int h, int withBox )

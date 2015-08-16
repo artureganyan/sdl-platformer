@@ -122,6 +122,7 @@ void initTypes()
     initType    ( TYPE_WALL_TOP,        4,      6,      TYPE_WALL,          1                                                                               );
     initType    ( TYPE_WALL,            5,      6,      TYPE_WALL,          1                                                                               );
     initType    ( TYPE_WALL_FAKE,       5,      6,      TYPE_WALL_FAKE,     0                                                                               );
+    initType    ( TYPE_WALL_STAIR,      4,      6,      TYPE_WALL,          2                                                                               );
     initType    ( TYPE_GROUND_TOP,      6,      3,      TYPE_WALL,          1                                                                               );
     initType    ( TYPE_GROUND,          7,      3,      TYPE_WALL,          1                                                                               );
     initType    ( TYPE_GROUND_FAKE,     7,      3,      TYPE_GROUND_FAKE,   0                                                                               );

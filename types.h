@@ -53,6 +53,7 @@ typedef enum
     TYPE_HEART,
     TYPE_WALL_TOP,
     TYPE_WALL,
+    TYPE_WALL_STAIR,
     TYPE_GROUND_TOP,
     TYPE_GROUND,
     TYPE_WATER,
