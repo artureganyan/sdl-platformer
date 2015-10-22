@@ -9,6 +9,14 @@ model rather than a complete game.
 Compiled with mingw 4.9.1 (C99 dialect), requires SDL 2.0 and SDL_ttf 2.0.
 
 
+Screenshots
+-----------
+
+![screenshot1](/image/screenshot1.png)
+
+![screenshot2](/image/screenshot2.png)
+
+
 Credits
 -------
 

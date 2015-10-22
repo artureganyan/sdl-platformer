@@ -11,10 +11,9 @@
 
 typedef enum
 {
-    SPRITE_SIZE = 16,
     LEVEL_WIDTH = 640,
     LEVEL_HEIGHT = 480,
-    BAR_HEIGHT = 32,
+    SPRITE_SIZE = 16,
     SIZE_FACTOR = 2,
     CELL_SIZE = SPRITE_SIZE * SIZE_FACTOR,
     CELL_HALF = CELL_SIZE / 2,
@@ -24,7 +23,7 @@ typedef enum
     FRAME_RATE = 48,
     FRAME_PERIOD = 1000 / FRAME_RATE,
     PLAYER_WIDTH = CELL_SIZE - 12,
-    PLAYER_HEIGHT = CELL_SIZE, // -10
+    PLAYER_HEIGHT = CELL_SIZE,
     SYSTEM_TIMER_PERIOD = 1 // In ms, used to update frames
 } Constant;
 
@@ -56,6 +55,7 @@ typedef enum
     TYPE_WALL_STAIR,
     TYPE_GROUND_TOP,
     TYPE_GROUND,
+    TYPE_GROUND_STAIR,
     TYPE_WATER,
     TYPE_WATER_TOP,
     TYPE_GRASS,
@@ -74,12 +74,19 @@ typedef enum
     TYPE_TORCH,
     TYPE_DOOR,
     TYPE_LADDER,
+    TYPE_SPRING,
+    TYPE_FAN,
+    TYPE_ARROW_LEFT,
+    TYPE_ARROW_RIGHT,
+    TYPE_ARROW_UP,
+    TYPE_ARROW_DOWN,
 
-    TYPE_ITEMS,
     TYPE_KEY,
     TYPE_APPLE,
     TYPE_PEAR,
     TYPE_COIN,
+    TYPE_GEM,
+    TYPE_STATUARY,
     TYPE_LADDER_PART,
     TYPE_PICK,
     TYPE_ACTION,
@@ -88,9 +95,19 @@ typedef enum
 
     // General types (objects of these types can not be created)
     TYPE_ENEMY,
+    TYPE_ITEM,
     TYPE_BACKGROUND,
     TYPE_SPIKE
 } ObjectTypeId;
+
+typedef enum
+{
+    SOLID_LEFT = 0x0001,
+    SOLID_RIGHT = 0x0010,
+    SOLID_TOP = 0x0100,
+    SOLID_BOTTOM = 0x1000,
+    SOLID_ALL = SOLID_LEFT | SOLID_RIGHT | SOLID_TOP | SOLID_BOTTOM
+} SolidFlags;
 
 struct Object_s;
 typedef struct Object_s Object;
@@ -103,8 +120,6 @@ typedef struct
     ObjectTypeId typeId;
     ObjectTypeId generalTypeId;
     SDL_Rect sprite;
-    SDL_Texture* nameTexture;
-    const char* name;
     int solid;
     int speed;
     int width;
@@ -122,19 +137,24 @@ typedef struct
     int frameEnd;
     int frameDelay; // In game frames
     int frameDelayCounter;
+    int wave;
+    int alpha;
 } Animation;
 
 typedef struct Object_s
 {
     ObjectType* type;
     Animation anim;
-    int x, y;
-    int vx, vy;
+    int x;
+    int y;
+    int vx;
+    int vy;
     int removed;
     int state;
 } Object;
 
-typedef struct {
+typedef struct
+{
     Object** array;
     int reserved;
     int count;
@@ -144,40 +164,42 @@ typedef struct
 {
     ObjectType* type;
     Animation anim;
-    int x, y;
-    int vx, vy;
+    int x;
+    int y;
+    int vx;
+    int vy;
     int removed; // Unused
     int attack;
     int inAir;
     int onLadder;
-    int health;
+    int health;  // Values > 100 mean invincibility
     int lives;
     int coins;
+    int keys;
     ObjectArray items;
 } Player;
 
-typedef struct {
+typedef struct
+{
     ObjectType* map[ROW_COUNT][COLUMN_COUNT];
     ObjectArray objects;
-    const char* name;
-    int background;
     int r;
     int c;
     void (*init)();
 } Level;
 
-void initArray( ObjectArray* objects );
-void appendArray( ObjectArray* objects, Object* obj );
-void freeArray( ObjectArray* objects );
-void cleanArray( ObjectArray* objects );
-void sortArrayByDepth( ObjectArray* objects );
+void ObjectArray_init( ObjectArray* objects );
+void ObjectArray_append( ObjectArray* objects, Object* object );
+void ObjectArray_free( ObjectArray* objects );
+void ObjectArray_clean( ObjectArray* objects );
+void ObjectArray_sortByDepth( ObjectArray* objects );
 
 void createObjectInMap( Level* level, ObjectTypeId typeId, int r, int c );
 Object* createObject( Level* level, ObjectTypeId typeId, int r, int c );
 void initTypes();
 void initPlayer();
 
-#define MS_TO_FRAMES(ms) (int)((ms) / 1000.0 * FRAME_RATE)
+#define MS_TO_FRAMES(ms) (int)((ms) / 1000.0 * (FRAME_RATE))
 
 extern ObjectType objectTypes[TYPE_COUNT];
 extern Player player;

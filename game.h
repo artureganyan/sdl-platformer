@@ -9,10 +9,11 @@
 
 #include "types.h"
 
-void processPlayer();
-void processObjects();
+void initGame();
 void gameLoop();
+void completeLevel();
 void damagePlayer( int damage );
 void killPlayer();
+void showMessage( const char* );
 
 #endif

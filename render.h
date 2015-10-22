@@ -11,13 +11,14 @@
 #include "SDL_ttf.h"
 
 extern SDL_Renderer* renderer;
+extern SDL_Texture* sprites;
 
 void initRender();
 void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip flip );
-void drawObject( ObjectType* type, int x, int y, int frame, SDL_RendererFlip flip );
-void drawText( const char* text, int x, int y, int w, int h, int withBox );
+void drawObject( Object* object, int x, int y );
+void drawTextEx( const char* text, int x, int y, int w, int h, int withBox );
+void drawText( const char* text );
 void drawScreen();
-void drawInventory( int selectionIndex );
 void setAnimation( Object* object, int frameStart, int frameEnd, int frameDelay );
 
 #endif

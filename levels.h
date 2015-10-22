@@ -9,16 +9,24 @@
 
 #include "types.h"
 
-enum {
-    LEVEL_XCOUNT = 6,
-    LEVEL_YCOUNT = 3
+enum
+{
+    LEVEL_XCOUNT = 2,
+    LEVEL_YCOUNT = 2
 };
+
+typedef enum
+{
+    ACTION_TAKE,
+    ACTION_USE
+} Action;
+
+void initLevel( Level* );
+void initLevels();
+void setLevel( int r, int c );
+int onAction( Object* item, Action );
 
 extern Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];
 extern Level* level;
-
-void initLevel( Level* level );
-void initLevels();
-void setLevel( int r, int c );
 
 #endif
