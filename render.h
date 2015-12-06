@@ -11,7 +11,6 @@
 #include "SDL_ttf.h"
 
 extern SDL_Renderer* renderer;
-extern SDL_Texture* sprites;
 
 void initRender();
 void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip flip );

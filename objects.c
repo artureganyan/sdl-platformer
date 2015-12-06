@@ -13,9 +13,21 @@
 
 // Helpers
 
+typedef enum
+{
+    DIRECTION_NONE = 0x0000,
+    DIRECTION_LEFT = 0x0001,
+    DIRECTION_RIGHT = 0x0010,
+    DIRECTION_UP = 0x0100,
+    DIRECTION_DOWN = 0x1000,
+    DIRECTION_X = DIRECTION_LEFT | DIRECTION_RIGHT,
+    DIRECTION_Y = DIRECTION_UP | DIRECTION_DOWN,
+    DIRECTION_XY = DIRECTION_X | DIRECTION_Y
+} Direction;
+
 // Moves the object by dx and dy, checking the floor if checkFloor != 0.
-// Returns a bit mask indicating if object could not move by dx or dy:
-// bit 1 - dx, bit 2 - dy.
+// Returns 0 on success, otherwise returns flags indicating if object
+// could not move by dx (flag DIRECTION_X) or dy (flag DIRECTION_Y).
 int move( Object* object, int dx, int dy, int checkFloor )
 {
     int r, c, cell[4], body[4];
@@ -28,28 +40,28 @@ int move( Object* object, int dx, int dy, int checkFloor )
     if (isSolid(r, c, SOLID_ALL)) {
         object->x -= dx;
         object->y -= dy;
-        return 3;
+        return DIRECTION_XY;
     }
     if (dx > 0 && body[1] > cell[1]) {
         if (isSolid(r, c + 1, SOLID_LEFT) || body[1] > LEVEL_WIDTH || (checkFloor && !isSolidOrLadder(r + 1, c + 1))) {
             object->x -= dx;
-            result |= 1;
+            result |= DIRECTION_X;
         }
     } else if (dx < 0 && body[0] < cell[0]) {
         if (isSolid(r, c - 1, SOLID_RIGHT) || body[0] < 0 || (checkFloor && !isSolidOrLadder(r + 1, c - 1))) {
             object->x -= dx;
-            result |= 1;
+            result |= DIRECTION_X;
         }
     }
     if (dy > 0 && body[3] > cell[3]) {
         if (isSolid(r + 1, c, SOLID_TOP) || body[3] > LEVEL_HEIGHT) {
             object->y -= dy;
-            result |= 2;
+            result |= DIRECTION_Y;
         }
     } else if (dy < 0 && body[2] < cell[2]) {
         if (isSolid(r - 1, c, SOLID_BOTTOM) || body[2] < 0) {
             object->y -= dy;
-            result |= 2;
+            result |= DIRECTION_Y;
         }
     }
     return result;
@@ -58,29 +70,28 @@ int move( Object* object, int dx, int dy, int checkFloor )
 // Returns 1 if the source sees the target
 int isVisible( Object* source, Object* target )
 {
-    int x1 = 0, x2 = 0, r, c, visible = 0;
     if (target->y + CELL_SIZE > source->y + CELL_HALF &&
         target->y < source->y + CELL_HALF) {
+        int x1, x2;
         if (target->x < source->x && source->anim.direction < 0) {
             x1 = target->x;
             x2 = source->x;
         } else if (target->x > source->x && source->anim.direction > 0) {
             x1 = source->x;
             x2 = target->x;
+        } else {
+            return 0;
         }
-        if (x1 != x2) {
-            visible = 1;
-            r = (source->y + CELL_HALF) / CELL_SIZE;
-            for (x1 = x1 + CELL_HALF; x1 < x2; x1 += CELL_SIZE) {
-                c = x1 / CELL_SIZE;
-                if (isSolid(r, c, SOLID_LEFT | SOLID_RIGHT)) {
-                    visible = 0;
-                    break;
-                }
+        const int r = (source->y + CELL_HALF) / CELL_SIZE;
+        for (x1 = x1 + CELL_HALF; x1 < x2; x1 += CELL_SIZE) {
+            const int c = x1 / CELL_SIZE;
+            if (isSolid(r, c, SOLID_LEFT | SOLID_RIGHT)) {
+                return 0;
             }
         }
+        return 1;
     }
-    return visible;
+    return 0;
 }
 
 
@@ -104,9 +115,9 @@ int isVisible( Object* source, Object* target )
  */
 
 
-void Object_onInit( Object* o ) {}
-void Object_onFrame( Object* o ) {}
-void Object_onHit( Object* o ) {}
+void Object_onInit( Object* obj ) {}
+void Object_onFrame( Object* obj ) {}
+void Object_onHit( Object* obj ) {}
 
 
 const int ENEMY_STATE_MOVING = MS_TO_FRAMES(10000);
@@ -234,11 +245,11 @@ void Bat_onFrame( Object* e )
     const int STATE_NEWDIRECTION = CELL_SIZE;
     const int vy = e->state % 2 ? e->vy : 0;
     const int m = move(e, e->vx, vy, 0);
-    if (m & 1) {
+    if (m & DIRECTION_X) {
         e->vx = -e->vx;
         e->anim.direction = -e->anim.direction;
     }
-    if (m & 2) {
+    if (m & DIRECTION_Y) {
         e->vy = -e->vy;
     }
     if (++ e->state >= STATE_NEWDIRECTION) {
@@ -338,8 +349,8 @@ void Fireball_onFrame( Object* e )
 
     const int m = move(e, e->vx , e->vy , 0);
     if (m) {
-        if (m & 1) e->vx = -e->vx;
-        if (m & 2) e->vy = -e->vy;
+        if (m & DIRECTION_X) e->vx = -e->vx;
+        if (m & DIRECTION_Y) e->vy = -e->vy;
         e->anim.direction = e->vx > 0 ? 1 : -1;
     }
     if (rand() % 100 == 99) {
@@ -356,7 +367,7 @@ void Fireball_onFrame( Object* e )
 void Drop_onInit( Object* e )
 {
     e->y = (e->y / CELL_SIZE) * CELL_SIZE - (CELL_SIZE - e->type->height) / 2 - 1;
-    e->state = -rand() % 500;
+    e->state = -rand() % MS_TO_FRAMES(2000);
 }
 
 void Drop_onFrame( Object* e )
@@ -370,7 +381,7 @@ void Drop_onFrame( Object* e )
         drop->x = e->x;
         drop->y = e->y;
         drop->state = STATE_FALLING;
-        e->state -= rand() % 500;
+        e->state -= rand() % MS_TO_FRAMES(10000);
 
     } else if (e->state == STATE_FALLING) {
         if (e->vy < 5) {
@@ -438,7 +449,7 @@ void Teleporting_onFrame( Object* e )
         setAnimation(e, 2, 2, 24);
 
     } else {
-        e->state = -rand() % 100;
+        e->state = -rand() % MS_TO_FRAMES(2000);
     }
 
     e->state += 1;
@@ -472,30 +483,30 @@ void Platform_onHit( Object* e )
     const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
     const int dh = (CELL_SIZE - PLAYER_HEIGHT) / 2;
     const int border = 5;
-    int pr, pc, pcell[4], a[4];
-    int er, ec, ecell[4], b[4];
+    int pr, pc, pcell[4], pbody[4];
+    int er, ec, ecell[4], ebody[4];
 
-    getObjectPos((Object*)&player, &pr, &pc, pcell, a);
-    getObjectPos(e, &er, &ec, ecell, b);
+    getObjectPos((Object*)&player, &pr, &pc, pcell, pbody);
+    getObjectPos(e, &er, &ec, ecell, ebody);
 
-    if ((a[3] - b[2]) > border && (b[3] - a[2]) > border) {
-        if (a[1] >= b[0] && a[0] <= b[0]) {
-            player.x = b[0] - dw - PLAYER_WIDTH;
+    if ((pbody[3] - ebody[2]) > border && (ebody[3] - pbody[2]) > border) {
+        if (pbody[1] >= ebody[0] && pbody[0] <= ebody[0]) {
+            player.x = ebody[0] - dw - PLAYER_WIDTH;
             player.inAir = 0;
-        } else if (a[0] <= b[1] && a[1] >= b[1]) {
-            player.x = b[1] - dw;
+        } else if (pbody[0] <= ebody[1] && pbody[1] >= ebody[1]) {
+            player.x = ebody[1] - dw;
             player.inAir = 0;
         }
-    } else if ((a[1] - b[0]) > border && (b[1] - a[0]) > border) {
-        if (a[3] >= b[2] && a[2] <= b[2]) {
+
+    } else if ((pbody[1] - ebody[0]) > border && (ebody[1] - pbody[0]) > border) {
+        if (pbody[3] >= ebody[2] && pbody[2] <= ebody[2]) {
             if (!player.vx) {
                 player.x += e->vx;
             }
-            //player.x += 1;
-            player.y = b[2] - dh - PLAYER_HEIGHT;
+            player.y = ebody[2] - dh - PLAYER_HEIGHT;
             player.inAir = 0;
-        } else if (a[2] <= b[3] && a[3] >= b[3]) {
-            player.y = b[3] - dh;
+        } else if (pbody[2] <= ebody[3] && pbody[3] >= ebody[3]) {
+            player.y = ebody[3] - dh;
         }
     }
 }
@@ -543,6 +554,7 @@ void Fan_onFrame( Object* e )
     const double dr = sqrt(dx * dx + dy * dy);
     const double distance = CELL_SIZE * 2.5;
     if (fabs(dr) < distance) {
+        // \todo Something better should be done here
         const double r = dr ? dr : 0.1;
         int vx = 2 * dx / r;
         int vy = 3 * dy / r;
@@ -583,9 +595,12 @@ void Water_onInit( Object* e )
 
 void Water_onHit( Object* e )
 {
-    int er, ec, pr, pc;
+    int er, ec;
     getObjectCell(e, &er, &ec);
+
+    int pr, pc;
     getObjectCell((Object*)&player, &pr, &pc);
+
     if (er == pr) {
         killPlayer();
     }

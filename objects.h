@@ -4,14 +4,14 @@
  * This software is provided "AS IS", WITHOUT ANY WARRANTY, express or implied.
  ******************************************************************************/
 
-#ifndef CREATURES_H
-#define CREATURES_H
+#ifndef OBJECTS_H
+#define OBJECTS_H
 
 #include "types.h"
 
-void Object_onInit( Object* o );
-void Object_onFrame( Object* o );
-void Object_onHit( Object* o );
+void Object_onInit( Object* obj );
+void Object_onFrame( Object* obj );
+void Object_onHit( Object* obj );
 
 void Enemy_onInit( Object* e );
 void Enemy_onFrame( Object* e );

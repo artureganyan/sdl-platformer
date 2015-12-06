@@ -9,15 +9,15 @@
 #include <string.h>
 #include <stdio.h>
 
-SDL_Window* window;
 SDL_Renderer* renderer;
-SDL_Texture* sprites;
-TTF_Font* font;
+static SDL_Texture* sprites;
+static SDL_Window* window;
+static TTF_Font* font;
 
-const SDL_Color TEXT_COLOR = {255, 255, 255, 255};
-const SDL_Color BOX_CONTENT_COLOR = {0, 0, 0, 255};
-const SDL_Color BOX_BORDER_COLOR = {255, 255, 255, 255};
-const int BOX_BORDER = 2;
+static const SDL_Color TEXT_COLOR = {255, 255, 255, 255};
+static const SDL_Color BOX_CONTENT_COLOR = {0, 0, 0, 255};
+static const SDL_Color BOX_BORDER_COLOR = {255, 255, 255, 255};
+static const int BOX_BORDER = 2;
 
 enum
 {
@@ -30,7 +30,7 @@ typedef struct
     SDL_Texture* texture;
 } TextTexture;
 
-struct
+static struct
 {
     TextTexture textures[TEXT_CACHE_SIZE];
     int next;

@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <math.h>
 
-static enum
+typedef enum
 {
     STATE_QUIT = 0,
     STATE_PLAYING,
@@ -20,17 +20,18 @@ static enum
     STATE_KILLED,
     STATE_GAMEOVER,
     STATE_LEVELCOMPLETE
-} gameState = STATE_PLAYING;
+} GAME_STATE;
 
+static GAME_STATE gameState = STATE_PLAYING;
 static const char* message = NULL;
-const Uint8* keystate;
-FrameControl frameControl;
+static const Uint8* keystate = NULL;
+static FrameControl frameControl;
 
 
-void processPlayer()
+static void processPlayer()
 {
-    static const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
-    static const int dh = (CELL_SIZE - (PLAYER_HEIGHT - 14)) / 2;
+    const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
+    const int dh = (CELL_SIZE - (PLAYER_HEIGHT - 14)) / 2;
     int r, c, cell[4], body[4] /*unused*/;
     getObjectPos((Object*)&player, &r, &c, cell, body);
 
@@ -121,7 +122,7 @@ void processPlayer()
 
     // ... Left
     if (player.x < 0) {
-        if (level->c > 0 && !levels[lr][lc - 1].map[r][COLUMN_COUNT - 1]->solid) {
+        if (lc > 0 && !levels[lr][lc - 1].map[r][COLUMN_COUNT - 1]->solid) {
             if (player.x + CELL_HALF < 0) {
                 setLevel(lr, lc - 1);
                 player.x = LEVEL_WIDTH - CELL_HALF - 1;
@@ -131,7 +132,7 @@ void processPlayer()
         }
     // ... Right
     } else if (player.x + CELL_SIZE > LEVEL_WIDTH) {
-        if (level->c < LEVEL_XCOUNT - 1 && !levels[lr][lc + 1].map[r][0]->solid) {
+        if (lc < LEVEL_XCOUNT - 1 && !levels[lr][lc + 1].map[r][0]->solid) {
             if (player.x + CELL_HALF > LEVEL_WIDTH) {
                 setLevel(lr, lc + 1);
                 player.x = -CELL_HALF + 1;
@@ -142,7 +143,7 @@ void processPlayer()
     }
     // ... Bottom
     if (player.y + PLAYER_HEIGHT > LEVEL_HEIGHT) {
-        if (level->r < LEVEL_YCOUNT - 1) {
+        if (lr < LEVEL_YCOUNT - 1) {
             if (!levels[lr + 1][lc].map[0][c]->solid) {
                 if (player.y + PLAYER_HEIGHT / 2 > LEVEL_HEIGHT) {
                     setLevel(lr + 1, lc);
@@ -157,12 +158,12 @@ void processPlayer()
         }
     // ... Top
     } else if (player.y < 0) {
-        if (level->r > 0 && !levels[lr - 1][lc].map[ROW_COUNT - 1][c]->solid) {
+        if (lr > 0 && !levels[lr - 1][lc].map[ROW_COUNT - 1][c]->solid) {
             if (player.y + CELL_HALF < 0) {
                 setLevel(lr - 1, lc);
                 player.y = LEVEL_HEIGHT - CELL_HALF - 1;
             }
-        } else if (level->r > 0) {
+        } else if (lr > 0) {
             player.y = 0;
         } else {
             // Player will simply fall down
@@ -170,7 +171,7 @@ void processPlayer()
     }
 }
 
-void processObjects()
+static void processObjects()
 {
     for (int i = 0; i < level->objects.count; ++ i) {
         Object* object = level->objects.array[i];
@@ -184,6 +185,7 @@ void processObjects()
         }
     }
 }
+
 
 void damagePlayer( int damage )
 {
@@ -212,7 +214,12 @@ void showMessage( const char* text )
     gameState = STATE_MESSAGE;
 }
 
-void onExit()
+void completeLevel()
+{
+    gameState = STATE_LEVELCOMPLETE;
+}
+
+static void onExit()
 {
     timeEndPeriod(SYSTEM_TIMER_PERIOD);
     TTF_Quit();
@@ -230,11 +237,6 @@ void initGame()
     keystate = SDL_GetKeyboardState(NULL);
 }
 
-void completeLevel()
-{
-    gameState = STATE_LEVELCOMPLETE;
-}
-
 void gameLoop()
 {
     const int PLAYER_SPEED_RUN = 3;
@@ -242,6 +244,7 @@ void gameLoop()
     const int PLAYER_SPEED_JUMP = 9;
     const int PLAYER_ANIM_SPEED_RUN = 6;
     const int PLAYER_ANIM_SPEED_LADDER = 8;
+    const int CLEAN_PERIOD = MS_TO_FRAMES(10000);
 
     struct { int x, y; } prevGroundPos; // Used for respawn
     int ladderAnimTimer = 0;
@@ -251,7 +254,10 @@ void gameLoop()
     if (!FrameControl_start(&frameControl, FRAME_RATE)) {
         return;
     }
-    timeBeginPeriod(SYSTEM_TIMER_PERIOD);
+    if (timeBeginPeriod(SYSTEM_TIMER_PERIOD) != TIMERR_NOERROR) {
+        fprintf(stderr, "gameLoop(): timeBeginPeriod() failed\n");
+        return;
+    }
 
     while (gameState != STATE_QUIT) {
 
@@ -322,8 +328,8 @@ void gameLoop()
 
             // ... Up
             if (keystate[SDL_SCANCODE_UP]) {
-                const int r = (player.y + CELL_HALF) / CELL_SIZE;
-                const int c = (player.x + CELL_HALF) / CELL_SIZE;
+                int r, c;
+                getObjectCell((Object*)&player, &r, &c);
                 if (!isLadder(r, c) && !player.onLadder) {
                     if (!player.inAir && !player.onLadder && !jumpDenied) {
                         player.vy = -PLAYER_SPEED_JUMP;
@@ -342,8 +348,8 @@ void gameLoop()
 
             // ... Down
             } else if (keystate[SDL_SCANCODE_DOWN]) {
-                const int r = (player.y + CELL_HALF) / CELL_SIZE;
-                const int c = (player.x + CELL_HALF) / CELL_SIZE;
+                int r, c;
+                getObjectCell((Object*)&player, &r, &c);
                 if (player.onLadder || isLadder(r + 1, c)) {
                     player.vy = PLAYER_SPEED_LADDER;
                     player.x = c * CELL_SIZE;
@@ -368,8 +374,8 @@ void gameLoop()
 
             // ... Space
             if (keystate[SDL_SCANCODE_SPACE]) {
-                int r = (player.y + CELL_HALF) / CELL_SIZE;
-                int c = (player.x + CELL_HALF) / CELL_SIZE;
+                int r, c;
+                getObjectCell((Object*)&player, &r, &c);
                 if (findNearDoor(&r, &c)) {
                     if (player.keys > 0) {
                         player.keys -= 1;
@@ -419,7 +425,7 @@ void gameLoop()
         }
 
         // Delete unused objects from memory
-        if (cleanTimer ++ > 500) {
+        if (cleanTimer ++ >= CLEAN_PERIOD) {
             cleanTimer = 0;
             ObjectArray_clean(&level->objects);
         }
@@ -429,7 +435,6 @@ void gameLoop()
     }
 
     //printf("\n");
-    //printf("fps=%f, frame count=%lu\n", FrameControl_getRealFps(&frameControl), frameControl.frameCount);
-
-    timeEndPeriod(SYSTEM_TIMER_PERIOD);
+    //printf("fps=%f, frame count=%lu\n", FrameControl_getRealFps(&frameControl),
+    //       frameControl.frameCount);
 }

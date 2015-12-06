@@ -11,17 +11,17 @@
 
 Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];
 Level* level = &levels[0][0];
-extern const char* levelString;
+static const char* levelString;
 
 
-void changeSprite( ObjectTypeId typeId, int spriteRow, int spriteColumn )
+static void changeSprite( ObjectTypeId typeId, int spriteRow, int spriteColumn )
 {
     ObjectType* type = &objectTypes[typeId];
     type->sprite.y = spriteRow * SPRITE_SIZE;
     type->sprite.x = spriteColumn * SPRITE_SIZE;
 }
 
-void initSprites_Castle()
+static void initSprites_Castle()
 {
     changeSprite( TYPE_WALL_TOP,        4,  6  );
     changeSprite( TYPE_WALL,            5,  6  );
@@ -40,7 +40,7 @@ void initSprites_Castle()
     changeSprite( TYPE_LADDER,          12, 2  );
 }
 
-void initSprites_Forest()
+static void initSprites_Forest()
 {
     changeSprite( TYPE_WALL_TOP,        4,  6  );
     changeSprite( TYPE_WALL,            5,  6  );
@@ -57,7 +57,7 @@ void initSprites_Forest()
     changeSprite( TYPE_LADDER,          12, 2  );
 }
 
-void initSprites_Underground()
+static void initSprites_Underground()
 {
     changeSprite( TYPE_WALL_TOP,        4,  6  );
     changeSprite( TYPE_WALL,            5,  6  );
@@ -98,14 +98,14 @@ void initLevel( Level* level )
     ObjectArray_append(&level->objects, (Object*)&player);
 }
 
-void initLevelsFromString( const char* string )
+static void initLevelsFromString( const char* string )
 {
     struct { int r, c; } startLevel;
 
     // These helpers return appropriate level string/character
     const int STRING_ROW_SIZE = CELL_COUNT * LEVEL_XCOUNT;
     const int STRING_ROW_WIDTH = COLUMN_COUNT * LEVEL_XCOUNT;
-    #define GET_LEVEL_STRING(string, r, c) (string + STRING_ROW_SIZE * (r) + COLUMN_COUNT * (c))
+    #define GET_LEVEL_STRING(string, r, c) ((string) + STRING_ROW_SIZE * (r) + COLUMN_COUNT * (c))
     #define GET_LEVEL_CHAR(levelString, r, c) (levelString)[(r) * STRING_ROW_WIDTH + (c)]
 
     // Iterate over levels
@@ -273,7 +273,7 @@ void initLevels()
 
 
 // There must be exactly LEVEL_XCOUNT * LEVEL_YCOUNT levels here
-const char* levelString =
+static const char* levelString =
 
 "                    "  " *     b            "
 "  ooooooo S ooooooo "  " d               g  "
