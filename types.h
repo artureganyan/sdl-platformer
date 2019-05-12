@@ -24,7 +24,9 @@ typedef enum
     FRAME_PERIOD = 1000 / FRAME_RATE,
     PLAYER_WIDTH = CELL_SIZE - 12,
     PLAYER_HEIGHT = CELL_SIZE,
+#ifdef _MSC_VER
     SYSTEM_TIMER_PERIOD = 1 // In ms, used to update frames
+#endif
 } Constant;
 
 typedef enum
@@ -172,7 +174,7 @@ typedef struct
     int attack;
     int inAir;
     int onLadder;
-    int health;  // Values > 100 mean invincibility
+    int health;  // Values > 100 mean how long player is invincibile (e.g. 110 is for 10 frames)
     int lives;
     int coins;
     int keys;

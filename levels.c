@@ -273,6 +273,7 @@ void initLevels()
 
 
 // There must be exactly LEVEL_XCOUNT * LEVEL_YCOUNT levels here
+///*
 static const char* levelString =
 
 "                    "  " *     b            "
@@ -306,15 +307,15 @@ static const char* levelString =
 "*- **********=      "  "    =           o   "
 "*-   ooo    <=      "  " P  = ooooo  s **~~~"
 "********************"  "*****************~~~";
-
+//*/
 
 // Experiments
 
 /*
-const char* levelString =
+static const char* levelString =
 
 "    &           &   "  "                    "  "                  * "  "  `                *"  "*                  *"
-"          &         "  "                    "  " _              *   "  "        o s       o*"  "*          o       *"
+" P        &         "  "                    "  " _              *   "  "        o s       o*"  "*          o       *"
 "xxxxx               "  "                    "  " k  k  _        ****"  "****  ********  =***"  "*         ***      *"
 "xxx                 "  "                    "  "kakiaik          ***"  "                =  *"  "*       ***     g  *"
 "xx                  "  "                    "  "*******  ******  ***"  "             =******"  "*os    *  *  =******"
@@ -336,7 +337,7 @@ const char* levelString =
 "x       xxxxxx      "  "         | p =     |"  "      xxxxxxx     xx"  "** o   =    g       "  "               =    "
 "x      xxxxxxxx   xx"  "xxxx  xxxxxxxxxxxxxx"  "xxxx   xxxxx      xx"  "*****  =   *****    "  "               =    "
 "x   xxxxxxxxxxx  xxx"  "x ^    xxxxxxxxxxxxx"  "xxx               x*"  "**     =            "  "               =    "
-"xx  `xxxxxxxxx      "  "   b    |     | xxxx"  "xx            r     "  "       =    s       "  "                 p  "
+"xx  `xxxxxxxxx      "  "   b    |     | xxxx"  "xx            r     "  "       =    s       "  "                    "
 "xxx   xxxxxxxxxxxxxx"  "x       |     |     "  " | q         xxxxx**"  "**************=*****"  "*******      *******"
 "xxxx  xxxxxxxxxxxxxx"  "x    xxxxxxxxxxxxxxx"  "xxxxxx  x      xxxx*"  "**   b        =   **"  "***         -    ***"
 "xxxx  xxxxxxxxxxxxxx"  "x @    xxxxxxxxxxxxx"  "xxxx             xxx"  "x*  o   o     =   **"  "**       x        **"
@@ -344,10 +345,10 @@ const char* levelString =
 "xxx    xxxxxxxxxxxxx"  "x  xxx    |         "  "e|                xx"  "xx                xx"  "xxx      |      .xxx"
 "          .         "  "  k xxx~~xxx~~xx~~xx"  "xxx~~~~~~~~~~~~~~~xx"  "xx~~~~~~~~~~~~~~~~xx"  "xxxx~~~~~x~~~~~~xxxx"
 "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxx~~xxx~~xx~~xx"  "xxxx~~~~~~~~~~~~~~xx"  "xx~~~~~~~~~~~~~~~~xx"  "xxxx~~~~~x~~~~~~xxxx";
-*/
+//*/
 
 /*
-const char* levelString =
+static const char* levelString =
 
 //         0                       1                       2                       3                       4                      5
 "                    "  "         &          "  "                    "  "                    "  "                    " "                    "
@@ -397,4 +398,4 @@ const char* levelString =
 "xxxxxxxxxxxxxxxx    "  "   r    xxxx        "  "        xxxxx     xx"  "xx    . xxxxxxxx xxx"  "xx  xxxxxxxxxxxxxxx " " ^ xxxxx   xxxxxxxxx"
 "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxxx~~xx~~x"  "~~xx~~xxxxxxxx . xxx"  "xxx  xxxxxxxxxxxxxxx"  "xx~~xxxxxxxxxxxxxx  " "      .  xxxxxxxxxxx"
 "xxxxxxxxxxxxxxxxxxxx"  "xxxxxxxxxxxx~~~~~~~~"  "~~~~~~xxxxxxxxxxxxxx"  "xxxxxxxxxxxxxxxxxxxx"  "xx~~xxxxxxxxxxxxxxxx" "x xx xxxxxxxxxxxxxxx";
-*/
+//*/

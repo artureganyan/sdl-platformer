@@ -5,7 +5,6 @@
  ******************************************************************************/
 
 #include "render.h"
-#include "SDL_image.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -147,6 +146,7 @@ static SDL_Texture* createText( const char* text, SDL_Color color )
             SDL_TEXTUREACCESS_TARGET, textWidth, textHeight);
 
     SDL_SetRenderTarget(renderer, texture);
+    SDL_RenderClear(renderer);
 
     for (int i = 0; i < lineCount; ++ i) {
         int w, h;
@@ -214,6 +214,9 @@ void drawTextEx( const char* text, int x, int y, int w, int h, int withBox )
     }
     if (!texture) {
         TextTexture* t = &textCache.textures[textCache.next];
+        if (t->texture) {
+            SDL_DestroyTexture(t->texture);
+        }
         t->texture = createText(text, TEXT_COLOR);
         t->text = text;
         texture = t->texture;

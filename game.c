@@ -221,7 +221,9 @@ void completeLevel()
 
 static void onExit()
 {
+#ifdef _MSC_VER
     timeEndPeriod(SYSTEM_TIMER_PERIOD);
+#endif
     TTF_Quit();
     SDL_Quit();
 }
@@ -254,11 +256,12 @@ void gameLoop()
     if (!FrameControl_start(&frameControl, FRAME_RATE)) {
         return;
     }
+#ifdef _MSC_VER
     if (timeBeginPeriod(SYSTEM_TIMER_PERIOD) != TIMERR_NOERROR) {
         fprintf(stderr, "gameLoop(): timeBeginPeriod() failed\n");
         return;
     }
-
+#endif
     while (gameState != STATE_QUIT) {
 
         // Draw screen

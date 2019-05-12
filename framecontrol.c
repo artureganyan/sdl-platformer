@@ -13,7 +13,7 @@ int FrameControl_start( FrameControl* c, int fps )
     c->framePeriod = 1000.0 / fps;
     c->prevFrameTime = 0;
     c->frameCount = 0;
-
+#ifdef _MSC_VER
     LARGE_INTEGER i;
     if (!QueryPerformanceFrequency(&i)) {
         fprintf(stderr, "FrameControl_start(): QueryPerformanceFrequency() failed\n");
@@ -25,6 +25,11 @@ int FrameControl_start( FrameControl* c, int fps )
         return 0;
     }
     c->startTime = i.QuadPart;
+#else
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    c->startTime = now.tv_sec + now.tv_nsec / 1000000000.0;
+#endif
     return 1;
 }
 
@@ -46,12 +51,18 @@ void FrameControl_waitNextFrame( FrameControl* c )
 
 double FrameControl_getElapsedTime( FrameControl* c )
 {
+#ifdef _MSC_VER
     LARGE_INTEGER i;
     if (!QueryPerformanceCounter(&i)) {
         fprintf(stderr, "FrameControl_getElapsedTime(): QueryPerformanceCounter() failed\n");
         return 0;
     }
     return (i.QuadPart - c->startTime) / c->cpuFrequency;
+#else
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (now.tv_sec + now.tv_nsec / 1000000000.0 - c->startTime) * 1000.0;
+#endif
 }
 
 double FrameControl_getRealFps( FrameControl* c )

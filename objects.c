@@ -519,9 +519,9 @@ void Spring_onInit( Object* e )
 void Spring_onFrame( Object* e )
 {
     if (e->state > 0) {
-        if (-- e->state <= 0) {
-            setAnimation(e, 0, 0, 24);
-        }
+        e->state -= 1;
+    } else {
+        setAnimation(e, 0, 0, 24);
     }
 }
 

@@ -7,20 +7,28 @@
 #ifndef FRAMECONTROL_H
 #define FRAMECONTROL_H
 
+#ifdef _MSC_VER
 #include <windows.h>
+#else
+#include <time.h>
+#endif
 
 typedef struct
 {
     double cpuFrequency;
     double framePeriod;
     double prevFrameTime;
-    LONGLONG startTime;
+#ifdef _MSC_VER
+    LONGLONG startTime; // Ticks
+#else
+    double startTime;   // Seconds
+#endif
     unsigned long frameCount;
 } FrameControl;
 
 int FrameControl_start( FrameControl*, int fps );
 void FrameControl_waitNextFrame( FrameControl* );
-double FrameControl_getElapsedTime( FrameControl* );
+double FrameControl_getElapsedTime( FrameControl* ); // Milliseconds
 double FrameControl_getRealFps( FrameControl* );
 
 #endif
