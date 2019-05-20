@@ -44,10 +44,10 @@ void initRender()
     // Sprites
     static const char* spritesPath = "image/sprites.bmp";
     static const Uint8 transparent[3] = {90, 82, 104};
-    SDL_Surface* bmp = SDL_LoadBMP(spritesPath);
-    SDL_SetColorKey(bmp, SDL_TRUE, SDL_MapRGB(bmp->format, transparent[0], transparent[1], transparent[2]));
-    sprites = SDL_CreateTextureFromSurface(renderer, bmp);
-    SDL_FreeSurface(bmp);
+    SDL_Surface* surface = SDL_LoadBMP(spritesPath);
+    SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, transparent[0], transparent[1], transparent[2]));
+    sprites = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
 
     // Font
     TTF_Init();
@@ -57,8 +57,8 @@ void initRender()
 void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip flip )
 {
     SDL_Rect srcRect = *spriteRect;
-    SDL_Rect dstRect = {x, y, spriteRect->w * SIZE_FACTOR, spriteRect->h * SIZE_FACTOR};
-    srcRect.x += SPRITE_SIZE * frame;
+    srcRect.x += srcRect.w * frame;
+    SDL_Rect dstRect = {x, y, srcRect.w * SIZE_FACTOR, srcRect.h * SIZE_FACTOR};
     SDL_RenderCopyEx(renderer, sprites, &srcRect, &dstRect, 0, NULL, flip);
 }
 
@@ -75,8 +75,8 @@ void drawObject( Object* object, int x, int y )
         x += frame * SIZE_FACTOR;
         drawSprite(&spriteRect, x, y, 0, flip);
 
+        spriteRect.x += spriteRect.w;
         spriteRect.w = frame;
-        spriteRect.x += SPRITE_SIZE - frame;
         x -= frame * SIZE_FACTOR;
         drawSprite(&spriteRect, x, y, 0, flip);
     } else {
@@ -146,6 +146,7 @@ static SDL_Texture* createText( const char* text, SDL_Color color )
             SDL_TEXTUREACCESS_TARGET, textWidth, textHeight);
 
     SDL_SetRenderTarget(renderer, texture);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
 
     for (int i = 0; i < lineCount; ++ i) {

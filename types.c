@@ -57,7 +57,7 @@ void ObjectArray_clean( ObjectArray* objects )
 
 static int compareByDepth( const void* object1, const void* object2 )
 {
-    return ((Object*)object2)->type->typeId - ((Object*)object1)->type->typeId;
+    return ((const Object*)object2)->type->typeId - ((const Object*)object1)->type->typeId;
 }
 
 void ObjectArray_sortByDepth( ObjectArray* objects )
@@ -100,12 +100,12 @@ void initTypeEx( ObjectTypeId typeId, int spriteRow, int spriteColumn, ObjectTyp
                  OnInit onInit, OnFrame onFrame, OnHit onHit )
 {
     ObjectType* type = &objectTypes[typeId];
+    type->typeId = typeId;
+    type->generalTypeId = generalTypeId;
     type->sprite.y = spriteRow * SPRITE_SIZE;
     type->sprite.x = spriteColumn * SPRITE_SIZE;
     type->sprite.w = SPRITE_SIZE;
     type->sprite.h = SPRITE_SIZE;
-    type->typeId = typeId;
-    type->generalTypeId = generalTypeId;
     type->solid = solid;
     type->speed = 0;
     type->width = SPRITE_SIZE;

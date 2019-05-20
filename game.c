@@ -1,4 +1,4 @@
-/******************************************************************************
+﻿/******************************************************************************
  * Copyright (c) 2015 Artur Eganyan
  *
  * This software is provided "AS IS", WITHOUT ANY WARRANTY, express or implied.
@@ -32,37 +32,37 @@ static void processPlayer()
 {
     const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
     const int dh = (CELL_SIZE - (PLAYER_HEIGHT - 14)) / 2;
-    int r, c, cell[4], body[4] /*unused*/;
-    getObjectPos((Object*)&player, &r, &c, cell, body);
+    int r, c; Borders cell, body /*unused*/;
+    getObjectPos((Object*)&player, &r, &c, &cell, &body);
 
     // Movement
     player.x += player.vx;
     // ... Left
-    if (player.x < cell[0] && player.vx <= 0) {
+    if (player.x < cell.left && player.vx <= 0) {
         if (isSolid(r, c - 1, SOLID_RIGHT) ||
-            (player.y + dh < cell[2] && isSolid(r - 1, c - 1, SOLID_RIGHT)) ||
-            (player.y + CELL_SIZE - dh > cell[3] && isSolid(r + 1, c - 1, SOLID_RIGHT)) ) {
-            player.x = cell[0];
+            (player.y + dh < cell.top && isSolid(r - 1, c - 1, SOLID_RIGHT)) ||
+            (player.y + CELL_SIZE - dh > cell.bottom && isSolid(r + 1, c - 1, SOLID_RIGHT)) ) {
+            player.x = cell.left;
             player.vx = 0;
         }
     // ... Right
-    } else if (player.x + CELL_SIZE > cell[1] && player.vx >= 0) {
+    } else if (player.x + CELL_SIZE > cell.right && player.vx >= 0) {
         if (isSolid(r, c + 1, SOLID_LEFT) ||
-            (player.y + dh < cell[2] && isSolid(r - 1, c + 1, SOLID_LEFT)) ||
-            (player.y + CELL_SIZE - dh > cell[3] && isSolid(r + 1, c + 1, SOLID_LEFT)) ) {
-            player.x = cell[0];
+            (player.y + dh < cell.top && isSolid(r - 1, c + 1, SOLID_LEFT)) ||
+            (player.y + CELL_SIZE - dh > cell.bottom && isSolid(r + 1, c + 1, SOLID_LEFT)) ) {
+            player.x = cell.left;
             player.vx = 0;
         }
     }
 
     player.y += player.vy;
     // ... Bottom
-    if (player.y + CELL_SIZE > cell[3] && player.vy >= 0) {
+    if (player.y + CELL_SIZE > cell.bottom && player.vy >= 0) {
         if (isSolid(r + 1, c, SOLID_TOP) ||
-            (player.x + dw < cell[0] && isSolid(r + 1, c - 1, SOLID_TOP)) ||
-            (player.x - dw + CELL_SIZE > cell[1] && isSolid(r + 1, c + 1, SOLID_TOP)) ||
+            (player.x + dw < cell.left && isSolid(r + 1, c - 1, SOLID_TOP)) ||
+            (player.x - dw + CELL_SIZE > cell.right && isSolid(r + 1, c + 1, SOLID_TOP)) ||
             (!player.onLadder && isSolidLadder(r + 1, c)) ) {
-            player.y = cell[2];
+            player.y = cell.top;
             player.vy = 0;
             player.inAir = 0;
             if (player.onLadder) {
@@ -73,11 +73,11 @@ static void processPlayer()
             player.inAir = !player.onLadder;
         }
     // ... Top
-    } else if (player.y < cell[2] && player.vy <= 0) {
+    } else if (player.y < cell.top && player.vy <= 0) {
         if (isSolid(r - 1, c, SOLID_BOTTOM) ||
-            (player.x + dw < cell[0] && isSolid(r - 1, c - 1, SOLID_BOTTOM)) ||
-            (player.x - dw + CELL_SIZE > cell[1] && isSolid(r - 1, c + 1, SOLID_BOTTOM)) ) {
-            player.y = cell[2];
+            (player.x + dw < cell.left && isSolid(r - 1, c - 1, SOLID_BOTTOM)) ||
+            (player.x - dw + CELL_SIZE > cell.right && isSolid(r - 1, c + 1, SOLID_BOTTOM)) ) {
+            player.y = cell.top;
             player.vy += 1;
         }
         player.inAir = !player.onLadder;

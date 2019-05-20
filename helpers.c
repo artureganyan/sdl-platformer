@@ -48,27 +48,26 @@ int cellContains( int r, int c, ObjectTypeId generalType )
 
 void getObjectCell( Object* object, int* r, int* c )
 {
-    *r = (object->y + CELL_HALF) / CELL_SIZE;
-    *c = (object->x + CELL_HALF) / CELL_SIZE;
+    *r = (object->y + object->type->sprite.h * SIZE_FACTOR / 2) / CELL_SIZE;
+    *c = (object->x + object->type->sprite.w * SIZE_FACTOR / 2) / CELL_SIZE;
 }
 
-// cellBorders/bodyBorders = [left, right, top, bottom], for object cell/body
-void getObjectPos( Object* object, int* r, int* c, int cellBorders[4], int bodyBorders[4] )
+void getObjectPos( Object* object, int* r, int* c, Borders* cell, Borders* body )
 {
     const int dw = (CELL_SIZE - object->type->width) / 2;
     const int dh = (CELL_SIZE - object->type->height) / 2;
 
     getObjectCell(object, r, c);
 
-    cellBorders[0] = CELL_SIZE * (*c);
-    cellBorders[1] = CELL_SIZE * (*c + 1);
-    cellBorders[2] = CELL_SIZE * (*r);
-    cellBorders[3] = CELL_SIZE * (*r + 1);
+    cell->left = CELL_SIZE * (*c);
+    cell->right = cell->left + CELL_SIZE;
+    cell->top = CELL_SIZE * (*r);
+    cell->bottom = cell->top + CELL_SIZE;
 
-    bodyBorders[0] = object->x + dw;
-    bodyBorders[1] = object->x + CELL_SIZE - dw;
-    bodyBorders[2] = object->y + dh;
-    bodyBorders[3] = object->y + CELL_SIZE - dh;
+    body->left = object->x + dw;
+    body->right = object->x + CELL_SIZE - dw;
+    body->top = object->y + dh;
+    body->bottom = object->y + CELL_SIZE - dh;
 }
 
 int findNearDoor( int* r, int* c )

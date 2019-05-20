@@ -24,7 +24,6 @@ typedef enum
 void initLevel( Level* );
 void initLevels();
 void setLevel( int r, int c );
-int onAction( Object* item, Action );
 
 extern Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];
 extern Level* level;

@@ -111,6 +111,14 @@ typedef enum
     SOLID_ALL = SOLID_LEFT | SOLID_RIGHT | SOLID_TOP | SOLID_BOTTOM
 } SolidFlags;
 
+typedef struct
+{
+    int left;
+    int right;
+    int top;
+    int bottom;
+} Borders;
+
 struct Object_s;
 typedef struct Object_s Object;
 typedef void (*OnInit)( Object* );
@@ -121,11 +129,11 @@ typedef struct
 {
     ObjectTypeId typeId;
     ObjectTypeId generalTypeId;
-    SDL_Rect sprite;
+    SDL_Rect sprite; // Sprite rect in the spritesheet, unscaled
+    int width;       // Body width/height, scaled. Body is centered within
+    int height;      // the scaled sprite.
     int solid;
     int speed;
-    int width;
-    int height;
     OnInit onInit;
     OnFrame onFrame;
     OnHit onHit;
@@ -171,7 +179,6 @@ typedef struct
     int vx;
     int vy;
     int removed; // Unused
-    int attack;
     int inAir;
     int onLadder;
     int health;  // Values > 100 mean how long player is invincibile (e.g. 110 is for 10 frames)

@@ -30,36 +30,36 @@ typedef enum
 // could not move by dx (flag DIRECTION_X) or dy (flag DIRECTION_Y).
 int move( Object* object, int dx, int dy, int checkFloor )
 {
-    int r, c, cell[4], body[4];
+    int r, c; Borders cell, body;
     int result = 0;
 
     object->x += dx;
     object->y += dy;
-    getObjectPos(object, &r, &c, cell, body);
+    getObjectPos(object, &r, &c, &cell, &body);
 
     if (isSolid(r, c, SOLID_ALL)) {
         object->x -= dx;
         object->y -= dy;
         return DIRECTION_XY;
     }
-    if (dx > 0 && body[1] > cell[1]) {
-        if (isSolid(r, c + 1, SOLID_LEFT) || body[1] > LEVEL_WIDTH || (checkFloor && !isSolidOrLadder(r + 1, c + 1))) {
+    if (dx > 0 && body.right > cell.right) {
+        if (isSolid(r, c + 1, SOLID_LEFT) || body.right > LEVEL_WIDTH || (checkFloor && !isSolidOrLadder(r + 1, c + 1))) {
             object->x -= dx;
             result |= DIRECTION_X;
         }
-    } else if (dx < 0 && body[0] < cell[0]) {
-        if (isSolid(r, c - 1, SOLID_RIGHT) || body[0] < 0 || (checkFloor && !isSolidOrLadder(r + 1, c - 1))) {
+    } else if (dx < 0 && body.left < cell.left) {
+        if (isSolid(r, c - 1, SOLID_RIGHT) || body.left < 0 || (checkFloor && !isSolidOrLadder(r + 1, c - 1))) {
             object->x -= dx;
             result |= DIRECTION_X;
         }
     }
-    if (dy > 0 && body[3] > cell[3]) {
-        if (isSolid(r + 1, c, SOLID_TOP) || body[3] > LEVEL_HEIGHT) {
+    if (dy > 0 && body.bottom > cell.bottom) {
+        if (isSolid(r + 1, c, SOLID_TOP) || body.bottom > LEVEL_HEIGHT) {
             object->y -= dy;
             result |= DIRECTION_Y;
         }
-    } else if (dy < 0 && body[2] < cell[2]) {
-        if (isSolid(r - 1, c, SOLID_BOTTOM) || body[2] < 0) {
+    } else if (dy < 0 && body.top < cell.top) {
+        if (isSolid(r - 1, c, SOLID_BOTTOM) || body.top < 0) {
             object->y -= dy;
             result |= DIRECTION_Y;
         }
@@ -120,8 +120,8 @@ void Object_onFrame( Object* obj ) {}
 void Object_onHit( Object* obj ) {}
 
 
-const int ENEMY_STATE_MOVING = MS_TO_FRAMES(10000);
-const int ENEMY_STATE_WAITING = MS_TO_FRAMES(12000);
+static const int ENEMY_STATE_MOVING = MS_TO_FRAMES(10000);
+static const int ENEMY_STATE_WAITING = MS_TO_FRAMES(12000);
 
 void Enemy_onInit( Object* e )
 {
@@ -174,7 +174,8 @@ void ShooterEnemy_onFrame( Object* e )
     if (e->state <= STATE_MOVING) {
         if (isVisible(e, (Object*)&player)) {
             Object* shot = createObject(level, TYPE_ICESHOT, 0, 0);
-            shot->x = e->anim.direction > 0 ? e->x + e->type->width : e->x - e->type->width;
+            shot->x = e->anim.direction > 0 ? e->x + e->type->sprite.w * SIZE_FACTOR :
+                                              e->x - shot->type->sprite.w * SIZE_FACTOR;
             shot->y = e->y;
             shot->vx *= e->anim.direction;
             shot->anim.direction = e->anim.direction;
@@ -483,30 +484,28 @@ void Platform_onHit( Object* e )
     const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
     const int dh = (CELL_SIZE - PLAYER_HEIGHT) / 2;
     const int border = 5;
-    int pr, pc, pcell[4], pbody[4];
-    int er, ec, ecell[4], ebody[4];
+    int pr, pc; Borders pcell, pbody;
+    int er, ec; Borders ecell, ebody;
 
-    getObjectPos((Object*)&player, &pr, &pc, pcell, pbody);
-    getObjectPos(e, &er, &ec, ecell, ebody);
+    getObjectPos((Object*)&player, &pr, &pc, &pcell, &pbody);
+    getObjectPos(e, &er, &ec, &ecell, &ebody);
 
-    if ((pbody[3] - ebody[2]) > border && (ebody[3] - pbody[2]) > border) {
-        if (pbody[1] >= ebody[0] && pbody[0] <= ebody[0]) {
-            player.x = ebody[0] - dw - PLAYER_WIDTH;
-            player.inAir = 0;
-        } else if (pbody[0] <= ebody[1] && pbody[1] >= ebody[1]) {
-            player.x = ebody[1] - dw;
-            player.inAir = 0;
+    if ((pbody.bottom - ebody.top) > border && (ebody.bottom - pbody.top) > border) {
+        if (pbody.right >= ebody.left && pbody.left <= ebody.left) {
+            player.x = ebody.left - dw - PLAYER_WIDTH;
+        } else if (pbody.left <= ebody.right && pbody.right >= ebody.right) {
+            player.x = ebody.right - dw;
         }
 
-    } else if ((pbody[1] - ebody[0]) > border && (ebody[1] - pbody[0]) > border) {
-        if (pbody[3] >= ebody[2] && pbody[2] <= ebody[2]) {
+    } else if ((pbody.right - ebody.left) > border && (ebody.right - pbody.left) > border) {
+        if (pbody.bottom >= ebody.top && pbody.top <= ebody.top) {
             if (!player.vx) {
                 player.x += e->vx;
             }
-            player.y = ebody[2] - dh - PLAYER_HEIGHT;
+            player.y = ebody.top - dh - PLAYER_HEIGHT;
             player.inAir = 0;
-        } else if (pbody[2] <= ebody[3] && pbody[3] >= ebody[3]) {
-            player.y = ebody[3] - dh;
+        } else if (pbody.top <= ebody.bottom && pbody.bottom >= ebody.bottom) {
+            player.y = ebody.bottom - dh;
         }
     }
 }
@@ -528,13 +527,13 @@ void Spring_onFrame( Object* e )
 void Spring_onHit( Object* e )
 {
     const int h = 16;
-    int pr, pc, pcell[4], pbody[4];
-    int er, ec, ecell[4], ebody[4];
+    int pr, pc; Borders pcell, pbody;
+    int er, ec; Borders ecell, ebody;
 
-    getObjectPos((Object*)&player, &pr, &pc, pcell, pbody);
-    getObjectPos(e, &er, &ec, ecell, ebody);
+    getObjectPos((Object*)&player, &pr, &pc, &pcell, &pbody);
+    getObjectPos(e, &er, &ec, &ecell, &ebody);
 
-    if (e->state == 0 && pbody[3] >= ebody[3] - h && player.vy > 2) {
+    if (e->state == 0 && pbody.bottom >= ebody.bottom - h && player.vy > 2) {
         player.vy = -15;
         e->state = 50;
         setAnimation(e, 1, 1, 24);
