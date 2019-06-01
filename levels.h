@@ -15,17 +15,8 @@ enum
     LEVEL_YCOUNT = 2
 };
 
-typedef enum
-{
-    ACTION_TAKE,
-    ACTION_USE
-} Action;
-
-void initLevel( Level* );
-void initLevels();
-void setLevel( int r, int c );
-
 extern Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];
-extern Level* level;
+
+void initLevels();
 
 #endif

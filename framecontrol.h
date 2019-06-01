@@ -15,20 +15,20 @@
 
 typedef struct
 {
-    double cpuFrequency;
-    double framePeriod;
-    double prevFrameTime;
 #ifdef _MSC_VER
-    LONGLONG startTime; // Ticks
+    double cpuFrequency;    // Ticks per second divided by 1000
+    LONGLONG startTime;     // Ticks
 #else
-    double startTime;   // Seconds
+    double startTime;       // Milliseconds
 #endif
+    double prevFrameTime;   // Milliseconds
+    double framePeriod;     // Milliseconds
     unsigned long frameCount;
 } FrameControl;
 
-int FrameControl_start( FrameControl*, int fps );
-void FrameControl_waitNextFrame( FrameControl* );
-double FrameControl_getElapsedTime( FrameControl* ); // Milliseconds
-double FrameControl_getRealFps( FrameControl* );
+int FrameControl_start( FrameControl* c, int fps );
+void FrameControl_waitNextFrame( FrameControl* c );
+double FrameControl_getElapsedTime( FrameControl* c ); // Milliseconds
+double FrameControl_getRealFps( FrameControl* c );
 
 #endif

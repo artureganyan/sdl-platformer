@@ -5,6 +5,8 @@
  ******************************************************************************/
 
 #include "render.h"
+#include "game.h"
+#include "SDL_ttf.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -62,6 +64,18 @@ void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip
     SDL_RenderCopyEx(renderer, sprites, &srcRect, &dstRect, 0, NULL, flip);
 }
 
+static void drawObjectBody( Object* object, int x, int y )
+{
+    SDL_Rect body = {x + (CELL_SIZE - object->type->width) / 2,
+                     y + (CELL_SIZE - object->type->height) / 2,
+                     object->type->width, object->type->height};
+
+    SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
+    SDL_RenderDrawRect(renderer, &body);
+}
+
+// x and y are specified to draw the object animation at arbitrary position,
+// e.g. to make special effects
 void drawObject( Object* object, int x, int y )
 {
     const SDL_RendererFlip flip = object->anim.direction < 0 ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
@@ -82,6 +96,8 @@ void drawObject( Object* object, int x, int y )
     } else {
         drawSprite(&object->type->sprite, x, y, frame, flip);
     }
+
+//  drawObjectBody(object, x, y);
 
     SDL_SetTextureAlphaMod(sprites, 255);
 }
@@ -104,7 +120,9 @@ static void drawBox( int x, int y, int w, int h )
 
 static SDL_Texture* createText( const char* text, SDL_Color color )
 {
-    if (!text) return NULL;
+    if (!text) {
+        return NULL;
+    }
 
     // Split text into lines and get the maximum line width
     int maxLineCount = 16;
@@ -204,7 +222,9 @@ static void _drawText( SDL_Texture* text, int x, int y, int w, int h, int withBo
 //
 void drawTextEx( const char* text, int x, int y, int w, int h, int withBox )
 {
-    if (!text) return;
+    if (!text) {
+        return;
+    }
     SDL_Texture* texture = NULL;
     for (int i = 0; i < TEXT_CACHE_SIZE; ++ i) {
         TextTexture* t = &textCache.textures[i];
@@ -236,7 +256,7 @@ void drawScreen()
     // Level
     for (int r = 0; r < ROW_COUNT; ++ r) {
         for (int c = 0; c < COLUMN_COUNT; ++ c) {
-            ObjectType* type = level->map[r][c];
+            ObjectType* type = level->cells[r][c];
             drawSprite(&type->sprite, CELL_SIZE * c, CELL_SIZE * r, 0, SDL_FLIP_NONE);
         }
     }

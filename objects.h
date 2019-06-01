@@ -9,9 +9,9 @@
 
 #include "types.h"
 
-void Object_onInit( Object* obj );
-void Object_onFrame( Object* obj );
-void Object_onHit( Object* obj );
+void Object_onInit( Object* object );
+void Object_onFrame( Object* object );
+void Object_onHit( Object* object );
 
 void Enemy_onInit( Object* e );
 void Enemy_onFrame( Object* e );
@@ -39,8 +39,8 @@ void Fireball_onFrame( Object* e );
 
 void Spider_onFrame( Object* e );
 
-void Teleporting_onFrame( Object* e );
-void Teleporting_onHit( Object* e );
+void TeleportingEnemy_onFrame( Object* e );
+void TeleportingEnemy_onHit( Object* e );
 
 void Platform_onInit( Object* e );
 void Platform_onFrame( Object* e );

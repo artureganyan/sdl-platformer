@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 #include "helpers.h"
+#include "game.h"
 
 
 int isCellValid( int r, int c )
@@ -14,19 +15,19 @@ int isCellValid( int r, int c )
 
 int isSolid( int r, int c, int flags )
 {
-    return isCellValid(r, c) ? (level->map[r][c]->solid & flags) == flags : 0;
+    return isCellValid(r, c) ? (level->cells[r][c]->solid & flags) == flags : 0;
 }
 
 int isLadder( int r, int c )
 {
-    return isCellValid(r, c) ? level->map[r][c]->generalTypeId == TYPE_LADDER : 0;
+    return isCellValid(r, c) ? level->cells[r][c]->generalTypeId == TYPE_LADDER : 0;
 }
 
 // Returns 1 if there is a ladder or top-solid block at (r, c)
 int isSolidOrLadder( int r, int c )
 {
-    return isCellValid(r, c) ? (level->map[r][c]->solid & SOLID_TOP) ||
-            (level->map[r][c]->generalTypeId == TYPE_LADDER) : 0;
+    return isCellValid(r, c) ? (level->cells[r][c]->solid & SOLID_TOP) ||
+            (level->cells[r][c]->generalTypeId == TYPE_LADDER) : 0;
 }
 
 // Returns 1 if there is a ladder at (r, c) and player can stay on it
@@ -38,12 +39,12 @@ int isSolidLadder( int r, int c )
 
 int isWater( int r, int c )
 {
-    return isCellValid(r, c) ? level->map[r][c]->generalTypeId == TYPE_WATER : 0;
+    return isCellValid(r, c) ? level->cells[r][c]->generalTypeId == TYPE_WATER : 0;
 }
 
 int cellContains( int r, int c, ObjectTypeId generalType )
 {
-    return isCellValid(r, c) ? level->map[r][c]->generalTypeId == generalType : 0;
+    return isCellValid(r, c) ? level->cells[r][c]->generalTypeId == generalType : 0;
 }
 
 void getObjectCell( Object* object, int* r, int* c )

@@ -7,6 +7,7 @@
 #include "objects.h"
 #include "render.h"
 #include "helpers.h"
+#include "levels.h"
 #include "game.h"
 #include <math.h>
 
@@ -28,7 +29,7 @@ typedef enum
 // Moves the object by dx and dy, checking the floor if checkFloor != 0.
 // Returns 0 on success, otherwise returns flags indicating if object
 // could not move by dx (flag DIRECTION_X) or dy (flag DIRECTION_Y).
-int move( Object* object, int dx, int dy, int checkFloor )
+static int move( Object* object, int dx, int dy, int checkFloor )
 {
     int r, c; Borders cell, body;
     int result = 0;
@@ -68,7 +69,7 @@ int move( Object* object, int dx, int dy, int checkFloor )
 }
 
 // Returns 1 if the source sees the target
-int isVisible( Object* source, Object* target )
+static int isVisible( Object* source, Object* target )
 {
     if (target->y + CELL_SIZE > source->y + CELL_HALF &&
         target->y < source->y + CELL_HALF) {
@@ -115,9 +116,9 @@ int isVisible( Object* source, Object* target )
  */
 
 
-void Object_onInit( Object* obj ) {}
-void Object_onFrame( Object* obj ) {}
-void Object_onHit( Object* obj ) {}
+void Object_onInit( Object* object ) {}
+void Object_onFrame( Object* object ) {}
+void Object_onHit( Object* object ) {}
 
 
 static const int ENEMY_STATE_MOVING = MS_TO_FRAMES(10000);
@@ -165,13 +166,13 @@ void Enemy_onHit( Object* e )
 }
 
 
+static const int SHOOTERENEMY_STATE_MOVING = 0;
+static const int SHOOTERENEMY_STATE_ATTACK1 = MS_TO_FRAMES(750);
+static const int SHOOTERENEMY_STATE_ATTACK2 = MS_TO_FRAMES(1000);
+
 void ShooterEnemy_onFrame( Object* e )
 {
-    const int STATE_MOVING = 0;
-    const int STATE_ATTACK1 = MS_TO_FRAMES(750);
-    const int STATE_ATTACK2 = MS_TO_FRAMES(1000);
-
-    if (e->state <= STATE_MOVING) {
+    if (e->state <= SHOOTERENEMY_STATE_MOVING) {
         if (isVisible(e, (Object*)&player)) {
             Object* shot = createObject(level, TYPE_ICESHOT, 0, 0);
             shot->x = e->anim.direction > 0 ? e->x + e->type->sprite.w * SIZE_FACTOR :
@@ -179,26 +180,29 @@ void ShooterEnemy_onFrame( Object* e )
             shot->y = e->y;
             shot->vx *= e->anim.direction;
             shot->anim.direction = e->anim.direction;
-            e->state = STATE_MOVING + 1;
+            e->state = SHOOTERENEMY_STATE_MOVING + 1;
         } else if (move(e, e->vx, e->vy, 1)) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
         setAnimation(e, 1, 2, 24);
 
-    } else if (e->state <= STATE_ATTACK1) {
+    } else if (e->state <= SHOOTERENEMY_STATE_ATTACK1) {
         setAnimation(e, 4, 4, 24);
 
-    } else if (e->state <= STATE_ATTACK2) {
+    } else if (e->state <= SHOOTERENEMY_STATE_ATTACK2) {
         setAnimation(e, 1, 1, 24);
 
     } else {
-        e->state = STATE_MOVING;
+        e->state = SHOOTERENEMY_STATE_MOVING;
     }
 
-    e->state += e->state > STATE_MOVING;
+    e->state += e->state > SHOOTERENEMY_STATE_MOVING;
 }
 
+
+static const int SHOT_STATE_MOVING = 0;
+static const int SHOT_STATE_HIT = MS_TO_FRAMES(170);
 
 void Shot_onInit( Object* e )
 {
@@ -208,16 +212,13 @@ void Shot_onInit( Object* e )
 
 void Shot_onFrame( Object* e )
 {
-    const int STATE_MOVING = 0;
-    const int STATE_HIT = MS_TO_FRAMES(170);
-
-    if (e->state <= STATE_MOVING) {
+    if (e->state <= SHOT_STATE_MOVING) {
         if (move(e, e->vx, e->vy, 0)) {
             setAnimation(e, 3, 3, 5);
-            e->state = STATE_MOVING + 1;
+            e->state = SHOT_STATE_MOVING + 1;
         }
 
-    } else if (e->state <= STATE_HIT) {
+    } else if (e->state <= SHOT_STATE_HIT) {
         e->state += 1;
 
     } else {
@@ -233,6 +234,9 @@ void Shot_onHit( Object* e )
 }
 
 
+static const int BAT_STATE_MOVING = 0;
+static const int BAT_STATE_NEWDIRECTION = CELL_SIZE;
+
 void Bat_onInit( Object* e )
 {
     Enemy_onInit(e);
@@ -243,7 +247,6 @@ void Bat_onInit( Object* e )
 
 void Bat_onFrame( Object* e )
 {
-    const int STATE_NEWDIRECTION = CELL_SIZE;
     const int vy = e->state % 2 ? e->vy : 0;
     const int m = move(e, e->vx, vy, 0);
     if (m & DIRECTION_X) {
@@ -253,8 +256,8 @@ void Bat_onFrame( Object* e )
     if (m & DIRECTION_Y) {
         e->vy = -e->vy;
     }
-    if (++ e->state >= STATE_NEWDIRECTION) {
-        e->state = 0;
+    if (++ e->state >= BAT_STATE_NEWDIRECTION) {
+        e->state = BAT_STATE_MOVING;
         e->vy = -e->vy;
     }
 }
@@ -265,8 +268,8 @@ void Bat_onHit( Object* e )
 }
 
 
-const int ITEM_STATE_IDLE = 0;
-const int ITEM_STATE_TAKEN = 15;
+static const int ITEM_STATE_IDLE = 0;
+static const int ITEM_STATE_TAKEN = 15;
 
 void Item_onHit( Object* item )
 {
@@ -315,6 +318,10 @@ void Item_onFrame( Object* item )
 }
 
 
+static const int FIREBALL_STATE_MOVING = 0;
+static const int FIREBALL_STATE_ATTACK1 = MS_TO_FRAMES(500);
+static const int FIREBALL_STATE_ATTACK2 = MS_TO_FRAMES(1000);
+
 void Fireball_onInit( Object* e )
 {
     Enemy_onInit(e);
@@ -323,32 +330,28 @@ void Fireball_onInit( Object* e )
 
 void Fireball_onFrame( Object* e )
 {
-    const int STATE_MOVING = 0;
-    const int STATE_ATTACK1 = MS_TO_FRAMES(500);
-    const int STATE_ATTACK2 = MS_TO_FRAMES(1000);
-
-    if (e->state <= STATE_MOVING) {
+    if (e->state <= FIREBALL_STATE_MOVING) {
         if (isVisible(e, (Object*)&player)) {
             Object* shot = createObject(level, TYPE_FIRESHOT, 0, 0);
             shot->x = e->x + e->anim.direction * 20;
             shot->y = e->y + 2;
             shot->vx *= e->anim.direction;
             shot->anim.direction = e->anim.direction;
-            e->state = STATE_MOVING + 1;
+            e->state = FIREBALL_STATE_MOVING + 1;
         }
         setAnimation(e, 0, 1, 24);
 
-    } else if (e->state <= STATE_ATTACK1) {
+    } else if (e->state <= FIREBALL_STATE_ATTACK1) {
         setAnimation(e, 4, 4, 24);
 
-    } else if (e->state <= STATE_ATTACK2) {
+    } else if (e->state <= FIREBALL_STATE_ATTACK2) {
         setAnimation(e, 0, 1, 24);
 
     } else {
-        e->state = STATE_MOVING;
+        e->state = FIREBALL_STATE_MOVING;
     }
 
-    const int m = move(e, e->vx , e->vy , 0);
+    const int m = move(e, e->vx, e->vy, 0);
     if (m) {
         if (m & DIRECTION_X) e->vx = -e->vx;
         if (m & DIRECTION_Y) e->vy = -e->vy;
@@ -361,30 +364,29 @@ void Fireball_onFrame( Object* e )
         e->anim.direction = e->vx > 0 ? 1 : -1;
     }
 
-    e->state += e->state > STATE_MOVING;
+    e->state += (e->state > FIREBALL_STATE_MOVING);
 }
 
 
+static const int DROP_STATE_CREATE = 0;
+static const int DROP_STATE_FALLING = 1;
+static const int DROP_STATE_FELL = MS_TO_FRAMES(1000);
+
 void Drop_onInit( Object* e )
 {
-    e->y = (e->y / CELL_SIZE) * CELL_SIZE - (CELL_SIZE - e->type->height) / 2 - 1;
     e->state = -rand() % MS_TO_FRAMES(2000);
 }
 
 void Drop_onFrame( Object* e )
 {
-    const int STATE_DROP = 0;
-    const int STATE_FALLING = 1;
-    const int STATE_FELL = MS_TO_FRAMES(1000);
-
-    if (e->state == STATE_DROP) {
+    if (e->state == DROP_STATE_CREATE) {
         Object* drop = createObject(level, TYPE_DROP, 0, 0);
         drop->x = e->x;
         drop->y = e->y;
-        drop->state = STATE_FALLING;
+        drop->state = DROP_STATE_FALLING;
         e->state -= rand() % MS_TO_FRAMES(10000);
 
-    } else if (e->state == STATE_FALLING) {
+    } else if (e->state == DROP_STATE_FALLING) {
         if (e->vy < 5) {
             e->vy += 1;
         }
@@ -395,7 +397,7 @@ void Drop_onFrame( Object* e )
             e->state -= 1;
         }
 
-    } else if (e->state > STATE_FELL) {
+    } else if (e->state > DROP_STATE_FELL) {
         e->removed = 1;
     }
 
@@ -417,23 +419,23 @@ void Spider_onFrame( Object* e )
 }
 
 
-void Teleporting_onFrame( Object* e )
-{
-    const int STATE_MOVING = MS_TO_FRAMES(4000);
-    const int STATE_TELEPORTING = MS_TO_FRAMES(7000);
-    const int STATE_WAITING = MS_TO_FRAMES(7000);
+static const int TELEPORTINGENEMY_STATE_MOVING = MS_TO_FRAMES(4000);
+static const int TELEPORTINGENEMY_STATE_TELEPORTING = MS_TO_FRAMES(7000);
+static const int TELEPORTINGENEMY_STATE_WAITING = MS_TO_FRAMES(7000);
 
-    if (e->state <= STATE_MOVING) {
+void TeleportingEnemy_onFrame( Object* e )
+{
+    if (e->state <= TELEPORTINGENEMY_STATE_MOVING) {
         if (move(e, e->vx, e->vy, 1)) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
         setAnimation(e, 1, 2, 24);
 
-    } else if (e->state < STATE_TELEPORTING) {
+    } else if (e->state < TELEPORTINGENEMY_STATE_TELEPORTING) {
         setAnimation(e, 2, 2, 24);
 
-    } else if (e->state == STATE_TELEPORTING) {
+    } else if (e->state == TELEPORTINGENEMY_STATE_TELEPORTING) {
         int r, c;
         int prevr = (e->y + CELL_HALF) / CELL_SIZE;
         int count = CELL_COUNT;
@@ -446,7 +448,7 @@ void Teleporting_onFrame( Object* e )
             }
         }
 
-    } else if (e->state <= STATE_WAITING) {
+    } else if (e->state <= TELEPORTINGENEMY_STATE_WAITING) {
         setAnimation(e, 2, 2, 24);
 
     } else {
@@ -456,10 +458,9 @@ void Teleporting_onFrame( Object* e )
     e->state += 1;
 }
 
-void Teleporting_onHit( Object* e )
+void TeleportingEnemy_onHit( Object* e )
 {
-    const int STATE_MOVING = MS_TO_FRAMES(4000); // Duplicate
-    if (e->state <= STATE_MOVING) {
+    if (e->state <= TELEPORTINGENEMY_STATE_MOVING) {
         Enemy_onHit(e);
     }
 }

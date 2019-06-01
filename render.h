@@ -8,7 +8,6 @@
 #define RENDER_H
 
 #include "types.h"
-#include "SDL_ttf.h"
 
 extern SDL_Renderer* renderer;
 

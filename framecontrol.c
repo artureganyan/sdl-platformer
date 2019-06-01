@@ -28,7 +28,7 @@ int FrameControl_start( FrameControl* c, int fps )
 #else
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
-    c->startTime = now.tv_sec + now.tv_nsec / 1000000000.0;
+    c->startTime = (now.tv_sec + now.tv_nsec / 1000000000.0) * 1000.0;
 #endif
     return 1;
 }
@@ -61,7 +61,7 @@ double FrameControl_getElapsedTime( FrameControl* c )
 #else
     struct timespec now;
     clock_gettime(CLOCK_MONOTONIC, &now);
-    return (now.tv_sec + now.tv_nsec / 1000000000.0 - c->startTime) * 1000.0;
+    return (now.tv_sec + now.tv_nsec / 1000000000.0) * 1000.0 - c->startTime;
 #endif
 }
 

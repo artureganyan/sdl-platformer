@@ -179,6 +179,7 @@ typedef struct
     int vx;
     int vy;
     int removed; // Unused
+    int state;   // Unused
     int inAir;
     int onLadder;
     int health;  // Values > 100 mean how long player is invincibile (e.g. 110 is for 10 frames)
@@ -190,7 +191,7 @@ typedef struct
 
 typedef struct
 {
-    ObjectType* map[ROW_COUNT][COLUMN_COUNT];
+    ObjectType* cells[ROW_COUNT][COLUMN_COUNT];
     ObjectArray objects;
     int r;
     int c;
@@ -203,15 +204,13 @@ void ObjectArray_free( ObjectArray* objects );
 void ObjectArray_clean( ObjectArray* objects );
 void ObjectArray_sortByDepth( ObjectArray* objects );
 
-void createObjectInMap( Level* level, ObjectTypeId typeId, int r, int c );
+void createStaticObject( Level* level, ObjectTypeId typeId, int r, int c );
 Object* createObject( Level* level, ObjectTypeId typeId, int r, int c );
+void initObject( Object* object, ObjectTypeId typeId );
+void initPlayer( Player* player );
+void initLevel( Level* level );
 void initTypes();
-void initPlayer();
-
-#define MS_TO_FRAMES(ms) (int)((ms) / 1000.0 * (FRAME_RATE))
 
 extern ObjectType objectTypes[TYPE_COUNT];
-extern Player player;
-extern Level* level;
 
 #endif

@@ -9,6 +9,8 @@
 
 #include "types.h"
 
+#define MS_TO_FRAMES(ms) (int)((ms) / 1000.0 * (FRAME_RATE))
+
 int isCellValid( int r, int c );
 int isSolid( int r, int c, int flags );
 int isLadder( int r, int c );

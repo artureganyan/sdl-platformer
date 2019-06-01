@@ -26,6 +26,8 @@ static GAME_STATE gameState = STATE_PLAYING;
 static const char* message = NULL;
 static const Uint8* keystate = NULL;
 static FrameControl frameControl;
+Level* level = &levels[0][0];
+Player player;
 
 
 static void processPlayer()
@@ -122,7 +124,7 @@ static void processPlayer()
 
     // ... Left
     if (player.x < 0) {
-        if (lc > 0 && !levels[lr][lc - 1].map[r][COLUMN_COUNT - 1]->solid) {
+        if (lc > 0 && !levels[lr][lc - 1].cells[r][COLUMN_COUNT - 1]->solid) {
             if (player.x + CELL_HALF < 0) {
                 setLevel(lr, lc - 1);
                 player.x = LEVEL_WIDTH - CELL_HALF - 1;
@@ -132,7 +134,7 @@ static void processPlayer()
         }
     // ... Right
     } else if (player.x + CELL_SIZE > LEVEL_WIDTH) {
-        if (lc < LEVEL_XCOUNT - 1 && !levels[lr][lc + 1].map[r][0]->solid) {
+        if (lc < LEVEL_XCOUNT - 1 && !levels[lr][lc + 1].cells[r][0]->solid) {
             if (player.x + CELL_HALF > LEVEL_WIDTH) {
                 setLevel(lr, lc + 1);
                 player.x = -CELL_HALF + 1;
@@ -144,7 +146,7 @@ static void processPlayer()
     // ... Bottom
     if (player.y + PLAYER_HEIGHT > LEVEL_HEIGHT) {
         if (lr < LEVEL_YCOUNT - 1) {
-            if (!levels[lr + 1][lc].map[0][c]->solid) {
+            if (!levels[lr + 1][lc].cells[0][c]->solid) {
                 if (player.y + PLAYER_HEIGHT / 2 > LEVEL_HEIGHT) {
                     setLevel(lr + 1, lc);
                     player.y = -CELL_HALF + 1;
@@ -158,7 +160,7 @@ static void processPlayer()
         }
     // ... Top
     } else if (player.y < 0) {
-        if (lr > 0 && !levels[lr - 1][lc].map[ROW_COUNT - 1][c]->solid) {
+        if (lr > 0 && !levels[lr - 1][lc].cells[ROW_COUNT - 1][c]->solid) {
             if (player.y + CELL_HALF < 0) {
                 setLevel(lr - 1, lc);
                 player.y = LEVEL_HEIGHT - CELL_HALF - 1;
@@ -189,7 +191,9 @@ static void processObjects()
 
 void damagePlayer( int damage )
 {
-    if (player.health > 100) return;
+    if (player.health > 100) {
+        return;
+    }
     player.health -= damage;
     if (player.health <= 0) {
         player.health = 0;
@@ -199,7 +203,9 @@ void damagePlayer( int damage )
 
 void killPlayer()
 {
-    if (player.health > 100) return;
+    if (player.health > 100) {
+        return;
+    }
     setAnimation((Object*)&player, 5, 5, 5);
     if (-- player.lives) {
         gameState = STATE_KILLED;
@@ -212,6 +218,14 @@ void showMessage( const char* text )
 {
     message = text;
     gameState = STATE_MESSAGE;
+}
+
+void setLevel( int r, int c )
+{
+    level = &levels[r][c];
+    if (level->init) {
+        level->init();
+    }
 }
 
 void completeLevel()
@@ -228,13 +242,12 @@ static void onExit()
     SDL_Quit();
 }
 
-
 void initGame()
 {
     atexit(onExit);
     initRender();
     initTypes();
-    initPlayer();
+    initPlayer(&player);
     initLevels();
     keystate = SDL_GetKeyboardState(NULL);
 }
@@ -254,6 +267,7 @@ void gameLoop()
     int jumpDenied = 0;
 
     if (!FrameControl_start(&frameControl, FRAME_RATE)) {
+        fprintf(stderr, "gameLoop(): FrameControl_start() failed\n");
         return;
     }
 #ifdef _MSC_VER
@@ -382,7 +396,7 @@ void gameLoop()
                 if (findNearDoor(&r, &c)) {
                     if (player.keys > 0) {
                         player.keys -= 1;
-                        level->map[r][c] = &objectTypes[TYPE_NONE];
+                        level->cells[r][c] = &objectTypes[TYPE_NONE];
                     }
                 }
             }

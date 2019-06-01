@@ -9,11 +9,15 @@
 
 #include "types.h"
 
+extern Level* level;
+extern Player player;
+
 void initGame();
 void gameLoop();
+void setLevel( int r, int c );
 void completeLevel();
 void damagePlayer( int damage );
 void killPlayer();
-void showMessage( const char* );
+void showMessage( const char* message );
 
 #endif
