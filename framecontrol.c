@@ -8,64 +8,100 @@
 #include "SDL.h"
 #include <stdio.h>
 
-int FrameControl_start( FrameControl* c, int fps )
+#ifdef _WIN32
+#include <windows.h>
+typedef LONGLONG Time;  // Ticks
+static const Time TIME_UNDEFINED = -1;
+#else
+#include <time.h>
+typedef long long Time; // Nanoseconds
+static const Time TIME_UNDEFINED = -1;
+#endif
+
+static struct
 {
-    c->framePeriod = 1000.0 / fps;
-    c->prevFrameTime = 0;
-    c->frameCount = 0;
-#ifdef _MSC_VER
+    Time startTime;
+    Time prevFrameTime;
+    Time framePeriod;
+    unsigned long frameCount;
+    double timePerMs;
+} control;
+
+
+static inline double timeToMs( Time time )
+{
+    return time / control.timePerMs;
+}
+
+static inline Time msToTime( double ms )
+{
+    return ms * control.timePerMs;
+}
+
+static Time getCurrentTime()
+{
+#ifdef _WIN32
+    LARGE_INTEGER i;
+    if (!QueryPerformanceCounter(&i)) {
+        fprintf(stderr, "getCurrentTime(): QueryPerformanceCounter() failed\n");
+        return TIME_UNDEFINED;
+    }
+    return i.QuadPart;
+#else
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return t.tv_sec * (Time)1000000000 + t.tv_nsec;
+#endif
+}
+
+int startFrameControl( int fps )
+{
+#ifdef _WIN32
     LARGE_INTEGER i;
     if (!QueryPerformanceFrequency(&i)) {
-        fprintf(stderr, "FrameControl_start(): QueryPerformanceFrequency() failed\n");
+        fprintf(stderr, "startFrameControl(): QueryPerformanceFrequency() failed\n");
         return 0;
     }
-    c->cpuFrequency = i.QuadPart / 1000.0;
-    if (!QueryPerformanceCounter(&i)) {
-        fprintf(stderr, "FrameControl_start(): QueryPerformanceCounter() failed\n");
-        return 0;
-    }
-    c->startTime = i.QuadPart;
+    control.timePerMs = i.QuadPart / 1000.0;
 #else
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    c->startTime = (now.tv_sec + now.tv_nsec / 1000000000.0) * 1000.0;
+    control.timePerMs = 1000000;
 #endif
+    control.startTime = getCurrentTime();
+    if (control.startTime == TIME_UNDEFINED) {
+        fprintf(stderr, "startFrameControl(): Can't get current time\n");
+        return 0;
+    }
+    control.prevFrameTime = 0;
+    control.framePeriod = msToTime(1000.0 / fps);
+    control.frameCount = 0;
     return 1;
 }
 
-void FrameControl_waitNextFrame( FrameControl* c )
+void waitForNextFrame()
 {
-    const double nextFrameTime = c->prevFrameTime + c->framePeriod;
-    double remainedTime;
-    while ((remainedTime = nextFrameTime - FrameControl_getElapsedTime(c)) > 0) {
-        if (remainedTime > 1) {
+    const Time nextFrameTime = control.prevFrameTime + control.framePeriod;
+    while (1) {
+        const Time currentTime = getCurrentTime();
+        if (currentTime >= nextFrameTime) {
+            break;
+        }
+        if (nextFrameTime - currentTime > control.timePerMs) {
             SDL_Delay(1);
         } else {
             // Just spin in the loop, because this can be more precise
             // than system delay
         }
     }
-    c->prevFrameTime = FrameControl_getElapsedTime(c);
-    c->frameCount += 1;
+    control.prevFrameTime = getCurrentTime();
+    control.frameCount += 1;
 }
 
-double FrameControl_getElapsedTime( FrameControl* c )
+double getElapsedTime()
 {
-#ifdef _MSC_VER
-    LARGE_INTEGER i;
-    if (!QueryPerformanceCounter(&i)) {
-        fprintf(stderr, "FrameControl_getElapsedTime(): QueryPerformanceCounter() failed\n");
-        return 0;
-    }
-    return (i.QuadPart - c->startTime) / c->cpuFrequency;
-#else
-    struct timespec now;
-    clock_gettime(CLOCK_MONOTONIC, &now);
-    return (now.tv_sec + now.tv_nsec / 1000000000.0) * 1000.0 - c->startTime;
-#endif
+    return timeToMs(getCurrentTime() - control.startTime);
 }
 
-double FrameControl_getRealFps( FrameControl* c )
+double getCurrentFps()
 {
-    return c->frameCount / (c->prevFrameTime / 1000.0);
+    return control.frameCount / (timeToMs(control.prevFrameTime - control.startTime) / 1000.0);
 }

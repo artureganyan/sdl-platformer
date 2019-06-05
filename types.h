@@ -24,7 +24,7 @@ typedef enum
     FRAME_PERIOD = 1000 / FRAME_RATE,
     PLAYER_WIDTH = CELL_SIZE - 12,
     PLAYER_HEIGHT = CELL_SIZE,
-#ifdef _MSC_VER
+#ifdef _WIN32
     SYSTEM_TIMER_PERIOD = 1 // In ms, used to update frames
 #endif
 } Constant;

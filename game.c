@@ -22,11 +22,13 @@ typedef enum
     STATE_LEVELCOMPLETE
 } GAME_STATE;
 
-static GAME_STATE gameState = STATE_PLAYING;
-static const char* message = NULL;
-static const Uint8* keystate = NULL;
-static FrameControl frameControl;
-Level* level = &levels[0][0];
+static struct {
+    GAME_STATE state;
+    const Uint8* keystate;
+    const char* message;
+} game;
+
+Level* level = 0;
 Player player;
 
 
@@ -188,7 +190,6 @@ static void processObjects()
     }
 }
 
-
 void damagePlayer( int damage )
 {
     if (player.health > 100) {
@@ -208,16 +209,16 @@ void killPlayer()
     }
     setAnimation((Object*)&player, 5, 5, 5);
     if (-- player.lives) {
-        gameState = STATE_KILLED;
+        game.state = STATE_KILLED;
     } else {
-        gameState = STATE_GAMEOVER;
+        game.state = STATE_GAMEOVER;
     }
 }
 
 void showMessage( const char* text )
 {
-    message = text;
-    gameState = STATE_MESSAGE;
+    game.message = text;
+    game.state = STATE_MESSAGE;
 }
 
 void setLevel( int r, int c )
@@ -230,12 +231,12 @@ void setLevel( int r, int c )
 
 void completeLevel()
 {
-    gameState = STATE_LEVELCOMPLETE;
+    game.state = STATE_LEVELCOMPLETE;
 }
 
 static void onExit()
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
     timeEndPeriod(SYSTEM_TIMER_PERIOD);
 #endif
     TTF_Quit();
@@ -249,7 +250,7 @@ void initGame()
     initTypes();
     initPlayer(&player);
     initLevels();
-    keystate = SDL_GetKeyboardState(NULL);
+    game.keystate = SDL_GetKeyboardState(NULL);
 }
 
 void gameLoop()
@@ -266,35 +267,36 @@ void gameLoop()
     int cleanTimer = 0;
     int jumpDenied = 0;
 
-    if (!FrameControl_start(&frameControl, FRAME_RATE)) {
-        fprintf(stderr, "gameLoop(): FrameControl_start() failed\n");
+    if (!startFrameControl(FRAME_RATE)) {
+        fprintf(stderr, "gameLoop(): startFrameControl() failed\n");
         return;
     }
-#ifdef _MSC_VER
+#ifdef _WIN32
     if (timeBeginPeriod(SYSTEM_TIMER_PERIOD) != TIMERR_NOERROR) {
         fprintf(stderr, "gameLoop(): timeBeginPeriod() failed\n");
         return;
     }
 #endif
-    while (gameState != STATE_QUIT) {
+    game.state = STATE_PLAYING;
+
+    while (game.state != STATE_QUIT) {
 
         // Draw screen
-        if (gameState == STATE_PLAYING) {
-            SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
-            SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            SDL_RenderClear(renderer);
-            drawScreen();
+        SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
+        drawScreen();
 
-        } else if (gameState == STATE_MESSAGE) {
-            drawText(message);
+        if (game.state == STATE_MESSAGE) {
+            drawText(game.message);
 
-        } else if (gameState == STATE_KILLED) {
+        } else if (game.state == STATE_KILLED) {
             drawText("You lost a life");
 
-        } else if (gameState == STATE_LEVELCOMPLETE) {
+        } else if (game.state == STATE_LEVELCOMPLETE) {
             drawText("Level complete!");
 
-        } else if (gameState == STATE_GAMEOVER) {
+        } else if (game.state == STATE_GAMEOVER) {
             drawText("Game over");
         }
 
@@ -304,15 +306,15 @@ void gameLoop()
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
-                gameState = STATE_QUIT;
+                game.state = STATE_QUIT;
             }
         }
 
         // Process user input and game logic
-        if (gameState == STATE_PLAYING) {
+        if (game.state == STATE_PLAYING) {
 
             // ... Left
-            if (keystate[SDL_SCANCODE_LEFT]) {
+            if (game.keystate[SDL_SCANCODE_LEFT]) {
                 if (!player.onLadder) {
                     if (!player.inAir) {
                         setAnimation((Object*)&player, 1, 2, PLAYER_ANIM_SPEED_RUN);
@@ -324,7 +326,7 @@ void gameLoop()
                 player.vx = -PLAYER_SPEED_RUN;
 
             // ... Right
-            } else if (keystate[SDL_SCANCODE_RIGHT]) {
+            } else if (game.keystate[SDL_SCANCODE_RIGHT]) {
                 if (!player.onLadder) {
                     if (!player.inAir) {
                         setAnimation((Object*)&player, 1, 2, PLAYER_ANIM_SPEED_RUN);
@@ -344,7 +346,7 @@ void gameLoop()
             }
 
             // ... Up
-            if (keystate[SDL_SCANCODE_UP]) {
+            if (game.keystate[SDL_SCANCODE_UP]) {
                 int r, c;
                 getObjectCell((Object*)&player, &r, &c);
                 if (!isLadder(r, c) && !player.onLadder) {
@@ -364,7 +366,7 @@ void gameLoop()
                 }
 
             // ... Down
-            } else if (keystate[SDL_SCANCODE_DOWN]) {
+            } else if (game.keystate[SDL_SCANCODE_DOWN]) {
                 int r, c;
                 getObjectCell((Object*)&player, &r, &c);
                 if (player.onLadder || isLadder(r + 1, c)) {
@@ -390,7 +392,7 @@ void gameLoop()
             }
 
             // ... Space
-            if (keystate[SDL_SCANCODE_SPACE]) {
+            if (game.keystate[SDL_SCANCODE_SPACE]) {
                 int r, c;
                 getObjectCell((Object*)&player, &r, &c);
                 if (findNearDoor(&r, &c)) {
@@ -404,16 +406,16 @@ void gameLoop()
             processPlayer();
             processObjects();
 
-        } else if (gameState == STATE_MESSAGE) {
+        } else if (game.state == STATE_MESSAGE) {
             // ... Space
-            if (keystate[SDL_SCANCODE_SPACE]) {
-                gameState = STATE_PLAYING;
+            if (game.keystate[SDL_SCANCODE_SPACE]) {
+                game.state = STATE_PLAYING;
             }
 
-        } else if (gameState == STATE_KILLED) {
+        } else if (game.state == STATE_KILLED) {
             // ... Space
-            if (keystate[SDL_SCANCODE_SPACE]) {
-                gameState = STATE_PLAYING;
+            if (game.keystate[SDL_SCANCODE_SPACE]) {
+                game.state = STATE_PLAYING;
                 setAnimation((Object*)&player, 0, 0, 1);
                 player.health = 200;
                 player.onLadder = 0;
@@ -422,15 +424,15 @@ void gameLoop()
                 player.y = prevGroundPos.y;
             }
 
-        } else if (gameState == STATE_LEVELCOMPLETE) {
+        } else if (game.state == STATE_LEVELCOMPLETE) {
             // ... Space
-            if (keystate[SDL_SCANCODE_SPACE]) {
+            if (game.keystate[SDL_SCANCODE_SPACE]) {
                 break;
             }
 
-        } else if (gameState == STATE_GAMEOVER) {
+        } else if (game.state == STATE_GAMEOVER) {
             // ... Space
-            if (keystate[SDL_SCANCODE_SPACE]) {
+            if (game.keystate[SDL_SCANCODE_SPACE]) {
                 break;
             }
         }
@@ -448,10 +450,9 @@ void gameLoop()
         }
 
         // Frame delay
-        FrameControl_waitNextFrame(&frameControl);
+        waitForNextFrame();
     }
 
     //printf("\n");
-    //printf("fps=%f, frame count=%lu\n", FrameControl_getRealFps(&frameControl),
-    //       frameControl.frameCount);
+    //printf("fps=%f\n", getCurrentFps());
 }
