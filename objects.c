@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2015 Artur Eganyan
+ * Copyright (c) Artur Eganyan
  *
  * This software is provided "AS IS", WITHOUT ANY WARRANTY, express or implied.
  ******************************************************************************/
