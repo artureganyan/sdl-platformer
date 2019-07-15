@@ -17,14 +17,14 @@ void ObjectArray_init( ObjectArray* objects )
 {
     objects->reserved = 16;
     objects->count = 0;
-    objects->array = (Object**)malloc(sizeof(Object) * objects->reserved);
+    objects->array = (Object**)malloc(sizeof(Object*) * objects->reserved);
 }
 
 void ObjectArray_append( ObjectArray* objects, Object* object )
 {
     if (objects->count == objects->reserved) {
         objects->reserved *= 2;
-        objects->array = (Object**)realloc(objects->array, sizeof(Object) * objects->reserved);
+        objects->array = (Object**)realloc(objects->array, sizeof(Object*) * objects->reserved);
     }
     objects->array[objects->count ++] = object;
 }

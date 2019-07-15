@@ -100,8 +100,8 @@ static void initLevelsFromString( const char* string )
 
                     // Wall and ground
                     if (s == '*' || s == 'x') {
-                        const int type = s == '*' ? TYPE_WALL : TYPE_GROUND;
-                        const int type_top = s == '*' ? TYPE_WALL_TOP : TYPE_GROUND_TOP;
+                        const ObjectTypeId type = s == '*' ? TYPE_WALL : TYPE_GROUND;
+                        const ObjectTypeId type_top = s == '*' ? TYPE_WALL_TOP : TYPE_GROUND_TOP;
                         const char st = GET_LEVEL_CHAR(levelString, r - 1, c);
                         if (r == 0 || st == '*' || st == 'x') {
                             createStaticObject(level, type, r, c);
