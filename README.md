@@ -6,15 +6,29 @@ to experiment with pure C and graphics, and a game was perfect for that. But it
 turned out that I had no good idea for the game itself, so this is a working 
 model rather than a complete game.
 
-Compiled with mingw 4.9.1 (C99 dialect), requires SDL 2.0 and SDL_ttf 2.0.
+![screenshot](/image/screenshot.png)
 
 
-Screenshots
+Compilation
 -----------
 
-![screenshot1](/image/screenshot1.png)
+It requires SDL 2.0 and SDL_ttf 2.0 libraries. See https://www.libsdl.org and
+https://www.libsdl.org/projects/SDL_ttf/ for downloads. On Linux you can install
+them as follows:
 
-![screenshot2](/image/screenshot2.png)
+```
+sudo apt-get install libsdl2-dev libsdl2-ttf-dev
+```
+
+To compile, do:
+
+```
+cd sdl-platformer
+make
+```
+
+Or you can open sdl_platformer.pro with Qt Creator and compile it there. You may
+need to adjust paths in Makefile or *.pro for your system.
 
 
 Credits

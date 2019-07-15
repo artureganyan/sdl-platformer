@@ -237,16 +237,7 @@ void initLevels()
 
     #undef SET_SPRITES
 
-    // Create special objects
-
-    // For the "broken bridge" level
-    /*
-    Level* level = &levels[1][4];
-    createObject(level, TYPE_WALL_TOP, 14, 6)->anim.alpha = 60;
-    createObject(level, TYPE_WALL_TOP, 14, 7)->anim.alpha = 60;
-    createObject(level, TYPE_WALL_TOP, 14, 11)->anim.alpha = 60;
-    createObject(level, TYPE_WALL_TOP, 14, 14)->anim.alpha = 60;
-    */
+    // Special objects can be created here
 }
 
 
