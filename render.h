@@ -17,6 +17,6 @@ void drawObject( Object* object, int x, int y );
 void drawTextEx( const char* text, int x, int y, int w, int h, int withBox );
 void drawText( const char* text );
 void drawScreen();
-void setAnimation( Object* object, int frameStart, int frameEnd, int frameDelay );
+void setAnimation( Object* object, int frameStart, int frameEnd, int fps );
 
 #endif

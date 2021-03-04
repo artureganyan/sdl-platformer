@@ -9,6 +9,6 @@
 int main( int argc, char* argv[] )
 {
     initGame();
-    gameLoop();
+    runGame();
     return 0;
 }

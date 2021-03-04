@@ -13,11 +13,14 @@ extern Level* level;
 extern Player player;
 
 void initGame();
-void gameLoop();
+void runGame();
+
 void setLevel( int r, int c );
 void completeLevel();
+
 void damagePlayer( int damage );
 void killPlayer();
+
 void showMessage( const char* message );
 
 #endif

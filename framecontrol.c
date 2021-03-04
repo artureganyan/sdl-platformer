@@ -22,6 +22,7 @@ static struct
 {
     Time startTime;
     Time prevFrameTime;
+    Time elapsedFrameTime;
     Time framePeriod;
     unsigned long frameCount;
     double timePerMs;
@@ -71,7 +72,8 @@ int startFrameControl( int fps )
         fprintf(stderr, "startFrameControl(): Can't get current time\n");
         return 0;
     }
-    control.prevFrameTime = 0;
+    control.prevFrameTime = control.startTime;
+    control.elapsedFrameTime = 0;
     control.framePeriod = msToTime(1000.0 / fps);
     control.frameCount = 0;
     return 1;
@@ -80,20 +82,30 @@ int startFrameControl( int fps )
 void waitForNextFrame()
 {
     const Time nextFrameTime = control.prevFrameTime + control.framePeriod;
-    while (1) {
-        const Time currentTime = getCurrentTime();
-        if (currentTime >= nextFrameTime) {
-            break;
-        }
+    Time currentTime = getCurrentTime();
+
+    while (currentTime < nextFrameTime) {
         if (nextFrameTime - currentTime > control.timePerMs) {
             SDL_Delay(1);
         } else {
             // Just spin in the loop, because this can be more precise
             // than system delay
         }
+        currentTime = getCurrentTime();
     }
-    control.prevFrameTime = getCurrentTime();
+
+    control.elapsedFrameTime = control.prevFrameTime ? currentTime - control.prevFrameTime : 0;
+    control.prevFrameTime = currentTime;
     control.frameCount += 1;
+}
+
+double getElapsedFrameTime()
+{
+    const double MAX_TIME = 1000.0 / 12;
+    const double elapsed = timeToMs(control.elapsedFrameTime);
+    if (elapsed > MAX_TIME)
+        return MAX_TIME;
+    return elapsed;
 }
 
 double getElapsedTime()

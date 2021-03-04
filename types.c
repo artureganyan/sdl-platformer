@@ -91,6 +91,7 @@ void initObject( Object* object, ObjectTypeId typeId )
     object->vy = 0;
     object->removed = 0;
     object->state = 0;
+    object->data = 0;
     object->anim.direction = 1;
     object->anim.frameDelayCounter = 0;
     object->anim.wave = 0;
@@ -105,6 +106,7 @@ void initPlayer( Player* player )
     player->inAir = 0;
     player->onLadder = 0;
     player->health = 100;
+    player->invincibility = 0;
     player->lives = 3;
     player->coins = 0;
     player->keys = 0;
@@ -214,28 +216,28 @@ void initTypes()
 
     objectTypes[TYPE_PLAYER].width = PLAYER_WIDTH;
     objectTypes[TYPE_PLAYER].height = PLAYER_HEIGHT;
-    objectTypes[TYPE_GHOST].speed = 1;
-    objectTypes[TYPE_SCORPION].speed = 1;
+    objectTypes[TYPE_GHOST].speed = 24;
+    objectTypes[TYPE_SCORPION].speed = 24;
     objectTypes[TYPE_SCORPION].width = 9;
     objectTypes[TYPE_SCORPION].height = 11;
-    objectTypes[TYPE_SPIDER].speed = 1;
+    objectTypes[TYPE_SPIDER].speed = 24;
     objectTypes[TYPE_SPIDER].width = 11;
     objectTypes[TYPE_SPIDER].height = 10;
-    objectTypes[TYPE_RAT].speed = 1;
+    objectTypes[TYPE_RAT].speed = 24;
     objectTypes[TYPE_RAT].width = 12;
     objectTypes[TYPE_RAT].height = 11;
-    objectTypes[TYPE_BLOB].speed = 1;
+    objectTypes[TYPE_BLOB].speed = 24;
     objectTypes[TYPE_BLOB].width = 11;
     objectTypes[TYPE_BLOB].height = 10;
-    objectTypes[TYPE_BAT].speed = 2;
+    objectTypes[TYPE_BAT].speed = 48;
     objectTypes[TYPE_BAT].height = 10;
-    objectTypes[TYPE_FIREBALL].speed = 2;
+    objectTypes[TYPE_FIREBALL].speed = 48;
     objectTypes[TYPE_FIREBALL].width = 14;
     objectTypes[TYPE_FIREBALL].height = 12;
-    objectTypes[TYPE_SKELETON].speed = 1;
-    objectTypes[TYPE_ICESHOT].speed = 7;
+    objectTypes[TYPE_SKELETON].speed = 24;
+    objectTypes[TYPE_ICESHOT].speed = 168;
     objectTypes[TYPE_ICESHOT].height = 7;
-    objectTypes[TYPE_FIRESHOT].speed = 5;
+    objectTypes[TYPE_FIRESHOT].speed = 120;
     objectTypes[TYPE_FIRESHOT].width = 4;
     objectTypes[TYPE_FIRESHOT].height = 4;
     objectTypes[TYPE_DROP].width = 4;
@@ -244,17 +246,8 @@ void initTypes()
     objectTypes[TYPE_HEART].height = 8;
     objectTypes[TYPE_PLATFORM].width = SPRITE_SIZE;
     objectTypes[TYPE_PLATFORM].height = SPRITE_SIZE;
-    objectTypes[TYPE_PLATFORM].speed = 2;
-    objectTypes[TYPE_PLATFORM].sprite.h = 8;
+    objectTypes[TYPE_PLATFORM].speed = 48;
+    objectTypes[TYPE_PLATFORM].sprite.h = SPRITE_SIZE / 2;
     objectTypes[TYPE_WALL_STAIR].sprite.h = 8;
     objectTypes[TYPE_GROUND_STAIR].sprite.h = 8;
-
-    // Calculate real sizes (multiply on SIZE_FACTOR)
-    for (ObjectTypeId t = TYPE_NONE; t < TYPE_COUNT; ++ t) {
-        // Skip the player because it already has correct size
-        if (t == TYPE_PLAYER) continue;
-        ObjectType* type = &objectTypes[t];
-        type->width *= SIZE_FACTOR;
-        type->height *= SIZE_FACTOR;
-    }
 }

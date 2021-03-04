@@ -27,32 +27,33 @@ static struct {
     GAME_STATE state;
     const Uint8* keystate;
     const char* message;
-    struct { int x, y; } prevGroundPos; // Used for respawn
-    int ladderAnimTimer;
-    int cleanTimer;
+    struct { double x, y; } prevGroundPos; // Used for respawn
+    double ladderAnimTimer;
+    double prevCleanTime;
     int jumpDenied;
 } game;
 
 Level* level = 0;
 Player player;
 
-static const int PLAYER_SPEED_RUN = 3;
-static const int PLAYER_SPEED_LADDER = 2;
-static const int PLAYER_SPEED_JUMP = 9;
-static const int PLAYER_ANIM_SPEED_RUN = 6;
-static const int PLAYER_ANIM_SPEED_LADDER = 8;
-static const int CLEAN_PERIOD = MS_TO_FRAMES(10000);
+static const double PLAYER_SPEED_RUN = 72;
+static const double PLAYER_SPEED_LADDER = 48;
+static const double PLAYER_SPEED_JUMP = 216;
+static const double PLAYER_ANIM_SPEED_RUN = 8;
+static const double PLAYER_ANIM_SPEED_LADDER = 6;
+static const double CLEAN_PERIOD = 10; // Seconds
 
 
 static void processPlayer()
 {
+    const double dt = getElapsedFrameTime() / 1000.0;
     const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
     const int dh = (CELL_SIZE - (PLAYER_HEIGHT - 14)) / 2;
     int r, c; Borders cell, body /*unused*/;
     getObjectPos((Object*)&player, &r, &c, &cell, &body);
 
     // Movement
-    player.x += player.vx;
+    player.x += player.vx * dt;
     // ... Left
     if (player.x < cell.left && player.vx <= 0) {
         if (isSolid(r, c - 1, SOLID_RIGHT) ||
@@ -71,7 +72,7 @@ static void processPlayer()
         }
     }
 
-    player.y += player.vy;
+    player.y += player.vy * dt;
     // ... Bottom
     if (player.y + CELL_SIZE > cell.bottom && player.vy >= 0) {
         if (isSolid(r + 1, c, SOLID_TOP) ||
@@ -83,7 +84,7 @@ static void processPlayer()
             player.inAir = 0;
             if (player.onLadder) {
                 player.onLadder = 0;
-                setAnimation((Object*)&player, 0, 0, 4);
+                setAnimation((Object*)&player, 0, 0, 0);
             }
         } else {
             player.inAir = !player.onLadder;
@@ -101,8 +102,8 @@ static void processPlayer()
 
     // Gravity
     if (!player.onLadder) {
-        if (player.vy < 5) {
-            player.vy += 1;
+        if (player.vy < 120) {
+            player.vy += 24 * 48 * dt;
         }
     }
 
@@ -110,7 +111,7 @@ static void processPlayer()
     if (player.onLadder) {
         if (!isLadder(r, c)) {
             player.onLadder = 0;
-            setAnimation((Object*)&player, 0, 0, 4);
+            setAnimation((Object*)&player, 0, 0, 0);
             if (player.vy < 0) {
                 player.vy = 0;
                 player.y = CELL_SIZE * r;
@@ -124,11 +125,12 @@ static void processPlayer()
     }
 
     // Invincibility
-    if (player.health > 100) {
-        player.health -= 1;
-        if (player.health % 10 == 0) {
-            player.anim.alpha = 255 * !player.anim.alpha;
+    if (player.invincibility > 0) {
+        player.invincibility -= dt * 1000;
+        if (player.invincibility < 0) {
+            player.invincibility = 0;
         }
+        player.anim.alpha = 255 * (1 - (player.invincibility / 200) % 2);  // Blink each 200 ms
     }
 
     // Screen borders
@@ -234,6 +236,8 @@ static void processFrame()
     }
 
     // Process user input and game logic
+    const double dt = getElapsedFrameTime() / 1000.0;
+    
     if (game.state == STATE_PLAYING) {
 
         // ... Left
@@ -280,8 +284,9 @@ static void processFrame()
                 player.onLadder = 1;
                 player.vy = -PLAYER_SPEED_LADDER;
                 player.x = c * CELL_SIZE;
-                setAnimation((Object*)&player, 3, 3, PLAYER_ANIM_SPEED_LADDER);
-                if (game.ladderAnimTimer ++ >= PLAYER_ANIM_SPEED_LADDER) {
+                setAnimation((Object*)&player, 3, 3, 0);
+                game.ladderAnimTimer += dt;
+                if (game.ladderAnimTimer >= 1.0 / PLAYER_ANIM_SPEED_LADDER) {
                     game.ladderAnimTimer = 0;
                     player.anim.direction *= -1;
                 }
@@ -300,7 +305,8 @@ static void processFrame()
                     player.y = r * CELL_SIZE + CELL_HALF + 1;
                 }
                 setAnimation((Object*)&player, 3, 3, 0);
-                if (game.ladderAnimTimer ++ >= PLAYER_ANIM_SPEED_LADDER) {
+                game.ladderAnimTimer += dt;
+                if (game.ladderAnimTimer >= 1.0 / PLAYER_ANIM_SPEED_LADDER) {
                     game.ladderAnimTimer = 0;
                     player.anim.direction *= -1;
                 }
@@ -309,6 +315,7 @@ static void processFrame()
         // ... Not up or down
         } else {
             if (player.onLadder) {
+                setAnimation((Object*)&player, 3, 3, 0);
                 player.vy = 0;
             }
             game.jumpDenied = 0;
@@ -339,8 +346,8 @@ static void processFrame()
         // ... Space
         if (game.keystate[SDL_SCANCODE_SPACE]) {
             game.state = STATE_PLAYING;
-            setAnimation((Object*)&player, 0, 0, 1);
-            player.health = 200;
+            setAnimation((Object*)&player, 0, 0, 0);
+            player.invincibility = 2000;
             player.onLadder = 0;
             player.inAir = 0;
             player.x = game.prevGroundPos.x;
@@ -367,15 +374,16 @@ static void processFrame()
     }
 
     // Delete unused objects from memory
-    if (game.cleanTimer ++ >= CLEAN_PERIOD) {
-        game.cleanTimer = 0;
+    const double current_time = getElapsedTime();
+    if (current_time - game.prevCleanTime >= CLEAN_PERIOD) {
+        game.prevCleanTime = current_time;
         ObjectArray_clean(&level->objects);
     }
 }
 
 void damagePlayer( int damage )
 {
-    if (player.health > 100) {
+    if (player.invincibility > 0) {
         return;
     }
     player.health -= damage;
@@ -387,10 +395,10 @@ void damagePlayer( int damage )
 
 void killPlayer()
 {
-    if (player.health > 100) {
+    if (player.invincibility > 0) {
         return;
     }
-    setAnimation((Object*)&player, 5, 5, 5);
+    setAnimation((Object*)&player, 5, 5, 0);
     if (-- player.lives) {
         game.state = STATE_KILLED;
     } else {
@@ -438,7 +446,7 @@ void initGame()
     game.state = STATE_PLAYING;
 }
 
-void gameLoop()
+void runGame()
 {
     if (!startFrameControl(FRAME_RATE)) {
         fprintf(stderr, "gameLoop(): startFrameControl() failed\n");

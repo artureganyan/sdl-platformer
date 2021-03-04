@@ -49,8 +49,8 @@ int cellContains( int r, int c, ObjectTypeId generalType )
 
 void getObjectCell( Object* object, int* r, int* c )
 {
-    *r = (object->y + object->type->sprite.h * SIZE_FACTOR / 2) / CELL_SIZE;
-    *c = (object->x + object->type->sprite.w * SIZE_FACTOR / 2) / CELL_SIZE;
+    *r = (object->y + object->type->sprite.h / 2) / CELL_SIZE;
+    *c = (object->x + object->type->sprite.w / 2) / CELL_SIZE;
 }
 
 void getObjectPos( Object* object, int* r, int* c, Borders* cell, Borders* body )

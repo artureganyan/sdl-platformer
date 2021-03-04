@@ -9,6 +9,7 @@
 #include "helpers.h"
 #include "levels.h"
 #include "game.h"
+#include "framecontrol.h"
 #include <math.h>
 
 
@@ -16,21 +17,39 @@
 
 typedef enum
 {
-    DIRECTION_NONE = 0x0000,
-    DIRECTION_LEFT = 0x0001,
-    DIRECTION_RIGHT = 0x0010,
-    DIRECTION_UP = 0x0100,
-    DIRECTION_DOWN = 0x1000,
+    DIRECTION_NONE = 0,
+    DIRECTION_LEFT = 1,
+    DIRECTION_RIGHT = 2,
+    DIRECTION_UP = 4,
+    DIRECTION_DOWN = 8,
     DIRECTION_X = DIRECTION_LEFT | DIRECTION_RIGHT,
     DIRECTION_Y = DIRECTION_UP | DIRECTION_DOWN,
     DIRECTION_XY = DIRECTION_X | DIRECTION_Y
 } Direction;
 
-// Moves the object by dx and dy, checking the floor if checkFloor != 0.
-// Returns 0 on success, otherwise returns flags indicating if object
-// could not move by dx (flag DIRECTION_X) or dy (flag DIRECTION_Y).
-static int move( Object* object, int dx, int dy, int checkFloor )
+typedef enum
 {
+    HITTEST_NONE = 0,
+    HITTEST_WALLS = 1,
+    HITTEST_FLOOR = 2,
+    HITTEST_LEVEL = 4,
+    HITTEST_ALL = HITTEST_WALLS | HITTEST_FLOOR | HITTEST_LEVEL
+} HitTest;
+
+// Moves the object by vx and vy, checking the walls, floor and level borders
+// according to hitTest flags. Returns 0 on success, otherwise returns flags
+// indicating if object could not move by vx (flag DIRECTION_X) or vy (flag
+// DIRECTION_Y).
+static int move( Object* object, double vx, double vy, int hitTest )
+{
+    const double dt = getElapsedFrameTime() / 1000.0;
+    const double dx = vx * dt;
+    const double dy = vy * dt;
+
+    const int check_walls = hitTest & HITTEST_WALLS;
+    const int check_floor = hitTest & HITTEST_FLOOR;
+    const int check_level = hitTest & HITTEST_LEVEL;
+
     int r, c; Borders cell, body;
     int result = 0;
 
@@ -38,29 +57,35 @@ static int move( Object* object, int dx, int dy, int checkFloor )
     object->y += dy;
     getObjectPos(object, &r, &c, &cell, &body);
 
-    if (isSolid(r, c, SOLID_ALL)) {
+    if (check_walls && isSolid(r, c, SOLID_ALL)) {
         object->x -= dx;
         object->y -= dy;
         return DIRECTION_XY;
     }
     if (dx > 0 && body.right > cell.right) {
-        if (isSolid(r, c + 1, SOLID_LEFT) || body.right > LEVEL_WIDTH || (checkFloor && !isSolidOrLadder(r + 1, c + 1))) {
+        if ((check_walls && isSolid(r, c + 1, SOLID_LEFT)) ||
+            (check_level && body.right > LEVEL_WIDTH) || 
+            (check_floor && !isSolidOrLadder(r + 1, c + 1))) {
             object->x -= dx;
             result |= DIRECTION_X;
         }
     } else if (dx < 0 && body.left < cell.left) {
-        if (isSolid(r, c - 1, SOLID_RIGHT) || body.left < 0 || (checkFloor && !isSolidOrLadder(r + 1, c - 1))) {
+        if ((check_walls && isSolid(r, c - 1, SOLID_RIGHT)) ||
+            (check_level && body.left < 0) ||
+            (check_floor && !isSolidOrLadder(r + 1, c - 1))) {
             object->x -= dx;
             result |= DIRECTION_X;
         }
     }
     if (dy > 0 && body.bottom > cell.bottom) {
-        if (isSolid(r + 1, c, SOLID_TOP) || body.bottom > LEVEL_HEIGHT) {
+        if ((check_walls && isSolid(r + 1, c, SOLID_TOP)) ||
+            (check_level && body.bottom > LEVEL_HEIGHT)) {
             object->y -= dy;
             result |= DIRECTION_Y;
         }
     } else if (dy < 0 && body.top < cell.top) {
-        if (isSolid(r - 1, c, SOLID_BOTTOM) || body.top < 0) {
+        if ((check_walls && isSolid(r - 1, c, SOLID_BOTTOM)) ||
+            (check_level && body.top < 0)) {
             object->y -= dy;
             result |= DIRECTION_Y;
         }
@@ -121,42 +146,46 @@ void Object_onFrame( Object* object ) {}
 void Object_onHit( Object* object ) {}
 
 
-static const int ENEMY_STATE_MOVING = MS_TO_FRAMES(10000);
-static const int ENEMY_STATE_WAITING = MS_TO_FRAMES(12000);
+static const int ENEMY_STATE_MOVING = 10000;
+static const int ENEMY_STATE_WAITING = 12000;
 
 void Enemy_onInit( Object* e )
 {
     const int dir = rand() % 2 ? 1 : -1;
     e->vx = e->type->speed * dir;
     e->anim.direction = dir;
+    e->state = -rand() % ENEMY_STATE_MOVING;
 }
 
 void Enemy_onFrame( Object* e )
 {
     if (e->state <= ENEMY_STATE_MOVING) {
-        if (move(e, e->vx, e->vy, 1)) {
+        if (move(e, e->vx, e->vy, HITTEST_ALL)) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
-        setAnimation(e, 1, 2, 24);
+        setAnimation(e, 1, 2, 2);
 
     } else if (e->state <= ENEMY_STATE_WAITING) {
-        setAnimation(e, 2, 2, 24);
+        setAnimation(e, 2, 2, 0);
 
     } else {
-        e->state = ENEMY_STATE_MOVING - rand() % MS_TO_FRAMES(20000);
+        e->state = ENEMY_STATE_MOVING - rand() % (ENEMY_STATE_MOVING * 2);
         if (rand() % 2) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
     }
 
-    e->state += 1;
+    e->state += getElapsedFrameTime();
 }
 
 void Enemy_onHit( Object* e )
 {
-    if ((e->vx < 0 && player.x > e->x) || (e->vx > 0 && player.x < e->x)) {
+    if (player.inAir && player.y < e->y) {
+        player.vy *= -2;
+        return;
+    } else if ((e->vx < 0 && player.x > e->x) || (e->vx > 0 && player.x < e->x)) {
         e->vx = -e->vx;
         e->anim.direction = -e->anim.direction;
     }
@@ -167,59 +196,60 @@ void Enemy_onHit( Object* e )
 
 
 static const int SHOOTERENEMY_STATE_MOVING = 0;
-static const int SHOOTERENEMY_STATE_ATTACK1 = MS_TO_FRAMES(750);
-static const int SHOOTERENEMY_STATE_ATTACK2 = MS_TO_FRAMES(1000);
+static const int SHOOTERENEMY_STATE_ATTACK1 = 750;
+static const int SHOOTERENEMY_STATE_ATTACK2 = 1000;
 
 void ShooterEnemy_onFrame( Object* e )
 {
     if (e->state <= SHOOTERENEMY_STATE_MOVING) {
         if (isVisible(e, (Object*)&player)) {
             Object* shot = createObject(level, TYPE_ICESHOT, 0, 0);
-            shot->x = e->anim.direction > 0 ? e->x + e->type->sprite.w * SIZE_FACTOR :
-                                              e->x - shot->type->sprite.w * SIZE_FACTOR;
+            shot->x = e->anim.direction > 0 ? e->x + e->type->sprite.w :
+                                              e->x - shot->type->sprite.w;
             shot->y = e->y;
             shot->vx *= e->anim.direction;
             shot->anim.direction = e->anim.direction;
             e->state = SHOOTERENEMY_STATE_MOVING + 1;
-        } else if (move(e, e->vx, e->vy, 1)) {
+        } else if (move(e, e->vx, e->vy, HITTEST_ALL)) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
-        setAnimation(e, 1, 2, 24);
+        setAnimation(e, 1, 2, 2);
 
     } else if (e->state <= SHOOTERENEMY_STATE_ATTACK1) {
-        setAnimation(e, 4, 4, 24);
+        setAnimation(e, 4, 4, 2);
 
     } else if (e->state <= SHOOTERENEMY_STATE_ATTACK2) {
-        setAnimation(e, 1, 1, 24);
+        setAnimation(e, 1, 1, 2);
 
     } else {
         e->state = SHOOTERENEMY_STATE_MOVING;
     }
 
-    e->state += e->state > SHOOTERENEMY_STATE_MOVING;
+    if (e->state > SHOOTERENEMY_STATE_MOVING)
+        e->state += getElapsedFrameTime();
 }
 
 
 static const int SHOT_STATE_MOVING = 0;
-static const int SHOT_STATE_HIT = MS_TO_FRAMES(170);
+static const int SHOT_STATE_HIT = 170;
 
 void Shot_onInit( Object* e )
 {
     e->vx = e->type->speed;
-    setAnimation(e, 1, 2, 5);
+    setAnimation(e, 1, 2, 9);
 }
 
 void Shot_onFrame( Object* e )
 {
     if (e->state <= SHOT_STATE_MOVING) {
-        if (move(e, e->vx, e->vy, 0)) {
-            setAnimation(e, 3, 3, 5);
+        if (move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL)) {
+            setAnimation(e, 3, 3, 0);
             e->state = SHOT_STATE_MOVING + 1;
         }
 
     } else if (e->state <= SHOT_STATE_HIT) {
-        e->state += 1;
+        e->state += getElapsedFrameTime();
 
     } else {
         e->removed = 1;
@@ -228,38 +258,43 @@ void Shot_onFrame( Object* e )
 
 void Shot_onHit( Object* e )
 {
-    setAnimation(e, 3, 3, 5);
-    e->state += 1;
+    setAnimation(e, 3, 3, 0);
+    e->state = SHOT_STATE_MOVING + 1;
     killPlayer();
 }
 
 
-static const int BAT_STATE_MOVING = 0;
-static const int BAT_STATE_NEWDIRECTION = CELL_SIZE;
+static const int BAT_FLY_HEIGHT = CELL_SIZE * 1.25;
 
 void Bat_onInit( Object* e )
 {
     Enemy_onInit(e);
-    setAnimation(e, 0, 1, 12);
-    e->vy = 1;  // vy must be > 0, so the bat firstly go down,
-                // and then return to the previous height
+    setAnimation(e, 0, 1, 4);
+    e->vy = e->type->speed / 2.0;
+    e->state = 0;
 }
 
 void Bat_onFrame( Object* e )
 {
-    const int vy = e->state % 2 ? e->vy : 0;
-    const int m = move(e, e->vx, vy, 0);
+    int r, c; Borders cell, body;
+    if (e->state == 0) {
+        getObjectPos(e, &r, &c, &cell, &body);
+        e->state = cell.top + BAT_FLY_HEIGHT;
+    }
+
+    const int m = move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL);
     if (m & DIRECTION_X) {
         e->vx = -e->vx;
         e->anim.direction = -e->anim.direction;
     }
     if (m & DIRECTION_Y) {
         e->vy = -e->vy;
-    }
-    if (++ e->state >= BAT_STATE_NEWDIRECTION) {
-        e->state = BAT_STATE_MOVING;
+    } else {
+        getObjectPos(e, &r, &c, &cell, &body);
+        if (body.bottom >= e->state || body.top <= e->state - BAT_FLY_HEIGHT) {
         e->vy = -e->vy;
     }
+}
 }
 
 void Bat_onHit( Object* e )
@@ -269,7 +304,8 @@ void Bat_onHit( Object* e )
 
 
 static const int ITEM_STATE_IDLE = 0;
-static const int ITEM_STATE_TAKEN = 15;
+static const int ITEM_STATE_TAKEN = 1;
+static const double ITEM_FADE_SPEED = 0.25; // Seconds
 
 void Item_onHit( Object* item )
 {
@@ -289,7 +325,7 @@ void Item_onHit( Object* item )
         }
 
         item->state = ITEM_STATE_IDLE + 1;
-        item->vy = -7;
+        item->vy = -7 * 24;
         setAnimation(item, 0, 0, 0);
     }
 }
@@ -300,17 +336,14 @@ void Item_onFrame( Object* item )
         // nothing
 
     } else if (item->state <= ITEM_STATE_TAKEN) {
-        item->anim.alpha -= 25;
+        const double dt = getElapsedFrameTime() / 1000.0;
+        item->anim.alpha -= (255 / ITEM_FADE_SPEED) * dt;
         if (item->anim.alpha < 0) {
             item->anim.alpha = 0;
+            item->state = ITEM_STATE_TAKEN + 1;
         }
-        if (item->vy < 0) {
-            item->vy += item->state % 2;
-        } else {
-            item->vy = 0;
-        }
-        item->y += item->vy;
-        item->state += 1;
+        item->vy -= item->vy * dt / ITEM_FADE_SPEED;
+        move(item, item->vx, item->vy, HITTEST_NONE);
 
     } else {
         item->removed = 1;
@@ -319,8 +352,8 @@ void Item_onFrame( Object* item )
 
 
 static const int FIREBALL_STATE_MOVING = 0;
-static const int FIREBALL_STATE_ATTACK1 = MS_TO_FRAMES(500);
-static const int FIREBALL_STATE_ATTACK2 = MS_TO_FRAMES(1000);
+static const int FIREBALL_STATE_ATTACK1 = 500;
+static const int FIREBALL_STATE_ATTACK2 = 1000;
 
 void Fireball_onInit( Object* e )
 {
@@ -339,69 +372,85 @@ void Fireball_onFrame( Object* e )
             shot->anim.direction = e->anim.direction;
             e->state = FIREBALL_STATE_MOVING + 1;
         }
-        setAnimation(e, 0, 1, 24);
+        setAnimation(e, 0, 1, 2);
 
     } else if (e->state <= FIREBALL_STATE_ATTACK1) {
-        setAnimation(e, 4, 4, 24);
+        setAnimation(e, 4, 4, 0);
 
     } else if (e->state <= FIREBALL_STATE_ATTACK2) {
-        setAnimation(e, 0, 1, 24);
+        setAnimation(e, 0, 1, 2);
 
     } else {
         e->state = FIREBALL_STATE_MOVING;
     }
 
-    const int m = move(e, e->vx, e->vy, 0);
+    const int m = move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL);
     if (m) {
         if (m & DIRECTION_X) e->vx = -e->vx;
         if (m & DIRECTION_Y) e->vy = -e->vy;
         e->anim.direction = e->vx > 0 ? 1 : -1;
     }
-    if (rand() % 100 == 99) {
-        if (rand() % 2) {
+
+    const int dt = getElapsedFrameTime();
+    e->data -= dt;
+    if (e->data < 0) {
+        if (rand() % 10 == 9) {
             e->vx = -e->vx;
+            e->anim.direction = e->vx > 0 ? 1 : -1;
         }
-        e->anim.direction = e->vx > 0 ? 1 : -1;
+        if (rand() % 10 == 9) {
+            e->vy = -e->vy;
+        }
+        e->data = 1000;
     }
 
-    e->state += (e->state > FIREBALL_STATE_MOVING);
+    if (e->state > FIREBALL_STATE_MOVING)
+        e->state += dt;
 }
 
 
-static const int DROP_STATE_CREATE = 0;
-static const int DROP_STATE_FALLING = 1;
-static const int DROP_STATE_FELL = MS_TO_FRAMES(1000);
+static const int DROP_STATE_WAITING = 0;
+static const int DROP_STATE_CREATE = 1000;
+static const int DROP_STATE_FALLING = 1001;
+static const int DROP_STATE_FELL = 5000;
 
 void Drop_onInit( Object* e )
 {
-    e->state = -rand() % MS_TO_FRAMES(2000);
+    e->state = -rand() % 2000;
 }
 
 void Drop_onFrame( Object* e )
 {
-    if (e->state == DROP_STATE_CREATE) {
+    if (e->state <= DROP_STATE_WAITING) {
+        e->state += getElapsedFrameTime();
+        if (e->state > DROP_STATE_CREATE)
+            e->state = DROP_STATE_CREATE;
+
+    } else if (e->state <= DROP_STATE_CREATE) {
         Object* drop = createObject(level, TYPE_DROP, 0, 0);
         drop->x = e->x;
         drop->y = e->y;
         drop->state = DROP_STATE_FALLING;
-        e->state -= rand() % MS_TO_FRAMES(10000);
+        e->state = DROP_STATE_WAITING - 2000 - rand() % 8000;
 
-    } else if (e->state == DROP_STATE_FALLING) {
-        if (e->vy < 5) {
-            e->vy += 1;
+    } else if (e->state <= DROP_STATE_FALLING) {
+        if (e->vy < 5 * 24) {
+            e->vy += 24 * getElapsedFrameTime() / 1000.0;
         }
-        if (move(e, 0, e->vy, 0)) {
-            e->y += e->vy;
-            e->state += 1;
-        } else {
-            e->state -= 1;
+        if (move(e, 0, e->vy, HITTEST_WALLS | HITTEST_LEVEL)) {
+            move(e, 0, e->vy, HITTEST_NONE);
+            e->state = DROP_STATE_FALLING + 1;
         }
 
-    } else if (e->state > DROP_STATE_FELL) {
+    } else if (e->state <= DROP_STATE_FELL) {
+        e->state += getElapsedFrameTime();
+        e->anim.alpha -= 255 * getElapsedFrameTime() / (DROP_STATE_FELL - DROP_STATE_FALLING) + 1;
+        if (e->anim.alpha < 0)
+            e->anim.alpha = 0;
+
+    } else {
         e->removed = 1;
     }
-
-    e->state += 1;
 }
 
 void Drop_onHit( Object* e )
@@ -410,32 +459,42 @@ void Drop_onHit( Object* e )
 }
 
 
+static const int SPIDER_STATE_MOVING = 10000;
+static const int SPIDER_STATE_WAITING = 12000;
+
 void Spider_onFrame( Object* e )
 {
     Enemy_onFrame(e);
+
+    e->state += getElapsedFrameTime();
     if (rand() % 100 == 99) {
-        e->vx = (abs(e->vx) == 2 ? 1 : 2) * e->anim.direction;
+        if (abs(e->vx) == e->type->speed) {
+            e->vx *= 2.5;
+        } else {
+            e->vx /= 2.5;
+        }
     }
 }
 
 
-static const int TELEPORTINGENEMY_STATE_MOVING = MS_TO_FRAMES(4000);
-static const int TELEPORTINGENEMY_STATE_TELEPORTING = MS_TO_FRAMES(7000);
-static const int TELEPORTINGENEMY_STATE_WAITING = MS_TO_FRAMES(7000);
+static const int TELEPORTINGENEMY_STATE_MOVING = 4000;
+static const int TELEPORTINGENEMY_STATE_BEFORE_TELEPORTING = 7000;
+static const int TELEPORTINGENEMY_STATE_TELEPORTING = 8000;
+static const int TELEPORTINGENEMY_STATE_WAITING = 7000;
 
 void TeleportingEnemy_onFrame( Object* e )
 {
     if (e->state <= TELEPORTINGENEMY_STATE_MOVING) {
-        if (move(e, e->vx, e->vy, 1)) {
+        if (move(e, e->vx, e->vy, HITTEST_ALL)) {
             e->vx = -e->vx;
             e->anim.direction = -e->anim.direction;
         }
-        setAnimation(e, 1, 2, 24);
+        setAnimation(e, 1, 2, 2);
 
-    } else if (e->state < TELEPORTINGENEMY_STATE_TELEPORTING) {
-        setAnimation(e, 2, 2, 24);
+    } else if (e->state <= TELEPORTINGENEMY_STATE_BEFORE_TELEPORTING) {
+        setAnimation(e, 2, 2, 0);
 
-    } else if (e->state == TELEPORTINGENEMY_STATE_TELEPORTING) {
+    } else if (e->state <= TELEPORTINGENEMY_STATE_TELEPORTING) {
         int r, c;
         int prevr = (e->y + CELL_HALF) / CELL_SIZE;
         int count = CELL_COUNT;
@@ -447,15 +506,16 @@ void TeleportingEnemy_onFrame( Object* e )
                 e->x = CELL_SIZE * c;
             }
         }
+        e->state = TELEPORTINGENEMY_STATE_TELEPORTING + 1;
 
     } else if (e->state <= TELEPORTINGENEMY_STATE_WAITING) {
-        setAnimation(e, 2, 2, 24);
+        setAnimation(e, 2, 2, 0);
 
     } else {
-        e->state = -rand() % MS_TO_FRAMES(2000);
+        e->state = -rand() % 2000;
     }
 
-    e->state += 1;
+    e->state += getElapsedFrameTime();
 }
 
 void TeleportingEnemy_onHit( Object* e )
@@ -474,7 +534,7 @@ void Platform_onInit( Object* e )
 
 void Platform_onFrame( Object* e )
 {
-    if (move(e, e->vx, e->vy, 0)) {
+    if (move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL)) {
         e->vx = -e->vx;
         e->vy = -e->vy;
     }
@@ -482,9 +542,10 @@ void Platform_onFrame( Object* e )
 
 void Platform_onHit( Object* e )
 {
+    const double dt = getElapsedFrameTime() / 1000.0;
     const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
     const int dh = (CELL_SIZE - PLAYER_HEIGHT) / 2;
-    const int border = 5;
+    const int border = 3;
     int pr, pc; Borders pcell, pbody;
     int er, ec; Borders ecell, ebody;
 
@@ -501,7 +562,7 @@ void Platform_onHit( Object* e )
     } else if ((pbody.right - ebody.left) > border && (ebody.right - pbody.left) > border) {
         if (pbody.bottom >= ebody.top && pbody.top <= ebody.top) {
             if (!player.vx) {
-                player.x += e->vx;
+                player.x += e->vx * dt;
             }
             player.y = ebody.top - dh - PLAYER_HEIGHT;
             player.inAir = 0;
@@ -519,32 +580,33 @@ void Spring_onInit( Object* e )
 void Spring_onFrame( Object* e )
 {
     if (e->state > 0) {
-        e->state -= 1;
+        e->state -= getElapsedFrameTime();
     } else {
-        setAnimation(e, 0, 0, 24);
+        setAnimation(e, 0, 0, 0);
+        e->state = 0;
     }
 }
 
 void Spring_onHit( Object* e )
 {
-    const int h = 16;
+    const int h = 8;
     int pr, pc; Borders pcell, pbody;
     int er, ec; Borders ecell, ebody;
 
     getObjectPos((Object*)&player, &pr, &pc, &pcell, &pbody);
     getObjectPos(e, &er, &ec, &ecell, &ebody);
 
-    if (e->state == 0 && pbody.bottom >= ebody.bottom - h && player.vy > 2) {
-        player.vy = -15;
-        e->state = 50;
-        setAnimation(e, 1, 1, 24);
+    if (e->state == 0 && pbody.bottom >= ebody.bottom - h && player.vy > 48) {
+        player.vy = -15 * 24;
+        e->state = 1000;
+        setAnimation(e, 1, 1, 0);
     }
 }
 
 
 void Fan_onInit( Object* e )
 {
-    setAnimation(e, 0, 3, 2);
+    setAnimation(e, 0, 3, 24);
 }
 
 void Fan_onFrame( Object* e )
@@ -568,9 +630,7 @@ void Cloud_onHit( Object* e )
 {
     if (player.y + CELL_HALF < e->y + CELL_SIZE) {
         if (player.vy > 0) {
-            player.y -= player.vy - 1;
-        } else if (player.vy < 0) {
-            //player.y -= player.vy + 2;
+            player.y -= player.vy * 0.9 * getElapsedFrameTime() / 1000.0;
         }
         player.inAir = 0;
     }
@@ -579,7 +639,7 @@ void Cloud_onHit( Object* e )
 
 void Torch_onInit( Object* e )
 {
-    setAnimation(e, 0, 1, 12);
+    setAnimation(e, 0, 1, 4);
 }
 
 void Torch_onHit( Object* e )
@@ -589,7 +649,7 @@ void Torch_onHit( Object* e )
 
 void Water_onInit( Object* e )
 {
-    setAnimation(e, 0, 15, 2);
+    setAnimation(e, 0, 15, 24);
     e->anim.wave = 1;
 }
 

@@ -11,11 +11,11 @@
 
 typedef enum
 {
-    LEVEL_WIDTH = 640,
-    LEVEL_HEIGHT = 480,
+    LEVEL_WIDTH = 320,
+    LEVEL_HEIGHT = 240,
     SPRITE_SIZE = 16,
     SIZE_FACTOR = 2,
-    CELL_SIZE = SPRITE_SIZE * SIZE_FACTOR,
+    CELL_SIZE = SPRITE_SIZE,
     CELL_HALF = CELL_SIZE / 2,
     ROW_COUNT = (LEVEL_HEIGHT + CELL_SIZE - 1) / CELL_SIZE,
     COLUMN_COUNT = (LEVEL_WIDTH + CELL_SIZE - 1) / CELL_SIZE,
@@ -104,19 +104,19 @@ typedef enum
 
 typedef enum
 {
-    SOLID_LEFT = 0x0001,
-    SOLID_RIGHT = 0x0010,
-    SOLID_TOP = 0x0100,
-    SOLID_BOTTOM = 0x1000,
+    SOLID_LEFT = 1,
+    SOLID_RIGHT = 2,
+    SOLID_TOP = 4,
+    SOLID_BOTTOM = 8,
     SOLID_ALL = SOLID_LEFT | SOLID_RIGHT | SOLID_TOP | SOLID_BOTTOM
 } SolidFlags;
 
 typedef struct
 {
-    int left;
-    int right;
-    int top;
-    int bottom;
+    double left;
+    double right;
+    double top;
+    double bottom;
 } Borders;
 
 struct Object_s;
@@ -130,10 +130,10 @@ typedef struct
     ObjectTypeId typeId;
     ObjectTypeId generalTypeId;
     SDL_Rect sprite; // Sprite rect in the spritesheet, unscaled
-    int width;       // Body width/height, scaled. Body is centered within
-    int height;      // the scaled sprite.
+    int width;       // Body width/height, unscaled. Body is centered within
+    int height;      // the sprite.
     int solid;
-    int speed;
+    double speed;
     OnInit onInit;
     OnFrame onFrame;
     OnHit onHit;
@@ -145,8 +145,8 @@ typedef struct
     int frame;
     int frameStart;
     int frameEnd;
-    int frameDelay; // In game frames
-    int frameDelayCounter;
+    double frameDelay;          // Seconds
+    double frameDelayCounter;   // Seconds
     int wave;
     int alpha;
 } Animation;
@@ -155,12 +155,13 @@ typedef struct Object_s
 {
     ObjectType* type;
     Animation anim;
-    int x;
-    int y;
-    int vx;
-    int vy;
+    double x;
+    double y;
+    double vx;      // Pixels per second
+    double vy;      // Pixels per second
     int removed;
     int state;
+    int data;
 } Object;
 
 typedef struct
@@ -174,15 +175,17 @@ typedef struct
 {
     ObjectType* type;
     Animation anim;
-    int x;
-    int y;
-    int vx;
-    int vy;
-    int removed; // Unused
-    int state;   // Unused
+    double x;
+    double y;
+    double vx;
+    double vy;
+    int removed;        // Unused
+    int state;          // Unused
+    int data;           // Unused
     int inAir;
     int onLadder;
-    int health;  // Values > 100 mean how long player is invincibile (e.g. 110 is for 10 frames)
+    int health;
+    int invincibility;  // How long player is invincibile, in ms
     int lives;
     int coins;
     int keys;

@@ -6,6 +6,7 @@
 
 #include "render.h"
 #include "game.h"
+#include "framecontrol.h"
 #include "SDL_ttf.h"
 #include <string.h>
 #include <stdio.h>
@@ -41,7 +42,7 @@ static struct
 void initRender()
 {
     // Window and renderer
-    SDL_CreateWindowAndRenderer(LEVEL_WIDTH, LEVEL_HEIGHT, 0, &window, &renderer);
+    SDL_CreateWindowAndRenderer(LEVEL_WIDTH * SIZE_FACTOR, LEVEL_HEIGHT * SIZE_FACTOR, 0, &window, &renderer);
 
     // Sprites
     static const char* spritesPath = "image/sprites.bmp";
@@ -60,7 +61,7 @@ void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip
 {
     SDL_Rect srcRect = *spriteRect;
     srcRect.x += srcRect.w * frame;
-    SDL_Rect dstRect = {x, y, srcRect.w * SIZE_FACTOR, srcRect.h * SIZE_FACTOR};
+    SDL_Rect dstRect = {x * SIZE_FACTOR, y * SIZE_FACTOR, srcRect.w * SIZE_FACTOR, srcRect.h * SIZE_FACTOR};
     SDL_RenderCopyEx(renderer, sprites, &srcRect, &dstRect, 0, NULL, flip);
 }
 
@@ -86,12 +87,12 @@ void drawObject( Object* object, int x, int y )
     if (object->anim.wave) {
         SDL_Rect spriteRect = object->type->sprite;
         spriteRect.w -= frame;
-        x += frame * SIZE_FACTOR;
+        x += frame;
         drawSprite(&spriteRect, x, y, 0, flip);
 
         spriteRect.x += spriteRect.w;
         spriteRect.w = frame;
-        x -= frame * SIZE_FACTOR;
+        x -= frame;
         drawSprite(&spriteRect, x, y, 0, flip);
     } else {
         drawSprite(&object->type->sprite, x, y, frame, flip);
@@ -189,11 +190,16 @@ static SDL_Texture* createText( const char* text, SDL_Color color )
 // If withBox is 1, draws a box around the text.
 static void _drawText( SDL_Texture* text, int x, int y, int w, int h, int withBox )
 {
+    x *= SIZE_FACTOR;
+    y *= SIZE_FACTOR;
+    w *= SIZE_FACTOR;
+    h *= SIZE_FACTOR;
+
     SDL_Rect textRect = {x, y};
     SDL_QueryTexture(text, NULL, NULL, &textRect.w, &textRect.h);
     if (withBox) {
         const int padding = 10;
-        const SDL_Rect defaultRect = {x, y, CELL_SIZE * 5, CELL_SIZE * 2.5};
+        const SDL_Rect defaultRect = {x, y, CELL_SIZE * SIZE_FACTOR * 5, CELL_SIZE * SIZE_FACTOR * 2.5};
         SDL_Rect boxRect = textRect;
         if (boxRect.w > defaultRect.w) {
             boxRect.w += padding * 2;
@@ -262,12 +268,16 @@ void drawScreen()
     }
 
     // Objects
+    const double dt = getElapsedFrameTime() / 1000.0;
     for (int i = 0; i < level->objects.count; ++ i) {
         Object* object = level->objects.array[i];
         Animation* anim = &object->anim;
-        if (object->removed) continue;
+        if (object->removed) {
+            continue;
+        }
         if (anim->frameStart < anim->frameEnd) {
-            if (-- anim->frameDelayCounter <= 0) {
+            anim->frameDelayCounter -= dt;
+            if (anim->frameDelayCounter <= 0) {
                 anim->frameDelayCounter = anim->frameDelay;
                 anim->frame += 1;
                 if (anim->frame > anim->frameEnd) {
@@ -279,12 +289,12 @@ void drawScreen()
     }
 }
 
-void setAnimation( Object* object, int frameStart, int frameEnd, int frameDelay )
+void setAnimation( Object* object, int frameStart, int frameEnd, int fps )
 {
     Animation* anim = &object->anim;
     anim->frameStart = frameStart;
     anim->frameEnd = frameEnd;
-    anim->frameDelay = frameDelay;
+    anim->frameDelay = 1.0 / fps;
     if (anim->frame < anim->frameStart || anim->frame > anim->frameEnd) {
         anim->frame = anim->frameStart;
     }

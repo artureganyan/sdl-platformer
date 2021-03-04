@@ -9,7 +9,8 @@
 
 int startFrameControl( int fps );
 void waitForNextFrame();
-double getElapsedTime(); // Milliseconds
+double getElapsedFrameTime();   // ms
+double getElapsedTime();        // ms
 double getCurrentFps();
 
 #endif
