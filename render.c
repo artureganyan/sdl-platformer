@@ -79,12 +79,12 @@ static void drawObjectBody( Object* object, int x, int y )
 // e.g. to make special effects
 void drawObject( Object* object, int x, int y )
 {
-    const SDL_RendererFlip flip = object->anim.direction < 0 ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
     const int frame = object->anim.frame;
+    const int flip = object->anim.flip;
 
     SDL_SetTextureAlphaMod(sprites, object->anim.alpha);
 
-    if (object->anim.wave) {
+    if (object->anim.type == ANIMATION_WAVE) {
         SDL_Rect spriteRect = object->type->sprite;
         spriteRect.w -= frame;
         x += frame;
@@ -275,25 +275,27 @@ void drawScreen()
         if (object->removed) {
             continue;
         }
-        if (anim->frameStart < anim->frameEnd) {
-            anim->frameDelayCounter -= dt;
-            if (anim->frameDelayCounter <= 0) {
-                anim->frameDelayCounter = anim->frameDelay;
-                anim->frame += 1;
-                if (anim->frame > anim->frameEnd) {
-                    anim->frame = anim->frameStart;
-                }
+        anim->frameDelayCounter -= dt;
+        if (anim->frameDelayCounter <= 0) {
+            anim->frameDelayCounter = anim->frameDelay;
+            anim->frame += 1;
+            if (anim->frame > anim->frameEnd) {
+                anim->frame = anim->frameStart;
+            }
+            if (anim->type == ANIMATION_FLIP) {
+                anim->flip = anim->flip == SDL_FLIP_NONE ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
             }
         }
         drawObject(object, object->x, object->y);
     }
 }
 
-void setAnimation( Object* object, int frameStart, int frameEnd, int fps )
+static void setAnimationEx( Object* object, int start, int end, int fps, int type )
 {
     Animation* anim = &object->anim;
-    anim->frameStart = frameStart;
-    anim->frameEnd = frameEnd;
+    anim->type = type;
+    anim->frameStart = start;
+    anim->frameEnd = end;
     anim->frameDelay = 1.0 / fps;
     if (anim->frame < anim->frameStart || anim->frame > anim->frameEnd) {
         anim->frame = anim->frameStart;
@@ -301,4 +303,19 @@ void setAnimation( Object* object, int frameStart, int frameEnd, int fps )
     if (anim->frameDelayCounter > anim->frameDelay || anim->frameDelayCounter < 0) {
         anim->frameDelayCounter = anim->frameDelay;
     }
+}
+
+void setAnimation( Object* object, int frameStart, int frameEnd, int fps )
+{
+    setAnimationEx(object, frameStart, frameEnd, fps, ANIMATION_FRAME);
+}
+
+void setAnimationWave( Object* object, int fps )
+{
+    setAnimationEx(object, 0, object->type->sprite.w - 1, fps, ANIMATION_WAVE);
+}
+
+void setAnimationFlip( Object* object, int frame, int fps )
+{
+    setAnimationEx(object, frame, frame, fps, ANIMATION_FLIP);
 }

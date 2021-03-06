@@ -139,15 +139,22 @@ typedef struct
     OnHit onHit;
 } ObjectType;
 
+typedef enum
+{
+    ANIMATION_FRAME,
+    ANIMATION_FLIP,
+    ANIMATION_WAVE
+} AnimationType;
+
 typedef struct
 {
-    int direction;
+    AnimationType type;
     int frame;
     int frameStart;
     int frameEnd;
     double frameDelay;          // Seconds
     double frameDelayCounter;   // Seconds
-    int wave;
+    int flip;
     int alpha;
 } Animation;
 

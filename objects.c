@@ -93,16 +93,23 @@ static int move( Object* object, double vx, double vy, int hitTest )
     return result;
 }
 
+static void setSpeed( Object* object, double vx, double vy )
+{
+    object->vx = vx;
+    object->vy = vy;
+    object->anim.flip = vx < 0 ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+}
+
 // Returns 1 if the source sees the target
 static int isVisible( Object* source, Object* target )
 {
     if (target->y + CELL_SIZE > source->y + CELL_HALF &&
         target->y < source->y + CELL_HALF) {
         int x1, x2;
-        if (target->x < source->x && source->anim.direction < 0) {
+        if (target->x < source->x && (source->anim.flip & SDL_FLIP_HORIZONTAL)) {
             x1 = target->x;
             x2 = source->x;
-        } else if (target->x > source->x && source->anim.direction > 0) {
+        } else if (target->x > source->x && !(source->anim.flip & SDL_FLIP_HORIZONTAL)) {
             x1 = source->x;
             x2 = target->x;
         } else {
@@ -152,8 +159,7 @@ static const int ENEMY_STATE_WAITING = 12000;
 void Enemy_onInit( Object* e )
 {
     const int dir = rand() % 2 ? 1 : -1;
-    e->vx = e->type->speed * dir;
-    e->anim.direction = dir;
+    setSpeed(e, e->type->speed * dir, 0);
     e->state = -rand() % ENEMY_STATE_MOVING;
 }
 
@@ -161,8 +167,7 @@ void Enemy_onFrame( Object* e )
 {
     if (e->state <= ENEMY_STATE_MOVING) {
         if (move(e, e->vx, e->vy, HITTEST_ALL)) {
-            e->vx = -e->vx;
-            e->anim.direction = -e->anim.direction;
+            setSpeed(e, -e->vx, e->vy);
         }
         setAnimation(e, 1, 2, 2);
 
@@ -172,8 +177,7 @@ void Enemy_onFrame( Object* e )
     } else {
         e->state = ENEMY_STATE_MOVING - rand() % (ENEMY_STATE_MOVING * 2);
         if (rand() % 2) {
-            e->vx = -e->vx;
-            e->anim.direction = -e->anim.direction;
+            setSpeed(e, -e->vx, e->vy);
         }
     }
 
@@ -186,8 +190,7 @@ void Enemy_onHit( Object* e )
         player.vy *= -2;
         return;
     } else if ((e->vx < 0 && player.x > e->x) || (e->vx > 0 && player.x < e->x)) {
-        e->vx = -e->vx;
-        e->anim.direction = -e->anim.direction;
+        setSpeed(e, -e->vx, e->vy);
     }
     e->state = ENEMY_STATE_MOVING + 1;
     setAnimation(e, 4, 4, 0);
@@ -204,15 +207,14 @@ void ShooterEnemy_onFrame( Object* e )
     if (e->state <= SHOOTERENEMY_STATE_MOVING) {
         if (isVisible(e, (Object*)&player)) {
             Object* shot = createObject(level, TYPE_ICESHOT, 0, 0);
-            shot->x = e->anim.direction > 0 ? e->x + e->type->sprite.w :
-                                              e->x - shot->type->sprite.w;
+            shot->x = e->anim.flip & SDL_FLIP_HORIZONTAL ?
+                      e->x - shot->type->sprite.w :
+                      e->x + e->type->sprite.w;
             shot->y = e->y;
-            shot->vx *= e->anim.direction;
-            shot->anim.direction = e->anim.direction;
+            setSpeed(shot, shot->vx * (e->vx > 0 ? 1 : -1), shot->vy);
             e->state = SHOOTERENEMY_STATE_MOVING + 1;
         } else if (move(e, e->vx, e->vy, HITTEST_ALL)) {
-            e->vx = -e->vx;
-            e->anim.direction = -e->anim.direction;
+            setSpeed(e, -e->vx, e->vy);
         }
         setAnimation(e, 1, 2, 2);
 
@@ -236,7 +238,7 @@ static const int SHOT_STATE_HIT = 170;
 
 void Shot_onInit( Object* e )
 {
-    e->vx = e->type->speed;
+    setSpeed(e, e->type->speed, 0);
     setAnimation(e, 1, 2, 9);
 }
 
@@ -270,7 +272,7 @@ void Bat_onInit( Object* e )
 {
     Enemy_onInit(e);
     setAnimation(e, 0, 1, 4);
-    e->vy = e->type->speed / 2.0;
+    setSpeed(e, e->vx, e->type->speed / 2.0);
     e->state = 0;
 }
 
@@ -284,15 +286,14 @@ void Bat_onFrame( Object* e )
 
     const int m = move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL);
     if (m & DIRECTION_X) {
-        e->vx = -e->vx;
-        e->anim.direction = -e->anim.direction;
+        setSpeed(e, -e->vx, e->vy);
     }
     if (m & DIRECTION_Y) {
-        e->vy = -e->vy;
+        setSpeed(e, e->vx, -e->vy);
     } else {
         getObjectPos(e, &r, &c, &cell, &body);
         if (body.bottom >= e->state || body.top <= e->state - BAT_FLY_HEIGHT) {
-        e->vy = -e->vy;
+            setSpeed(e, e->vx, -e->vy);
     }
 }
 }
@@ -325,7 +326,7 @@ void Item_onHit( Object* item )
         }
 
         item->state = ITEM_STATE_IDLE + 1;
-        item->vy = -7 * 24;
+        setSpeed(item, item->vx, -7 * 24);
         setAnimation(item, 0, 0, 0);
     }
 }
@@ -342,7 +343,7 @@ void Item_onFrame( Object* item )
             item->anim.alpha = 0;
             item->state = ITEM_STATE_TAKEN + 1;
         }
-        item->vy -= item->vy * dt / ITEM_FADE_SPEED;
+        setSpeed(item, item->vx, item->vy - item->vy * dt / ITEM_FADE_SPEED);
         move(item, item->vx, item->vy, HITTEST_NONE);
 
     } else {
@@ -358,7 +359,7 @@ static const int FIREBALL_STATE_ATTACK2 = 1000;
 void Fireball_onInit( Object* e )
 {
     Enemy_onInit(e);
-    e->vy = e->vx;
+    setSpeed(e, e->vx, e->vx);
 }
 
 void Fireball_onFrame( Object* e )
@@ -366,10 +367,9 @@ void Fireball_onFrame( Object* e )
     if (e->state <= FIREBALL_STATE_MOVING) {
         if (isVisible(e, (Object*)&player)) {
             Object* shot = createObject(level, TYPE_FIRESHOT, 0, 0);
-            shot->x = e->x + e->anim.direction * 20;
+            shot->x = e->x + 20 * (e->anim.flip & SDL_FLIP_HORIZONTAL ? 1 : -1);
             shot->y = e->y + 2;
-            shot->vx *= e->anim.direction;
-            shot->anim.direction = e->anim.direction;
+            setSpeed(shot, shot->vx * (e->vx > 0 ? 1 : -1), shot->vy);
             e->state = FIREBALL_STATE_MOVING + 1;
         }
         setAnimation(e, 0, 1, 2);
@@ -386,20 +386,17 @@ void Fireball_onFrame( Object* e )
 
     const int m = move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL);
     if (m) {
-        if (m & DIRECTION_X) e->vx = -e->vx;
-        if (m & DIRECTION_Y) e->vy = -e->vy;
-        e->anim.direction = e->vx > 0 ? 1 : -1;
+        setSpeed(e, m & DIRECTION_X ? -e->vx : e->vx, m & DIRECTION_Y ? -e->vy : e->vy);
     }
 
     const int dt = getElapsedFrameTime();
     e->data -= dt;
     if (e->data < 0) {
         if (rand() % 10 == 9) {
-            e->vx = -e->vx;
-            e->anim.direction = e->vx > 0 ? 1 : -1;
+            setSpeed(e, -e->vx, e->vy);
         }
         if (rand() % 10 == 9) {
-            e->vy = -e->vy;
+            setSpeed(e, e->vx, -e->vy);
         }
         e->data = 1000;
     }
@@ -469,9 +466,9 @@ void Spider_onFrame( Object* e )
     e->state += getElapsedFrameTime();
     if (rand() % 100 == 99) {
         if (abs(e->vx) == e->type->speed) {
-            e->vx *= 2.5;
+            setSpeed(e, e->vx * 2.5, e->vy);
         } else {
-            e->vx /= 2.5;
+            setSpeed(e, e->vx / 2.5, e->vy);
         }
     }
 }
@@ -486,8 +483,7 @@ void TeleportingEnemy_onFrame( Object* e )
 {
     if (e->state <= TELEPORTINGENEMY_STATE_MOVING) {
         if (move(e, e->vx, e->vy, HITTEST_ALL)) {
-            e->vx = -e->vx;
-            e->anim.direction = -e->anim.direction;
+            setSpeed(e, -e->vx, e->vy);
         }
         setAnimation(e, 1, 2, 2);
 
@@ -528,8 +524,7 @@ void TeleportingEnemy_onHit( Object* e )
 
 void Platform_onInit( Object* e )
 {
-    e->vx = e->type->speed;
-    e->vy = 0;
+    setSpeed(e, e->type->speed, 0);
 }
 
 void Platform_onFrame( Object* e )
@@ -649,8 +644,7 @@ void Torch_onHit( Object* e )
 
 void Water_onInit( Object* e )
 {
-    setAnimation(e, 0, 15, 24);
-    e->anim.wave = 1;
+    setAnimationWave(e, 24);
 }
 
 void Water_onHit( Object* e )

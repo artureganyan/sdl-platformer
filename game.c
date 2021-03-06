@@ -28,7 +28,6 @@ static struct {
     const Uint8* keystate;
     const char* message;
     struct { double x, y; } prevGroundPos; // Used for respawn
-    double ladderAnimTimer;
     double prevCleanTime;
     int jumpDenied;
 } game;
@@ -236,8 +235,6 @@ static void processFrame()
     }
 
     // Process user input and game logic
-    const double dt = getElapsedFrameTime() / 1000.0;
-    
     if (game.state == STATE_PLAYING) {
 
         // ... Left
@@ -249,7 +246,7 @@ static void processFrame()
                     setAnimation((Object*)&player, 1, 1, PLAYER_ANIM_SPEED_RUN);
                 }
             }
-            player.anim.direction = -1;
+            player.anim.flip = SDL_FLIP_HORIZONTAL;
             player.vx = -PLAYER_SPEED_RUN;
 
         // ... Right
@@ -261,7 +258,7 @@ static void processFrame()
                     setAnimation((Object*)&player, 1, 1, PLAYER_ANIM_SPEED_RUN);
                 }
             }
-            player.anim.direction = 1;
+            player.anim.flip = SDL_FLIP_NONE;
             player.vx = PLAYER_SPEED_RUN;
 
         // ... Not left or right
@@ -284,12 +281,7 @@ static void processFrame()
                 player.onLadder = 1;
                 player.vy = -PLAYER_SPEED_LADDER;
                 player.x = c * CELL_SIZE;
-                setAnimation((Object*)&player, 3, 3, 0);
-                game.ladderAnimTimer += dt;
-                if (game.ladderAnimTimer >= 1.0 / PLAYER_ANIM_SPEED_LADDER) {
-                    game.ladderAnimTimer = 0;
-                    player.anim.direction *= -1;
-                }
+                setAnimationFlip((Object*)&player, 3, PLAYER_ANIM_SPEED_LADDER);
                 game.jumpDenied = 1;
             }
 
@@ -304,12 +296,7 @@ static void processFrame()
                     player.onLadder = 1;
                     player.y = r * CELL_SIZE + CELL_HALF + 1;
                 }
-                setAnimation((Object*)&player, 3, 3, 0);
-                game.ladderAnimTimer += dt;
-                if (game.ladderAnimTimer >= 1.0 / PLAYER_ANIM_SPEED_LADDER) {
-                    game.ladderAnimTimer = 0;
-                    player.anim.direction *= -1;
-                }
+                setAnimationFlip((Object*)&player, 3, PLAYER_ANIM_SPEED_LADDER);
             }
 
         // ... Not up or down

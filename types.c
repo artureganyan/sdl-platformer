@@ -92,9 +92,9 @@ void initObject( Object* object, ObjectTypeId typeId )
     object->removed = 0;
     object->state = 0;
     object->data = 0;
-    object->anim.direction = 1;
+    object->anim.flip = SDL_FLIP_NONE;
     object->anim.frameDelayCounter = 0;
-    object->anim.wave = 0;
+    object->anim.type = ANIMATION_FRAME;
     object->anim.alpha = 255;
     setAnimation(object, 0, 0, 0);
     object->type->onInit(object);
