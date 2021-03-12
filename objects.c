@@ -40,11 +40,11 @@ typedef enum
 // according to hitTest flags. Returns 0 on success, otherwise returns flags
 // indicating if object could not move by vx (flag DIRECTION_X) or vy (flag
 // DIRECTION_Y).
-static int move( Object* object, double vx, double vy, int hitTest )
+static int move( Object* object, int hitTest )
 {
     const double dt = getElapsedFrameTime() / 1000.0;
-    const double dx = vx * dt;
-    const double dy = vy * dt;
+    const double dx = object->vx * dt;
+    const double dy = object->vy * dt;
 
     const int check_walls = hitTest & HITTEST_WALLS;
     const int check_floor = hitTest & HITTEST_FLOOR;
@@ -166,7 +166,7 @@ void Enemy_onInit( Object* e )
 void Enemy_onFrame( Object* e )
 {
     if (e->state <= ENEMY_STATE_MOVING) {
-        if (move(e, e->vx, e->vy, HITTEST_ALL)) {
+        if (move(e, HITTEST_ALL)) {
             setSpeed(e, -e->vx, e->vy);
         }
         setAnimation(e, 1, 2, 2);
@@ -207,13 +207,11 @@ void ShooterEnemy_onFrame( Object* e )
     if (e->state <= SHOOTERENEMY_STATE_MOVING) {
         if (isVisible(e, (Object*)&player)) {
             Object* shot = createObject(level, TYPE_ICESHOT, 0, 0);
-            shot->x = e->anim.flip & SDL_FLIP_HORIZONTAL ?
-                      e->x - shot->type->sprite.w :
-                      e->x + e->type->sprite.w;
+            shot->x = e->anim.flip & SDL_FLIP_HORIZONTAL ? e->x - shot->type->sprite.w : e->x + e->type->sprite.w;
             shot->y = e->y;
             setSpeed(shot, shot->vx * (e->vx > 0 ? 1 : -1), shot->vy);
             e->state = SHOOTERENEMY_STATE_MOVING + 1;
-        } else if (move(e, e->vx, e->vy, HITTEST_ALL)) {
+        } else if (move(e, HITTEST_ALL)) {
             setSpeed(e, -e->vx, e->vy);
         }
         setAnimation(e, 1, 2, 2);
@@ -245,7 +243,7 @@ void Shot_onInit( Object* e )
 void Shot_onFrame( Object* e )
 {
     if (e->state <= SHOT_STATE_MOVING) {
-        if (move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL)) {
+        if (move(e, HITTEST_WALLS | HITTEST_LEVEL)) {
             setAnimation(e, 3, 3, 0);
             e->state = SHOT_STATE_MOVING + 1;
         }
@@ -284,7 +282,7 @@ void Bat_onFrame( Object* e )
         e->state = cell.top + BAT_FLY_HEIGHT;
     }
 
-    const int m = move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL);
+    const int m = move(e, HITTEST_WALLS | HITTEST_LEVEL);
     if (m & DIRECTION_X) {
         setSpeed(e, -e->vx, e->vy);
     }
@@ -344,7 +342,7 @@ void Item_onFrame( Object* item )
             item->state = ITEM_STATE_TAKEN + 1;
         }
         setSpeed(item, item->vx, item->vy - item->vy * dt / ITEM_FADE_SPEED);
-        move(item, item->vx, item->vy, HITTEST_NONE);
+        move(item, HITTEST_NONE);
 
     } else {
         item->removed = 1;
@@ -367,7 +365,7 @@ void Fireball_onFrame( Object* e )
     if (e->state <= FIREBALL_STATE_MOVING) {
         if (isVisible(e, (Object*)&player)) {
             Object* shot = createObject(level, TYPE_FIRESHOT, 0, 0);
-            shot->x = e->x + 20 * (e->anim.flip & SDL_FLIP_HORIZONTAL ? 1 : -1);
+            shot->x = e->anim.flip & SDL_FLIP_HORIZONTAL ? e->x - shot->type->sprite.w : e->x + e->type->sprite.w;
             shot->y = e->y + 2;
             setSpeed(shot, shot->vx * (e->vx > 0 ? 1 : -1), shot->vy);
             e->state = FIREBALL_STATE_MOVING + 1;
@@ -384,7 +382,7 @@ void Fireball_onFrame( Object* e )
         e->state = FIREBALL_STATE_MOVING;
     }
 
-    const int m = move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL);
+    const int m = move(e, HITTEST_WALLS | HITTEST_LEVEL);
     if (m) {
         setSpeed(e, m & DIRECTION_X ? -e->vx : e->vx, m & DIRECTION_Y ? -e->vy : e->vy);
     }
@@ -434,8 +432,8 @@ void Drop_onFrame( Object* e )
         if (e->vy < 5 * 24) {
             e->vy += 24 * getElapsedFrameTime() / 1000.0;
         }
-        if (move(e, 0, e->vy, HITTEST_WALLS | HITTEST_LEVEL)) {
-            move(e, 0, e->vy, HITTEST_NONE);
+        if (move(e, HITTEST_WALLS | HITTEST_LEVEL)) {
+            move(e, HITTEST_NONE);
             e->state = DROP_STATE_FALLING + 1;
         }
 
@@ -482,7 +480,7 @@ static const int TELEPORTINGENEMY_STATE_WAITING = 7000;
 void TeleportingEnemy_onFrame( Object* e )
 {
     if (e->state <= TELEPORTINGENEMY_STATE_MOVING) {
-        if (move(e, e->vx, e->vy, HITTEST_ALL)) {
+        if (move(e, HITTEST_ALL)) {
             setSpeed(e, -e->vx, e->vy);
         }
         setAnimation(e, 1, 2, 2);
@@ -529,7 +527,7 @@ void Platform_onInit( Object* e )
 
 void Platform_onFrame( Object* e )
 {
-    if (move(e, e->vx, e->vy, HITTEST_WALLS | HITTEST_LEVEL)) {
+    if (move(e, HITTEST_WALLS | HITTEST_LEVEL)) {
         e->vx = -e->vx;
         e->vy = -e->vy;
     }
