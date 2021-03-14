@@ -5,6 +5,7 @@
  ******************************************************************************/
 
 #include "framecontrol.h"
+#include "helpers.h"
 #include "SDL.h"
 #include <stdio.h>
 
@@ -43,10 +44,7 @@ static Time getCurrentTime()
 {
 #ifdef _WIN32
     LARGE_INTEGER i;
-    if (!QueryPerformanceCounter(&i)) {
-        fprintf(stderr, "getCurrentTime(): QueryPerformanceCounter() failed\n");
-        return TIME_UNDEFINED;
-    }
+    ensure(QueryPerformanceCounter(&i), "getCurrentTime(): QueryPerformanceCounter() failed");
     return i.QuadPart;
 #else
     struct timespec t;
@@ -55,28 +53,21 @@ static Time getCurrentTime()
 #endif
 }
 
-int startFrameControl( int fps )
+void startFrameControl( int fps )
 {
 #ifdef _WIN32
     LARGE_INTEGER i;
-    if (!QueryPerformanceFrequency(&i)) {
-        fprintf(stderr, "startFrameControl(): QueryPerformanceFrequency() failed\n");
-        return 0;
-    }
+    ensure(QueryPerformanceFrequency(&i), "startFrameControl(): QueryPerformanceFrequency() failed");
     control.timePerMs = i.QuadPart / 1000.0;
 #else
     control.timePerMs = 1000000;
 #endif
     control.startTime = getCurrentTime();
-    if (control.startTime == TIME_UNDEFINED) {
-        fprintf(stderr, "startFrameControl(): Can't get current time\n");
-        return 0;
-    }
+    ensure(control.startTime != TIME_UNDEFINED, "startFrameControl(): Can't get current time");
     control.prevFrameTime = control.startTime;
     control.elapsedFrameTime = 0;
     control.framePeriod = msToTime(1000.0 / fps);
     control.frameCount = 0;
-    return 1;
 }
 
 void waitForNextFrame()

@@ -536,18 +536,18 @@ void Platform_onFrame( Object* e )
 void Platform_onHit( Object* e )
 {
     const double dt = getElapsedFrameTime() / 1000.0;
-    const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
-    const int dh = (CELL_SIZE - PLAYER_HEIGHT) / 2;
+    const int dw = (CELL_SIZE - player.type->body.w) / 2;
+    const int dh = (CELL_SIZE - player.type->body.h) / 2;
     const int border = 3;
-    int pr, pc; Borders pcell, pbody;
-    int er, ec; Borders ecell, ebody;
+    Borders pbody;
+    Borders ebody;
 
-    getObjectPos((Object*)&player, &pr, &pc, &pcell, &pbody);
-    getObjectPos(e, &er, &ec, &ecell, &ebody);
+    getObjectBody((Object*)&player, &pbody);
+    getObjectBody(e, &ebody);
 
     if ((pbody.bottom - ebody.top) > border && (ebody.bottom - pbody.top) > border) {
         if (pbody.right >= ebody.left && pbody.left <= ebody.left) {
-            player.x = ebody.left - dw - PLAYER_WIDTH;
+            player.x = ebody.left - dw - player.type->body.w;
         } else if (pbody.left <= ebody.right && pbody.right >= ebody.right) {
             player.x = ebody.right - dw;
         }
@@ -557,7 +557,7 @@ void Platform_onHit( Object* e )
             if (!player.vx) {
                 player.x += e->vx * dt;
             }
-            player.y = ebody.top - dh - PLAYER_HEIGHT;
+            player.y = ebody.top - dh - player.type->body.h;
             player.inAir = 0;
         } else if (pbody.top <= ebody.bottom && pbody.bottom >= ebody.bottom) {
             player.y = ebody.bottom - dh;
@@ -583,11 +583,11 @@ void Spring_onFrame( Object* e )
 void Spring_onHit( Object* e )
 {
     const int h = 8;
-    int pr, pc; Borders pcell, pbody;
-    int er, ec; Borders ecell, ebody;
+    Borders pbody;
+    Borders ebody;
 
-    getObjectPos((Object*)&player, &pr, &pc, &pcell, &pbody);
-    getObjectPos(e, &er, &ec, &ecell, &ebody);
+    getObjectBody((Object*)&player, &pbody);
+    getObjectBody(e, &ebody);
 
     if (e->state == 0 && pbody.bottom >= ebody.bottom - h && player.vy > 48) {
         player.vy = -15 * 24;

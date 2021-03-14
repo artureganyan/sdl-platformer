@@ -7,6 +7,7 @@
 #include "render.h"
 #include "game.h"
 #include "framecontrol.h"
+#include "helpers.h"
 #include "SDL_ttf.h"
 #include <string.h>
 #include <stdio.h>
@@ -48,6 +49,7 @@ void initRender()
     static const char* spritesPath = "image/sprites.bmp";
     static const Uint8 transparent[3] = {90, 82, 104};
     SDL_Surface* surface = SDL_LoadBMP(spritesPath);
+    ensure(surface != NULL,  "initRender(): Can't load sprite sheet");
     SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, transparent[0], transparent[1], transparent[2]));
     sprites = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
@@ -55,6 +57,7 @@ void initRender()
     // Font
     TTF_Init();
     font = TTF_OpenFont("font/PressStart2P.ttf", 12);
+    ensure(font != NULL, "initRender(): Can't load font");
 }
 
 void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip flip )
@@ -67,9 +70,8 @@ void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip
 
 static void drawObjectBody( Object* object, int x, int y )
 {
-    SDL_Rect body = {x + (CELL_SIZE - object->type->width) / 2,
-                     y + (CELL_SIZE - object->type->height) / 2,
-                     object->type->width, object->type->height};
+    SDL_Rect body = {x + object->type->body.x, y + object->type->body.y,
+                     object->type->body.w, object->type->body.h};
 
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     SDL_RenderDrawRect(renderer, &body);

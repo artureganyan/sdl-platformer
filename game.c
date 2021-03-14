@@ -46,8 +46,8 @@ static const double CLEAN_PERIOD = 10; // Seconds
 static void processPlayer()
 {
     const double dt = getElapsedFrameTime() / 1000.0;
-    const int dw = (CELL_SIZE - PLAYER_WIDTH) / 2;
-    const int dh = (CELL_SIZE - (PLAYER_HEIGHT - 14)) / 2;
+    const int dw = (CELL_SIZE - player.type->body.w) / 2;
+    const int dh = (CELL_SIZE - (player.type->body.h - 14)) / 2;
     int r, c; Borders cell, body /*unused*/;
     getObjectPos((Object*)&player, &r, &c, &cell, &body);
 
@@ -159,15 +159,15 @@ static void processPlayer()
         }
     }
     // ... Bottom
-    if (player.y + PLAYER_HEIGHT > LEVEL_HEIGHT) {
+    if (player.y + player.type->body.h > LEVEL_HEIGHT) {
         if (lr < LEVEL_YCOUNT - 1) {
             if (!levels[lr + 1][lc].cells[0][c]->solid) {
-                if (player.y + PLAYER_HEIGHT / 2 > LEVEL_HEIGHT) {
+                if (player.y + player.type->body.h / 2 > LEVEL_HEIGHT) {
                     setLevel(lr + 1, lc);
                     player.y = -CELL_HALF + 1;
                 }
             } else {
-                player.y = LEVEL_HEIGHT - PLAYER_HEIGHT;
+                player.y = LEVEL_HEIGHT - player.type->body.h;
                 player.inAir = 0;
             }
         } else {
@@ -196,8 +196,7 @@ static void processObjects()
             continue;
         }
         object->type->onFrame(object);
-        if (abs(object->x - player.x) < (PLAYER_WIDTH + object->type->width) / 2 &&
-            abs(object->y - player.y) < (PLAYER_HEIGHT + object->type->height) / 2) {
+        if (hitTest(object, (Object*)&player)) {
             object->type->onHit(object);
         }
     }
@@ -435,15 +434,9 @@ void initGame()
 
 void runGame()
 {
-    if (!startFrameControl(FRAME_RATE)) {
-        fprintf(stderr, "gameLoop(): startFrameControl() failed\n");
-        return;
-    }
+    startFrameControl(FRAME_RATE);
 #ifdef _WIN32
-    if (timeBeginPeriod(SYSTEM_TIMER_PERIOD) != TIMERR_NOERROR) {
-        fprintf(stderr, "gameLoop(): timeBeginPeriod() failed\n");
-        return;
-    }
+    ensure(timeBeginPeriod(SYSTEM_TIMER_PERIOD) == TIMERR_NOERROR, "timeBeginPeriod() failed");
 #endif
     while (game.state != STATE_QUIT) {
         processFrame();

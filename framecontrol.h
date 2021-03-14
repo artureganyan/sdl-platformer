@@ -7,7 +7,7 @@
 #ifndef FRAMECONTROL_H
 #define FRAMECONTROL_H
 
-int startFrameControl( int fps );
+void startFrameControl( int fps );
 void waitForNextFrame();
 double getElapsedFrameTime();   // ms
 double getElapsedTime();        // ms

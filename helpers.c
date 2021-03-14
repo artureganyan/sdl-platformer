@@ -47,28 +47,42 @@ int cellContains( int r, int c, ObjectTypeId generalType )
     return isCellValid(r, c) ? level->cells[r][c]->generalTypeId == generalType : 0;
 }
 
+int hitTest( Object* object1, Object* object2 )
+{
+    const SDL_Rect o1 = object1->type->body;
+    const SDL_Rect o2 = object2->type->body;
+    if (fabs((object1->x + o1.x + o1.w / 2.0) - (object2->x + o2.x + o2.w / 2.0)) < (o1.w + o2.w) / 2.0 &&
+        fabs((object1->y + o1.y + o1.h / 2.0) - (object2->y + o2.y + o2.h / 2.0)) < (o1.h + o2.h) / 2.0) {
+        return 1;
+    }
+    return 0;
+}
+
 void getObjectCell( Object* object, int* r, int* c )
 {
-    *r = (object->y + object->type->sprite.h / 2) / CELL_SIZE;
-    *c = (object->x + object->type->sprite.w / 2) / CELL_SIZE;
+    const SDL_Rect body = object->type->body;
+    *r = (object->y + body.y + body.h / 2.0) / CELL_SIZE;
+    *c = (object->x + body.x + body.w / 2.0) / CELL_SIZE;
+}
+
+void getObjectBody( Object* object, Borders* borders )
+{
+    const SDL_Rect body = object->type->body;
+    borders->left = object->x + body.x;
+    borders->right = borders->left + body.w;
+    borders->top = object->y + body.y;
+    borders->bottom = borders->top + body.h;
 }
 
 void getObjectPos( Object* object, int* r, int* c, Borders* cell, Borders* body )
 {
-    const int dw = (CELL_SIZE - object->type->width) / 2;
-    const int dh = (CELL_SIZE - object->type->height) / 2;
-
     getObjectCell(object, r, c);
+    getObjectBody(object, body);
 
     cell->left = CELL_SIZE * (*c);
     cell->right = cell->left + CELL_SIZE;
     cell->top = CELL_SIZE * (*r);
     cell->bottom = cell->top + CELL_SIZE;
-
-    body->left = object->x + dw;
-    body->right = object->x + CELL_SIZE - dw;
-    body->top = object->y + dh;
-    body->bottom = object->y + CELL_SIZE - dh;
 }
 
 int findNearDoor( int* r, int* c )
@@ -113,4 +127,12 @@ Object* findObject( Level* level, ObjectTypeId typeId )
         }
     }
     return NULL;
+}
+
+void ensure(int condition, const char* message)
+{
+    if (!condition) {
+        SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error", message, NULL);
+        exit(EXIT_FAILURE);
+    }
 }

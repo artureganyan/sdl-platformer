@@ -21,9 +21,6 @@ typedef enum
     COLUMN_COUNT = (LEVEL_WIDTH + CELL_SIZE - 1) / CELL_SIZE,
     CELL_COUNT = ROW_COUNT * COLUMN_COUNT,
     FRAME_RATE = 48,
-    FRAME_PERIOD = 1000 / FRAME_RATE,
-    PLAYER_WIDTH = CELL_SIZE - 12,
-    PLAYER_HEIGHT = CELL_SIZE,
 #ifdef _WIN32
     SYSTEM_TIMER_PERIOD = 1 // In ms, used to update frames
 #endif
@@ -130,8 +127,7 @@ typedef struct
     ObjectTypeId typeId;
     ObjectTypeId generalTypeId;
     SDL_Rect sprite; // Sprite rect in the spritesheet, unscaled
-    int width;       // Body width/height, unscaled. Body is centered within
-    int height;      // the sprite.
+    SDL_Rect body;   // Body rect relative to the object (x, y), unscaled
     int solid;
     double speed;
     OnInit onInit;

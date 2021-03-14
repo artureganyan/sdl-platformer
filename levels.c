@@ -182,7 +182,7 @@ static void initLevelsFromString( const char* string )
                         createObject(level, TYPE_SKELETON, r, c);
                     } else if (s == '`') {
                         Object* drop = createObject(level, TYPE_DROP, r, c);
-                        drop->y = (drop->y / CELL_SIZE) * CELL_SIZE - (CELL_SIZE - drop->type->height) / 2 - 1;
+                        drop->y = (drop->y / CELL_SIZE) * CELL_SIZE - (CELL_SIZE - drop->type->body.h) / 2 - 1;
                     } else if (s == '_') {
                         createObject(level, TYPE_PLATFORM, r, c);
                     } else if (s == '/') {
