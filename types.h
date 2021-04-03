@@ -20,10 +20,7 @@ typedef enum
     ROW_COUNT = (LEVEL_HEIGHT + CELL_SIZE - 1) / CELL_SIZE,
     COLUMN_COUNT = (LEVEL_WIDTH + CELL_SIZE - 1) / CELL_SIZE,
     CELL_COUNT = ROW_COUNT * COLUMN_COUNT,
-    FRAME_RATE = 48,
-#ifdef _WIN32
-    SYSTEM_TIMER_PERIOD = 1 // In ms, used to update frames
-#endif
+    FRAME_RATE = 48
 } Constant;
 
 typedef enum
@@ -74,7 +71,6 @@ typedef enum
     TYPE_DOOR,
     TYPE_LADDER,
     TYPE_SPRING,
-    TYPE_FAN,
     TYPE_ARROW_LEFT,
     TYPE_ARROW_RIGHT,
     TYPE_ARROW_UP,

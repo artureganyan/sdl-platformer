@@ -50,9 +50,6 @@ void Spring_onInit( Object* e );
 void Spring_onFrame( Object* e );
 void Spring_onHit( Object* e );
 
-void Fan_onInit( Object* e );
-void Fan_onFrame( Object* e );
-
 void Cloud_onHit( Object* e );
 
 void Torch_onInit( Object* e );

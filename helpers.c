@@ -6,11 +6,12 @@
 
 #include "helpers.h"
 #include "game.h"
+#include "levels.h"
 
 
 int isCellValid( int r, int c )
 {
-    return c >= 0 && c < COLUMN_COUNT && r >= 0 && r < ROW_COUNT;
+    return r >= 0 && r < ROW_COUNT && c >= 0 && c < COLUMN_COUNT;
 }
 
 int isSolid( int r, int c, int flags )
@@ -21,13 +22,6 @@ int isSolid( int r, int c, int flags )
 int isLadder( int r, int c )
 {
     return isCellValid(r, c) ? level->cells[r][c]->generalTypeId == TYPE_LADDER : 0;
-}
-
-// Returns 1 if there is a ladder or top-solid block at (r, c)
-int isSolidOrLadder( int r, int c )
-{
-    return isCellValid(r, c) ? (level->cells[r][c]->solid & SOLID_TOP) ||
-            (level->cells[r][c]->generalTypeId == TYPE_LADDER) : 0;
 }
 
 // Returns 1 if there is a ladder at (r, c) and player can stay on it

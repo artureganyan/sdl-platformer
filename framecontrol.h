@@ -8,6 +8,7 @@
 #define FRAMECONTROL_H
 
 void startFrameControl( int fps );
+void stopFrameControl();        // Must be called after startFrameControl(), before the program exits
 void waitForNextFrame();
 double getElapsedFrameTime();   // ms
 double getElapsedTime();        // ms

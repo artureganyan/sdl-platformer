@@ -187,8 +187,6 @@ static void initLevelsFromString( const char* string )
                         createObject(level, TYPE_PLATFORM, r, c);
                     } else if (s == '/') {
                         createObject(level, TYPE_SPRING, r, c);
-                    } else if (s == 'X') {
-                        createObject(level, TYPE_FAN, r, c);
                     } else if (s == '<') {
                         createStaticObject(level, TYPE_ARROW_LEFT, r, c);
                     } else if (s == '>') {

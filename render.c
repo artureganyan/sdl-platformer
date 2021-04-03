@@ -39,14 +39,12 @@ static struct
     int next;
 } textCache;
 
-
-void initRender()
+void initRender( const char* spritesPath, const char* fontPath )
 {
     // Window and renderer
     SDL_CreateWindowAndRenderer(LEVEL_WIDTH * SIZE_FACTOR, LEVEL_HEIGHT * SIZE_FACTOR, 0, &window, &renderer);
 
     // Sprites
-    static const char* spritesPath = "image/sprites.bmp";
     static const Uint8 transparent[3] = {90, 82, 104};
     SDL_Surface* surface = SDL_LoadBMP(spritesPath);
     ensure(surface != NULL,  "initRender(): Can't load sprite sheet");
@@ -56,7 +54,7 @@ void initRender()
 
     // Font
     TTF_Init();
-    font = TTF_OpenFont("font/PressStart2P.ttf", 12);
+    font = TTF_OpenFont(fontPath, 12);
     ensure(font != NULL, "initRender(): Can't load font");
 }
 
@@ -68,39 +66,40 @@ void drawSprite( SDL_Rect* spriteRect, int x, int y, int frame, SDL_RendererFlip
     SDL_RenderCopyEx(renderer, sprites, &srcRect, &dstRect, 0, NULL, flip);
 }
 
-static void drawObjectBody( Object* object, int x, int y )
+static void drawObjectBody( Object* object )
 {
-    SDL_Rect body = {x + object->type->body.x, y + object->type->body.y,
-                     object->type->body.w, object->type->body.h};
+    SDL_Rect body = {(object->x + object->type->body.x) * SIZE_FACTOR,
+                     (object->y + object->type->body.y) * SIZE_FACTOR,
+                     object->type->body.w * SIZE_FACTOR,
+                     object->type->body.h * SIZE_FACTOR};
 
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     SDL_RenderDrawRect(renderer, &body);
 }
 
-// x and y are specified to draw the object animation at arbitrary position,
-// e.g. to make special effects
-void drawObject( Object* object, int x, int y )
+void drawObject( Object* object )
 {
     const int frame = object->anim.frame;
     const int flip = object->anim.flip;
+    const int x = object->x;
+    const int y = object->y;
 
     SDL_SetTextureAlphaMod(sprites, object->anim.alpha);
 
     if (object->anim.type == ANIMATION_WAVE) {
         SDL_Rect spriteRect = object->type->sprite;
         spriteRect.w -= frame;
-        x += frame;
-        drawSprite(&spriteRect, x, y, 0, flip);
+        drawSprite(&spriteRect, x + frame, y, 0, flip);
 
         spriteRect.x += spriteRect.w;
         spriteRect.w = frame;
-        x -= frame;
         drawSprite(&spriteRect, x, y, 0, flip);
     } else {
         drawSprite(&object->type->sprite, x, y, frame, flip);
     }
 
-//  drawObjectBody(object, x, y);
+    // For debug
+    //drawObjectBody(object);
 
     SDL_SetTextureAlphaMod(sprites, 255);
 }
@@ -288,7 +287,7 @@ void drawScreen()
                 anim->flip = anim->flip == SDL_FLIP_NONE ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
             }
         }
-        drawObject(object, object->x, object->y);
+        drawObject(object);
     }
 }
 

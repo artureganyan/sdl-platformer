@@ -12,7 +12,6 @@
 int isCellValid( int r, int c );
 int isSolid( int r, int c, int flags );
 int isLadder( int r, int c );
-int isSolidOrLadder( int r, int c );
 int isSolidLadder( int r, int c );
 int isWater( int r, int c );
 int cellContains( int r, int c, ObjectTypeId generalType );

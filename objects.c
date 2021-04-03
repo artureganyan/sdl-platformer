@@ -65,14 +65,14 @@ static int move( Object* object, int hitTest )
     if (dx > 0 && body.right > cell.right) {
         if ((check_walls && isSolid(r, c + 1, SOLID_LEFT)) ||
             (check_level && body.right > LEVEL_WIDTH) || 
-            (check_floor && !isSolidOrLadder(r + 1, c + 1))) {
+            (check_floor && !isSolid(r + 1, c + 1, SOLID_TOP) && !isLadder(r + 1, c + 1))) {
             object->x -= dx;
             result |= DIRECTION_X;
         }
     } else if (dx < 0 && body.left < cell.left) {
         if ((check_walls && isSolid(r, c - 1, SOLID_RIGHT)) ||
             (check_level && body.left < 0) ||
-            (check_floor && !isSolidOrLadder(r + 1, c - 1))) {
+            (check_floor && !isSolid(r + 1, c - 1, SOLID_TOP) && !isLadder(r + 1, c - 1))) {
             object->x -= dx;
             result |= DIRECTION_X;
         }
@@ -582,39 +582,10 @@ void Spring_onFrame( Object* e )
 
 void Spring_onHit( Object* e )
 {
-    const int h = 8;
-    Borders pbody;
-    Borders ebody;
-
-    getObjectBody((Object*)&player, &pbody);
-    getObjectBody(e, &ebody);
-
-    if (e->state == 0 && pbody.bottom >= ebody.bottom - h && player.vy > 48) {
+    if (e->state == 0 && player.vy > 48) {
         player.vy = -15 * 24;
         e->state = 1000;
         setAnimation(e, 1, 1, 0);
-    }
-}
-
-
-void Fan_onInit( Object* e )
-{
-    setAnimation(e, 0, 3, 24);
-}
-
-void Fan_onFrame( Object* e )
-{
-    const double dx = player.x - e->x;
-    const double dy = player.y - e->y;
-    const double dr = sqrt(dx * dx + dy * dy);
-    const double distance = CELL_SIZE * 2.5;
-    if (fabs(dr) < distance) {
-        // \todo Something better should be done here
-        const double r = dr ? dr : 0.1;
-        int vx = 2 * dx / r;
-        int vy = 3 * dy / r;
-        player.vx += vx;
-        player.vy += vy;
     }
 }
 

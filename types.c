@@ -196,11 +196,10 @@ void initTypes()
     initTypeEx  ( TYPE_FIREBALL,        TYPE_ENEMY,             0,        13, 26, 16, 16,  (SDL_Rect){2,  3,  14, 12},   48,       Fireball_onInit,        Fireball_onFrame,           Bat_onHit              );
     initTypeEx  ( TYPE_SKELETON,        TYPE_ENEMY,             0,        6,  26, 16, 16,  (SDL_Rect){1,  0,  14, 16},   24,       Enemy_onInit,           TeleportingEnemy_onFrame,   TeleportingEnemy_onHit );
     initTypeEx  ( TYPE_ICESHOT,         TYPE_ENEMY,             0,        52, 0,  16, 16,  (SDL_Rect){0,  4,  16, 7},   168,       Shot_onInit,            Shot_onFrame,               Shot_onHit             );
-    initTypeEx  ( TYPE_FIRESHOT,        TYPE_ENEMY,             0,        60, 26, 16, 16,  (SDL_Rect){0,  0,  4,  4},   120,       Shot_onInit,            Shot_onFrame,               Shot_onHit             );
+    initTypeEx  ( TYPE_FIRESHOT,        TYPE_ENEMY,             0,        60, 26, 16, 16,  (SDL_Rect){6,  6,  4,  4},   120,       Shot_onInit,            Shot_onFrame,               Shot_onHit             );
     initTypeEx  ( TYPE_DROP,            TYPE_DROP,              0,        37, 43, 16, 16,  (SDL_Rect){6,  6,  4,  4},     0,       Drop_onInit,            Drop_onFrame,               Drop_onHit             );
     initTypeEx  ( TYPE_PLATFORM,        TYPE_PLATFORM,          0,        4,  6,  16, 8,   (SDL_Rect){0,  0,  16, 8},    48,       Platform_onInit,        Platform_onFrame,           Platform_onHit         );
-    initTypeEx  ( TYPE_SPRING,          TYPE_SPRING,            0,        65, 26, 16, 16,  (SDL_Rect){0,  0,  16, 16},    0,       Spring_onInit,          Spring_onFrame,             Spring_onHit           );
-    initTypeEx  ( TYPE_FAN,             TYPE_FAN,               0,        64, 26, 16, 16,  (SDL_Rect){0,  0,  16, 16},    0,       Fan_onInit,             Fan_onFrame,                Object_onHit           );
+    initTypeEx  ( TYPE_SPRING,          TYPE_SPRING,            0,        65, 26, 16, 16,  (SDL_Rect){0,  8,  16, 8},     0,       Spring_onInit,          Spring_onFrame,             Spring_onHit           );
     initTypeEx  ( TYPE_ARROW_LEFT,      TYPE_WALL,          SOLID_LEFT,   32, 3,  16, 16,  (SDL_Rect){0,  0,  16, 16},    0,       Object_onInit,          Object_onFrame,             Object_onHit           );
     initTypeEx  ( TYPE_ARROW_RIGHT,     TYPE_WALL,          SOLID_RIGHT,  31, 3,  16, 16,  (SDL_Rect){0,  0,  16, 16},    0,       Object_onInit,          Object_onFrame,             Object_onHit           );
     initTypeEx  ( TYPE_KEY,             TYPE_KEY,               0,        45, 26, 16, 16,  (SDL_Rect){0,  0,  16, 16},    0,       Object_onInit,          Item_onFrame,               Item_onHit             );

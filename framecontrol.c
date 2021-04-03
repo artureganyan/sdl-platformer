@@ -11,23 +11,25 @@
 
 #ifdef _WIN32
 #include <windows.h>
-typedef LONGLONG Time;  // Ticks
+typedef LONGLONG Time;                   // Ticks
 static const Time TIME_UNDEFINED = -1;
+static const int SYSTEM_TIMER_PERIOD = 1 // Milliseconds
 #else
 #include <time.h>
-typedef long long Time; // Nanoseconds
+typedef long long Time;                  // Nanoseconds
 static const Time TIME_UNDEFINED = -1;
 #endif
 
 static struct
 {
+    int started;
     Time startTime;
     Time prevFrameTime;
     Time elapsedFrameTime;
     Time framePeriod;
     unsigned long frameCount;
     double timePerMs;
-} control;
+} control = {0};
 
 
 static inline double timeToMs( Time time )
@@ -66,8 +68,24 @@ void startFrameControl( int fps )
     ensure(control.startTime != TIME_UNDEFINED, "startFrameControl(): Can't get current time");
     control.prevFrameTime = control.startTime;
     control.elapsedFrameTime = 0;
-    control.framePeriod = msToTime(1000.0 / fps);
+    control.framePeriod = fps > 0 ? msToTime(1000.0 / fps) : 0;
     control.frameCount = 0;
+#ifdef _WIN32
+    // Request accuracy of the system timer. NOTE: This call must
+    // be matched with timeEndPeriod(), with the same parameter.
+    ensure(timeBeginPeriod(SYSTEM_TIMER_PERIOD) == TIMERR_NOERROR, "timeBeginPeriod() failed");
+#endif
+    control.started = 1;
+}
+
+void stopFrameControl()
+{
+    if (!control.started) {
+        return;
+    }
+#ifdef _WIN32
+    timeEndPeriod(SYSTEM_TIMER_PERIOD);
+#endif
 }
 
 void waitForNextFrame()
@@ -94,8 +112,9 @@ double getElapsedFrameTime()
 {
     const double MAX_TIME = 1000.0 / 12;
     const double elapsed = timeToMs(control.elapsedFrameTime);
-    if (elapsed > MAX_TIME)
+    if (elapsed > MAX_TIME) {
         return MAX_TIME;
+    }
     return elapsed;
 }
 
