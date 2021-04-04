@@ -11,11 +11,11 @@
 
 enum
 {
-    LEVEL_XCOUNT = 2,
-    LEVEL_YCOUNT = 2
+    LEVEL_COUNTX = 2,
+    LEVEL_COUNTY = 2
 };
 
-extern Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];
+extern Level levels[LEVEL_COUNTY][LEVEL_COUNTX];
 
 void initLevels();
 

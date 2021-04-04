@@ -9,7 +9,8 @@
 #include "game.h"
 #include "helpers.h"
 
-Level levels[LEVEL_YCOUNT][LEVEL_XCOUNT];
+Level levels[LEVEL_COUNTY][LEVEL_COUNTX];
+static const char* levelsString;
 
 
 static void changeSprite( ObjectTypeId typeId, int spriteRow, int spriteColumn )
@@ -19,7 +20,7 @@ static void changeSprite( ObjectTypeId typeId, int spriteRow, int spriteColumn )
     type->sprite.x = spriteColumn * SPRITE_SIZE;
 }
 
-static void initSprites_Castle()
+static void changeSprites_Castle()
 {
     changeSprite( TYPE_WALL_TOP,        4,  6  );
     changeSprite( TYPE_WALL,            5,  6  );
@@ -38,7 +39,7 @@ static void initSprites_Castle()
     changeSprite( TYPE_LADDER,          12, 2  );
 }
 
-static void initSprites_Forest()
+static void changeSprites_Forest()
 {
     changeSprite( TYPE_WALL_TOP,        4,  6  );
     changeSprite( TYPE_WALL,            5,  6  );
@@ -55,7 +56,7 @@ static void initSprites_Forest()
     changeSprite( TYPE_LADDER,          12, 2  );
 }
 
-static void initSprites_Underground()
+static void changeSprites_Underground()
 {
     changeSprite( TYPE_WALL_TOP,        4,  6  );
     changeSprite( TYPE_WALL,            5,  6  );
@@ -72,20 +73,24 @@ static void initSprites_Underground()
     changeSprite( TYPE_LADDER,          12, 2  );
 }
 
+static inline const char* getLevelString( const char* allLevels, int r, int c )
+{
+    return allLevels + r * CELL_COUNT * LEVEL_COUNTX + c * COLUMN_COUNT;
+}
+
+static inline const char getLevelChar( const char* levelString, int r, int c )
+{
+    return levelString[r * COLUMN_COUNT * LEVEL_COUNTX + c];
+}
+
 static void initLevelsFromString( const char* string )
 {
     struct { int r, c; } startLevel;
 
-    // These helpers return appropriate level string/character
-    const int STRING_ROW_SIZE = CELL_COUNT * LEVEL_XCOUNT;
-    const int STRING_ROW_WIDTH = COLUMN_COUNT * LEVEL_XCOUNT;
-    #define GET_LEVEL_STRING(string, r, c) ((string) + STRING_ROW_SIZE * (r) + COLUMN_COUNT * (c))
-    #define GET_LEVEL_CHAR(levelString, r, c) (levelString)[(r) * STRING_ROW_WIDTH + (c)]
-
-    // Iterate over levels
-    for (int lr = 0; lr < LEVEL_YCOUNT; ++ lr) {
-        for (int lc = 0; lc < LEVEL_XCOUNT; ++ lc) {
-            const char* levelString = GET_LEVEL_STRING(string, lr, lc);
+    // Iterate over the levels
+    for (int lr = 0; lr < LEVEL_COUNTY; ++ lr) {
+        for (int lc = 0; lc < LEVEL_COUNTX; ++ lc) {
+            const char* levelString = getLevelString(string, lr, lc);
 
             Level* level = &levels[lr][lc];
             initLevel(level);
@@ -93,16 +98,16 @@ static void initLevelsFromString( const char* string )
             level->c = lc;
             ObjectArray_append(&level->objects, (Object*)&player);
 
-            // Iterate over cells within the level and create objects
+            // Iterate over the level cells and create objects
             for (int r = 0; r < ROW_COUNT; ++ r) {
                 for (int c = 0; c < COLUMN_COUNT; ++ c) {
-                    const char s = GET_LEVEL_CHAR(levelString, r, c);
+                    const char s = getLevelChar(levelString, r, c);
 
                     // Wall and ground
                     if (s == '*' || s == 'x') {
                         const ObjectTypeId type = s == '*' ? TYPE_WALL : TYPE_GROUND;
                         const ObjectTypeId type_top = s == '*' ? TYPE_WALL_TOP : TYPE_GROUND_TOP;
-                        const char st = GET_LEVEL_CHAR(levelString, r - 1, c);
+                        const char st = getLevelChar(levelString, r - 1, c);
                         if (r == 0 || st == '*' || st == 'x') {
                             createStaticObject(level, type, r, c);
                         } else {
@@ -110,7 +115,7 @@ static void initLevelsFromString( const char* string )
                         }
                     // Water
                     } else if (s == '~') {
-                        const char st = GET_LEVEL_CHAR(levelString, r - 1, c);
+                        const char st = getLevelChar(levelString, r - 1, c);
                         if (r == 0 || st == '~' || st == 'x' || st == '*') {
                             createStaticObject(level, TYPE_WATER, r, c);
                         } else {
@@ -118,8 +123,8 @@ static void initLevelsFromString( const char* string )
                         }
                     // Pillar
                     } else if (s == '|') {
-                        const char st = GET_LEVEL_CHAR(levelString, r - 1, c);
-                        const char sb = GET_LEVEL_CHAR(levelString, r + 1, c);
+                        const char st = getLevelChar(levelString, r - 1, c);
+                        const char sb = getLevelChar(levelString, r + 1, c);
                         if (r == 0 || st == '*' || st == 'x') {
                             createStaticObject(level, TYPE_PILLAR_TOP, r, c);
                         } else if (r == ROW_COUNT - 1 || sb == '*' || sb == 'x') {
@@ -129,7 +134,7 @@ static void initLevelsFromString( const char* string )
                         }
                     // Spike
                     } else if (s == '^') {
-                        const char st = GET_LEVEL_CHAR(levelString, r - 1, c);
+                        const char st = getLevelChar(levelString, r - 1, c);
                         if (st == '*' || st == 'x') {
                             createStaticObject(level, TYPE_SPIKE_TOP, r, c);
                         } else {
@@ -197,7 +202,8 @@ static void initLevelsFromString( const char* string )
                         createObject(level, TYPE_TORCH, r, c);
                     } else if (s >= '1' && s <= '9') {
                         Object* action = createObject(level, TYPE_ACTION, r, c);
-                        action->state = s;
+                        action->data = s;
+                    // Start position
                     } else if (s == 'P') {
                         startLevel.r = lr;
                         startLevel.c = lc;
@@ -211,63 +217,56 @@ static void initLevelsFromString( const char* string )
         }
     }
 
-    #undef GET_LEVEL_CHAR
-    #undef GET_LEVEL_STRING
-
     // Set start level
     setLevel(startLevel.r, startLevel.c);
 }
 
-static const char* levelString;
-
 void initLevels()
 {
-    // Create levels
-    initLevelsFromString(levelString);
+    ensure(strlen(levelsString) == LEVEL_COUNTY * LEVEL_COUNTX * ROW_COUNT * COLUMN_COUNT,
+           "The levels string does not match the levels count or size.");
 
-    // Set sprites
-    #define SET_SPRITES(r0, r1, c0, c1, sprites) \
-        for (int r = (r0); r <= (r1); ++ r) \
-            for (int c = (c0); c <= (c1); ++ c) \
-                levels[r][c].init = initSprites_##sprites;
+    initLevelsFromString(levelsString);
 
-    SET_SPRITES(0, 1, 0, 1, Underground);
-
-    #undef SET_SPRITES
+    for (int r = 0; r < LEVEL_COUNTY; r++) {
+        for (int c = 0; c < LEVEL_COUNTX; c++) {
+            levels[r][c].init = changeSprites_Underground;
+        }
+    }
 
     // Special objects can be created here
 }
 
 
-// There must be exactly LEVEL_XCOUNT * LEVEL_YCOUNT levels here
+// There must be exactly LEVEL_COUNTX * LEVEL_COUNTY levels here
 
-static const char* levelString =
+static const char* levelsString =
 
-"                    "  " *     b            "
-"  ooooooo S ooooooo "  " d               g  "
+"                    "  " *     b       b    "
+"  ooooooo S ooooooo "  " d                  "
 "=*******************"  "**** _       ****=**"
 "=                   "  "*                =  "
 "=    o    o    o    "  "*                =  "
-"=                   "  "*    ooo    s    =  "
+"=                   "  "*    ooo    p    =  "
 "***     _        **="  "*oo ----  **********"
 "                   ="  "*-- -               "
-"    f  o     o     ="  "*   -     ooo       "
+"    f  o     o     ="  "*   -  p  ooo       "
 "              f    ="  "*     --=-----  o  O"
 "=**       _      ***"  "*       =       -  -"
-"=                   "  "*       =           "
+"=                   "  "*   b   =           "
 "=    o    o    o    "  "*       =           "
-"=                   "  "*       =   g       "
+"=      s            "  "*       =   g       "
 "****************  -*"  "*=***************   "
 
 "*           *   o -*"  " =                O "
-"*  f        *   - o*"  " =               ---"
+"*           *   - o*"  " =               ---"
 "*    o o o  *   o -*"  " =          oo      "
-"*  k        >   - o*"  " =  g oooo       goo"
+"*  k    e   >   - o*"  " =  g oooo       goo"
 "*******=*****     -*"  " **********    *****"
 "*      =    *-  -  *"  "                    "
 "* h    =    *      *"  "   o o o    /       "
 "*    -----  *      *"  "          ------    "
-"*         - * o s o*"  "               -  ks"
+"*         - * o e o*"  "               -  ks"
 "*          **=******"  " oo  o / o     -----"
 "*-          *=      "  " ***=*****          "
 "*-  o o/ og *=      "  "    =               "
@@ -278,7 +277,7 @@ static const char* levelString =
 // Experiments
 
 /*
-static const char* levelString =
+static const char* levelsString =
 
 "    &           &   "  "                    "  "                  * "  "  `                *"  "*                  *"
 " P        &         "  "                    "  " _              *   "  "        o s       o*"  "*          o       *"
@@ -314,7 +313,7 @@ static const char* levelString =
 //*/
 
 /*
-static const char* levelString =
+static const char* levelsString =
 
 //         0                       1                       2                       3                       4                      5
 "                    "  "         &          "  "                    "  "                    "  "                    " "                    "

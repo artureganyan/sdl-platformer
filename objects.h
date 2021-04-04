@@ -13,11 +13,11 @@ void Object_onInit( Object* object );
 void Object_onFrame( Object* object );
 void Object_onHit( Object* object );
 
-void Enemy_onInit( Object* e );
-void Enemy_onFrame( Object* e );
-void Enemy_onHit( Object* e );
+void MovingEnemy_onInit( Object* e );
+void MovingEnemy_onFrame( Object* e );
+void MovingEnemy_onHit( Object* e );
 
-void ShooterEnemy_onFrame( Object* e );
+void ShootingEnemy_onFrame( Object* e );
 
 void Shot_onInit( Object* e );
 void Shot_onFrame( Object* e );

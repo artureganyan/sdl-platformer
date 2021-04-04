@@ -256,7 +256,7 @@ static void processPlayer()
         }
     // ... Right
     } else if (player.x + CELL_SIZE > LEVEL_WIDTH) {
-        if (lc < LEVEL_XCOUNT - 1 && !levels[lr][lc + 1].cells[r][0]->solid) {
+        if (lc < LEVEL_COUNTX - 1 && !levels[lr][lc + 1].cells[r][0]->solid) {
             if (player.x + CELL_HALF > LEVEL_WIDTH) {
                 setLevel(lr, lc + 1);
                 player.x = -CELL_HALF + 1;
@@ -267,7 +267,7 @@ static void processPlayer()
     }
     // ... Bottom
     if (player.y + player.type->body.h > LEVEL_HEIGHT) {
-        if (lr < LEVEL_YCOUNT - 1) {
+        if (lr < LEVEL_COUNTY - 1) {
             if (!levels[lr + 1][lc].cells[0][c]->solid) {
                 if (player.y + player.type->body.h / 2 > LEVEL_HEIGHT) {
                     setLevel(lr + 1, lc);
