@@ -21,6 +21,4 @@ void completeLevel();
 void damagePlayer( int damage );
 void killPlayer();
 
-void showMessage( const char* message );
-
 #endif

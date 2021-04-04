@@ -25,6 +25,14 @@ typedef enum
 
 typedef enum
 {
+    MESSAGE_PLAYER_KILLED = 0,
+    MESSAGE_GAME_OVER,
+    MESSAGE_LEVEL_COMPLETE,
+    MESSAGE_COUNT
+} MessageId;
+
+typedef enum
+{
     TYPE_NONE = 0,
 
     TYPE_GHOST,

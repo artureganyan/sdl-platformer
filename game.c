@@ -17,17 +17,14 @@ typedef enum
 {
     STATE_QUIT = 0,
     STATE_PLAYING,
-    STATE_MESSAGE,
     STATE_KILLED,
     STATE_GAMEOVER,
     STATE_LEVELCOMPLETE
 } GAME_STATE;
 
-
 static struct {
     GAME_STATE state;
     const Uint8* keystate;
-    const char* message;
     struct { double x, y; } respawnPos;
     double cleanTime;
     int jumpDenied;
@@ -79,12 +76,6 @@ void respawnPlayer()
     player.inAir = 0;
     player.x = game.respawnPos.x;
     player.y = game.respawnPos.y;
-}
-
-void showMessage( const char* text )
-{
-    game.message = text;
-    game.state = STATE_MESSAGE;
 }
 
 void setLevel( int r, int c )
@@ -367,17 +358,14 @@ static void processFrame()
 
     drawScreen();
 
-    if (game.state == STATE_MESSAGE) {
-        drawText(game.message);
-
-    } else if (game.state == STATE_KILLED) {
-        drawText("You lost a life");
+    if (game.state == STATE_KILLED) {
+        drawMessage(MESSAGE_PLAYER_KILLED);
 
     } else if (game.state == STATE_LEVELCOMPLETE) {
-        drawText("Level complete!");
+        drawMessage(MESSAGE_LEVEL_COMPLETE);
 
     } else if (game.state == STATE_GAMEOVER) {
-        drawText("Game over");
+        drawMessage(MESSAGE_GAME_OVER);
     }
 
     SDL_RenderPresent(renderer);
@@ -427,6 +415,7 @@ static void processFrame()
 static void onExit()
 {
     stopFrameControl();
+    
     TTF_Quit();
     SDL_Quit();
 }
