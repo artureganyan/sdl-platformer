@@ -9,19 +9,24 @@
 
 #include "SDL.h"
 
+//#define DEBUG_MODE
+
 typedef enum
 {
     LEVEL_WIDTH = 320,
     LEVEL_HEIGHT = 240,
     SPRITE_SIZE = 16,
-    SIZE_FACTOR = 2,
     CELL_SIZE = SPRITE_SIZE,
     CELL_HALF = CELL_SIZE / 2,
     ROW_COUNT = (LEVEL_HEIGHT + CELL_SIZE - 1) / CELL_SIZE,
     COLUMN_COUNT = (LEVEL_WIDTH + CELL_SIZE - 1) / CELL_SIZE,
     CELL_COUNT = ROW_COUNT * COLUMN_COUNT,
-    FRAME_RATE = 48
+    SIZE_FACTOR = 2,
+    FRAME_RATE = 48  // If <= 0, renders without upper fps limit
 } Constant;
+
+extern const double MAX_DELTA_TIME; // Maximum delta time at which the hit test still works, milliseconds
+extern const double MAX_SPEED;      // Maximum speed at which the hit test still works, pixels per second
 
 typedef enum
 {
@@ -178,6 +183,7 @@ typedef struct
     int count;
 } ObjectArray;
 
+// Player inherits Object, so must begin with its fields
 typedef struct
 {
     ObjectType* type;

@@ -25,6 +25,7 @@ int findNearDoor( int* r, int* c );
 Object* findNearItem( int r, int c );
 Object* findObject( Level* level, ObjectTypeId typeId );
 
+double limitAbs(double value, double max);
 void ensure(int condition, const char* message);
 
 #endif

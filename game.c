@@ -36,6 +36,9 @@ Player player;
 static const double PLAYER_SPEED_RUN = 72;          // Pixels per second 
 static const double PLAYER_SPEED_LADDER = 48;       //
 static const double PLAYER_SPEED_JUMP = 216;        //
+static const double PLAYER_SPEED_FALL_MAX = 120;    //
+
+static const double PLAYER_GRAVITY = 24 * 48;       // Pixels per second per second
 
 static const double PLAYER_ANIM_SPEED_RUN = 8;      // Frames per second
 static const double PLAYER_ANIM_SPEED_LADDER = 6;   //
@@ -179,22 +182,33 @@ static void processInput()
             }
         }
     }
+
+#ifdef DEBUG_MODE
+    // ... F, simulate "frame by frame" mode
+    if (game.keystate[SDL_SCANCODE_F]) {
+        SDL_Delay(1000);
+    }
+#endif
 }
 
 static void processPlayer()
 {
     // Movement
     const double dt = getElapsedFrameTime() / 1000.0;
-    player.x += player.vx * dt;
-    player.y += player.vy * dt;
-
     const double hitw = (CELL_SIZE - player.type->body.w) / 2;
     const double hith = hitw;
-    int r, c; Borders cell, body, sprite;
-    getObjectPos((Object*)&player, &r, &c, &cell, &body);
-    sprite = (Borders){player.x, player.x + CELL_SIZE, player.y, player.y + CELL_SIZE};
 
-    // Left
+    int r, c; Borders cell, body;
+    getObjectPos((Object*)&player, &r, &c, &cell, &body);
+
+    player.vx = limitAbs(player.vx, MAX_SPEED);
+    player.vy = limitAbs(player.vy, MAX_SPEED);
+
+    // ... X
+    player.x += player.vx * dt;
+    Borders sprite = {player.x, player.x + CELL_SIZE, player.y, player.y + CELL_SIZE};
+
+    // ... Left
     if (sprite.left < cell.left && player.vx <= 0) {
         if (isSolid(r, c - 1, SOLID_RIGHT) ||
             (sprite.top + hith < cell.top && isSolid(r - 1, c - 1, SOLID_RIGHT)) ||
@@ -202,7 +216,7 @@ static void processPlayer()
             player.x = cell.left;
             player.vx = 0;
         }
-    // Right
+    // ... Right
     } else if (sprite.right > cell.right && player.vx >= 0) {
         if (isSolid(r, c + 1, SOLID_LEFT) ||
             (sprite.top + hith < cell.top && isSolid(r - 1, c + 1, SOLID_LEFT)) ||
@@ -211,7 +225,12 @@ static void processPlayer()
             player.vx = 0;
         }
     }
-    // Bottom
+
+    // ... Y
+    player.y += player.vy * dt;
+    sprite = (Borders){player.x, player.x + CELL_SIZE, player.y, player.y + CELL_SIZE};
+
+    // ... Bottom
     if (sprite.bottom > cell.bottom && player.vy >= 0) {
         if (isSolid(r + 1, c, SOLID_TOP) ||
             (sprite.left + hitw < cell.left && isSolid(r + 1, c - 1, SOLID_TOP)) ||
@@ -227,7 +246,7 @@ static void processPlayer()
         } else {
             player.inAir = !player.onLadder;
         }
-    // Top
+    // ... Top
     } else if (sprite.top < cell.top && player.vy <= 0) {
         if (isSolid(r - 1, c, SOLID_BOTTOM) ||
             (sprite.left + hitw < cell.left && isSolid(r - 1, c - 1, SOLID_BOTTOM)) ||
@@ -299,9 +318,10 @@ static void processPlayer()
 
     // ... Gravity
     if (!player.onLadder) {
-        if (player.vy < 120) {
-            player.vy += 24 * 48 * dt;
-}
+        player.vy += PLAYER_GRAVITY * dt;
+        if (player.vy > PLAYER_SPEED_FALL_MAX) {
+            player.vy = PLAYER_SPEED_FALL_MAX;
+        }
     }
 
     // ... Ladder
@@ -410,6 +430,10 @@ static void processFrame()
         game.cleanTime = current_time + CLEAN_PERIOD;
         ObjectArray_clean(&level->objects);
     }
+
+#ifdef DEBUG_MODE
+    printf("fps=%f, objects=%d\n", getCurrentFps(), level->objects.count);
+#endif
 }
 
 static void onExit()
@@ -435,7 +459,7 @@ void initGame()
 
 void runGame()
 {
-    startFrameControl(FRAME_RATE);
+    startFrameControl(FRAME_RATE, MAX_DELTA_TIME);
 
     while (game.state != STATE_QUIT) {
         processFrame();

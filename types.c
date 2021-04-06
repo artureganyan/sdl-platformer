@@ -8,6 +8,10 @@
 #include "render.h"
 #include "objects.h"
 
+enum { MIN_FRAME_RATE = 24 };
+const double MAX_DELTA_TIME = 1000.0 / MIN_FRAME_RATE;
+const double MAX_SPEED = MIN_FRAME_RATE * CELL_SIZE;
+
 ObjectType objectTypes[TYPE_COUNT];
 
 

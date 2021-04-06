@@ -38,57 +38,56 @@ typedef enum
 
 // Moves the object and checks the walls, floor and level borders according
 // to hitTest flags. Returns 0 on success, otherwise returns the directions
-// which the object could not move to.
+// which the object could not fully move to.
 static int move( Object* object, int hitTest )
 {
     const double dt = getElapsedFrameTime() / 1000.0;
-    const double dx = object->vx * dt;
-    const double dy = object->vy * dt;
+    const double dx = limitAbs(object->vx, MAX_SPEED) * dt;
+    const double dy = limitAbs(object->vy, MAX_SPEED) * dt;
 
     const int check_walls = hitTest & HITTEST_WALLS;
     const int check_floor = hitTest & HITTEST_FLOOR;
     const int check_level = hitTest & HITTEST_LEVEL;
 
-    int r, c; Borders cell, body;
+    const SDL_Rect bodyRect = object->type->body;
+
     int result = 0;
+    int r, c; Borders cell, body;
+    getObjectPos(object, &r, &c, &cell, &body);
 
     object->x += dx;
     object->y += dy;
-    getObjectPos(object, &r, &c, &cell, &body);
+    getObjectBody(object, &body);
 
-    if (check_walls && isSolid(r, c, SOLID_ALL)) {
-        object->x -= dx;
-        object->y -= dy;
-        return DIRECTION_XY;
-    }
     if (dx > 0 && body.right > cell.right) {
         if ((check_walls && isSolid(r, c + 1, SOLID_LEFT)) ||
             (check_level && body.right > LEVEL_WIDTH) || 
             (check_floor && !isSolid(r + 1, c + 1, SOLID_TOP) && !isLadder(r + 1, c + 1))) {
-            object->x -= dx;
+            object->x = cell.right - (bodyRect.x + bodyRect.w);
             result |= DIRECTION_X;
         }
     } else if (dx < 0 && body.left < cell.left) {
         if ((check_walls && isSolid(r, c - 1, SOLID_RIGHT)) ||
             (check_level && body.left < 0) ||
             (check_floor && !isSolid(r + 1, c - 1, SOLID_TOP) && !isLadder(r + 1, c - 1))) {
-            object->x -= dx;
+            object->x = cell.left - bodyRect.x;
             result |= DIRECTION_X;
         }
     }
     if (dy > 0 && body.bottom > cell.bottom) {
         if ((check_walls && isSolid(r + 1, c, SOLID_TOP)) ||
             (check_level && body.bottom > LEVEL_HEIGHT)) {
-            object->y -= dy;
+            object->y = cell.bottom - (bodyRect.y + bodyRect.h);
             result |= DIRECTION_Y;
         }
     } else if (dy < 0 && body.top < cell.top) {
         if ((check_walls && isSolid(r - 1, c, SOLID_BOTTOM)) ||
             (check_level && body.top < 0)) {
-            object->y -= dy;
+            object->y = cell.top - bodyRect.y;
             result |= DIRECTION_Y;
         }
     }
+
     return result;
 }
 
@@ -102,7 +101,7 @@ static void setSpeed( Object* object, double vx, double vy )
 // Returns animation speed (frames per second) for the movement speed (pixels per second)
 static inline int speedToFps( double speed )
 {
-    return ceil(abs(speed / 12.0));
+    return ceil(fabs(speed / 12.0));
 }
 
 // Returns 1 if the source sees the target
@@ -174,7 +173,7 @@ void MovingEnemy_onFrame( Object* e )
         if (move(e, HITTEST_ALL)) {
             setSpeed(e, -e->vx, e->vy);
         }
-        setAnimation(e, 1, 2, speedToFps(e->type->speed));
+        setAnimation(e, 1, 2, speedToFps(e->vx));
 
     } else if (e->state <= ENEMY_WAITING) {
         setAnimation(e, 2, 2, 0);
@@ -220,7 +219,7 @@ void ShootingEnemy_onFrame( Object* e )
         } else if (move(e, HITTEST_ALL)) {
             setSpeed(e, -e->vx, e->vy);
         }
-        setAnimation(e, 1, 2, speedToFps(e->type->speed));
+        setAnimation(e, 1, 2, speedToFps(e->vx));
 
     } else if (e->state <= SHOOTINGENEMY_ATTACK1) {
         setAnimation(e, 4, 4, 2);
@@ -275,7 +274,7 @@ static const int BAT_FLY_HEIGHT = CELL_SIZE * 1.25;
 void Bat_onInit( Object* e )
 {
     MovingEnemy_onInit(e);
-    setAnimation(e, 0, 1, speedToFps(e->type->speed));
+    setAnimation(e, 0, 1, speedToFps(e->vx));
     setSpeed(e, e->vx, e->type->speed / 2.0);
     e->state = 0;
 }
@@ -298,8 +297,8 @@ void Bat_onFrame( Object* e )
         getObjectPos(e, &r, &c, &cell, &body);
         if (body.bottom >= e->state || body.top <= e->state - BAT_FLY_HEIGHT) {
             setSpeed(e, e->vx, -e->vy);
+        }
     }
-}
 }
 
 void Bat_onHit( Object* e )
@@ -469,12 +468,12 @@ void Spider_onFrame( Object* e )
 {
     MovingEnemy_onFrame(e);
 
-    e->state += getElapsedFrameTime();
     if (rand() % 100 == 99) {
-        if (abs(e->vx) == e->type->speed) {
-            setSpeed(e, e->vx * 2.5, e->vy);
+        const int direction = e->vx > 0 ? 1 : -1;
+        if (fabs(e->vx) == e->type->speed) {
+            setSpeed(e, direction * e->type->speed * 2.5, e->vy);
         } else {
-            setSpeed(e, e->vx / 2.5, e->vy);
+            setSpeed(e, direction * e->type->speed, e->vy);
         }
     }
 }
@@ -491,7 +490,7 @@ void TeleportingEnemy_onFrame( Object* e )
         if (move(e, HITTEST_ALL)) {
             setSpeed(e, -e->vx, e->vy);
         }
-        setAnimation(e, 1, 2, speedToFps(e->type->speed));
+        setAnimation(e, 1, 2, speedToFps(e->vx));
 
     } else if (e->state <= TELEPORTINGENEMY_BEFORE_TELEPORT) {
         setAnimation(e, 2, 2, 0);
@@ -558,32 +557,33 @@ void Platform_onFrame( Object* e )
 void Platform_onHit( Object* e )
 {
     const double dt = getElapsedFrameTime() / 1000.0;
-    const int dw = (CELL_SIZE - player.type->body.w) / 2;
-    const int dh = (CELL_SIZE - player.type->body.h) / 2;
-    const int border = 3;
+    const double dw = (CELL_SIZE - player.type->body.w) / 2.0;
+    const double dh = (CELL_SIZE - player.type->body.h) / 2.0;
+    const double border = 3;
 
     Borders pb, eb;
     getObjectBody((Object*)&player, &pb);
     getObjectBody(e, &eb);
 
-    // Hit from left or right
-    if (pb.bottom > eb.top + border && pb.top < eb.bottom - border) {
-        if (pb.right >= eb.left && pb.left <= eb.left) {
-            player.x = eb.left - dw - player.type->body.w;
-        } else if (pb.left <= eb.right && pb.right >= eb.right) {
-            player.x = eb.right - dw;
+    const int hitX = pb.right >= (eb.left + border) && pb.left <= (eb.right - border);
+    const int hitY = pb.bottom >= (eb.top + border) && pb.top <= (eb.bottom - border);
+
+    // Top
+    if (pb.bottom > eb.top && pb.bottom < eb.bottom && hitX) {
+        if (!player.vx) {
+            player.x += e->vx * dt;
         }
-    // Hit from top or bottom
-    } else if (pb.right > eb.left + border && pb.left < eb.right - border) {
-        if (pb.bottom >= eb.top && pb.top <= eb.top) {
-            if (!player.vx) {
-                player.x += e->vx * dt;
-            }
-            player.y = eb.top - dh - player.type->body.h;
-            player.inAir = 0;
-        } else if (pb.top <= eb.bottom && pb.bottom >= eb.bottom) {
-            player.y = eb.bottom - dh;
-        }
+        player.y = eb.top - dh - player.type->body.h;
+        player.inAir = 0;
+    // Bottom
+    } else if (pb.top < eb.bottom && pb.top > eb.top && hitX) {
+        player.y = eb.bottom - dh;
+    // Left
+    } else if (pb.right > eb.left && pb.right < eb.right && hitY) {
+        player.x = eb.left - dw - player.type->body.w;
+    // Right
+    } else if (pb.left < eb.right && pb.left > eb.left && hitY) {
+        player.x = eb.right - dw;
     }
 }
 

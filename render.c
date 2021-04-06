@@ -97,8 +97,9 @@ void drawObject( Object* object )
         drawSprite(object->type->sprite, x, y, frame, flip);
     }
 
-    // For debug
-    //drawObjectBody(object);
+#ifdef DEBUG_MODE
+    drawObjectBody(object);
+#endif
 
     SDL_SetTextureAlphaMod(sprites, 255);
 }

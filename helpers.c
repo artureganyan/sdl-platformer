@@ -123,6 +123,13 @@ Object* findObject( Level* level, ObjectTypeId typeId )
     return NULL;
 }
 
+double limitAbs(double value, double max)
+{
+    return value >  max ?  max :
+           value < -max ? -max :
+           value;
+}
+
 void ensure(int condition, const char* message)
 {
     if (!condition) {

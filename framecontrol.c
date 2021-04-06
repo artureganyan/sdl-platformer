@@ -28,6 +28,7 @@ static struct
     Time elapsedFrameTime;
     Time framePeriod;
     unsigned long frameCount;
+    double maxDeltaTime;
     double timePerMs;
 } control = {0};
 
@@ -55,7 +56,21 @@ static Time getCurrentTime()
 #endif
 }
 
-void startFrameControl( int fps )
+// If fps <= 0, new frame will be ready right after the previous one is handled,
+// i.e. there will be no fps limit.
+// 
+// The maxDeltaTime is the maximum time increment which can be correctly handled,
+// in ms. If it's <= 0, there will be no increment limit.
+//
+// The maxDeltaTime is used because, if the frame takes too long, the game may
+// change more than we can handle: e.g. some object may move too far, across the
+// walls. To solve this, the long frame can be handled as multiple shorter frames,
+// each <= maxDeltaTime. Or, if it's not required to sync the game time with the
+// real time, the long frame can be simply truncated to maxDeltaTime. This is done
+// in getElapsedFrameTime(), so that each long frame will be treated as a shorter
+// one (the game will slow down at these moments). For more information, see
+// https://gafferongames.com/post/fix_your_timestep/
+void startFrameControl( int fps, double maxDeltaTime )
 {
 #ifdef _WIN32
     LARGE_INTEGER i;
@@ -70,6 +85,7 @@ void startFrameControl( int fps )
     control.elapsedFrameTime = 0;
     control.framePeriod = fps > 0 ? msToTime(1000.0 / fps) : 0;
     control.frameCount = 0;
+    control.maxDeltaTime = maxDeltaTime;
 #ifdef _WIN32
     // Request accuracy of the system timer. NOTE: This call must
     // be matched with timeEndPeriod(), with the same parameter.
@@ -110,10 +126,9 @@ void waitForNextFrame()
 
 double getElapsedFrameTime()
 {
-    const double MAX_TIME = 1000.0 / 12;
     const double elapsed = timeToMs(control.elapsedFrameTime);
-    if (elapsed > MAX_TIME) {
-        return MAX_TIME;
+    if (control.maxDeltaTime > 0 && elapsed > control.maxDeltaTime) {
+        return control.maxDeltaTime;
     }
     return elapsed;
 }
